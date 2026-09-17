@@ -1,6 +1,6 @@
-import Image from "next/image";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import Image from 'next/image';
+import { Menu } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export function Header() {
   return (
