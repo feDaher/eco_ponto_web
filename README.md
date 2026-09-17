@@ -43,13 +43,12 @@ Se algum comando não for reconhecido, instale a ferramenta correspondente antes
 3. Rode o comando abaixo, substituindo pela URL real do repositório:
 
 ```bash
-git clone https://github.com/feDaher/eco_ponto_web.git
 ```
 
 4. Entre na pasta do projeto que acabou de ser criada:
 
 ```bash
-cd eco_ponto_web
+cd ecoponto-web
 ```
 
 > Se preferir, pode dar outro nome à pasta local: `git clone <url> nome-que-eu-quiser`.
@@ -134,6 +133,12 @@ Se o `npm run build` terminar sem erros, o critério de aceite de "projeto build
 
 ## Problemas comuns
 
+- **Erro do Turbopack no Windows** (`Turbopack is not supported on this platform` ou logs de `Code Integrity`/`Smart App Control` bloqueando `next-swc.win32-x64-msvc.node`): isso acontece quando o **Smart App Control** do Windows bloqueia o binário nativo do SWC por falta de assinatura reconhecida. Duas soluções:
+  1. **Desativar o Smart App Control** (se você tiver acesso de administrador na máquina): vá em `Configurações` → `Privacidade e segurança` → `Segurança do Windows` → `Controle de aplicativos e navegador` → `Controle de aplicativo inteligente` → **Desativar**. Depois feche e abra o terminal de novo e rode `npm run dev`.
+  2. **Rodar com Webpack em vez de Turbopack** (funciona sempre, sem mexer em nada do sistema):
+     ```bash
+     npm run dev -- --webpack
+     ```
 - **`npm install` falha ou trava**: apague a pasta `node_modules` e o arquivo `package-lock.json`, depois rode `npm install` de novo.
 - **Porta 3000 já em uso**: rode `npm run dev -- -p 3001` para subir em outra porta.
 - **Erro de variável de ambiente indefinida**: confirme que o arquivo se chama exatamente `.env.local` (e não `.env.local.txt`) e que está na raiz do projeto.
