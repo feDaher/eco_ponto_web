@@ -13,7 +13,6 @@ Consulte pontos de coleta de resíduos recicláveis e eletrônicos, com painel a
 - [Rodando o projeto em desenvolvimento](#rodando-o-projeto-em-desenvolvimento)
 - [Gerando o build de produção](#gerando-o-build-de-produção)
 - [Scripts disponíveis](#scripts-disponíveis)
-- [Estrutura de pastas](#estrutura-de-pastas)
 - [Tecnologias utilizadas](#tecnologias-utilizadas)
 - [Problemas comuns](#problemas-comuns)
 
@@ -124,16 +123,6 @@ Se o `npm run build` terminar sem erros, o critério de aceite de "projeto build
 | `npm run build` | Gera o build de produção |
 | `npm run start` | Roda o build de produção já gerado |
 | `npm run lint` | Roda o ESLint para checar problemas no código |
-
-## Estrutura de pastas
-
-```
-src/
-├── app/            # Páginas e rotas (App Router)
-├── components/     # Componentes React (ui/, layout/, map/)
-├── lib/            # Cliente de API, autenticação, funções utilitárias
-└── types/          # Tipos TypeScript do domínio (User, CollectionPoint, etc.)
-```
 
 ## Tecnologias utilizadas
 
