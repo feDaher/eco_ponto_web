@@ -1,36 +1,151 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EcoPonto Web
 
-## Getting Started
+Aplicação web (site público + painel administrativo) do projeto **EcoPonto Digital**, desenvolvida com Next.js (App Router), TypeScript, Tailwind CSS e shadcn/ui.
 
-First, run the development server:
+Consulte pontos de coleta de resíduos recicláveis e eletrônicos, com painel administrativo para aprovação de pontos, gestão de usuários e relatórios.
+
+## Índice
+
+- [Pré-requisitos](#pré-requisitos)
+- [Clonando o repositório](#clonando-o-repositório)
+- [Instalando as dependências](#instalando-as-dependências)
+- [Configurando variáveis de ambiente](#configurando-variáveis-de-ambiente)
+- [Rodando o projeto em desenvolvimento](#rodando-o-projeto-em-desenvolvimento)
+- [Gerando o build de produção](#gerando-o-build-de-produção)
+- [Scripts disponíveis](#scripts-disponíveis)
+- [Estrutura de pastas](#estrutura-de-pastas)
+- [Tecnologias utilizadas](#tecnologias-utilizadas)
+- [Problemas comuns](#problemas-comuns)
+
+## Pré-requisitos
+
+Antes de começar, instale na sua máquina:
+
+| Ferramenta | Versão mínima | Link |
+| --- | --- | --- |
+| Node.js | 18.18 LTS ou superior | https://nodejs.org |
+| npm | 9 ou superior (já vem com o Node.js) | — |
+| Git | qualquer versão recente | https://git-scm.com |
+
+Para conferir se já tem tudo instalado, abra o terminal e rode:
+
+```bash
+node -v
+npm -v
+git --version
+```
+
+Se algum comando não for reconhecido, instale a ferramenta correspondente antes de continuar.
+
+## Clonando o repositório
+
+1. Abra o terminal na pasta onde você quer salvar o projeto (ex.: Área de Trabalho, Documentos).
+2. Copie a URL do repositório no GitHub/GitLab (botão verde **Code** → **HTTPS**).
+3. Rode o comando abaixo, substituindo pela URL real do repositório:
+
+```bash
+git clone https://github.com/feDaher/eco_ponto_web.git
+```
+
+4. Entre na pasta do projeto que acabou de ser criada:
+
+```bash
+cd eco_ponto_web
+```
+
+> Se preferir, pode dar outro nome à pasta local: `git clone <url> nome-que-eu-quiser`.
+
+## Instalando as dependências
+
+Este projeto usa **npm** como gerenciador de pacotes (não use `yarn` nem `pnpm` aqui, para não gerar conflito de lockfile). Dentro da pasta do projeto, rode:
+
+```bash
+npm install
+```
+
+Isso vai ler o `package.json` e o `package-lock.json` e baixar todas as dependências (Next.js, Tailwind, shadcn/ui, etc.) na pasta `node_modules/`. Pode levar alguns minutos na primeira vez.
+
+## Configurando variáveis de ambiente
+
+1. Copie o arquivo de exemplo:
+
+```bash
+cp .env.example .env.local
+```
+
+*(No Windows, se o comando `cp` não funcionar, copie e cole o arquivo manualmente pelo explorador de arquivos, ou use `copy .env.example .env.local` no Prompt de Comando.)*
+
+2. Abra o `.env.local` e preencha as variáveis necessárias, por exemplo:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3333
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=coloque_sua_chave_aqui
+```
+
+> O `.env.local` **nunca** deve ser commitado no Git (ele já está no `.gitignore`) — cada pessoa do time usa suas próprias chaves/URLs locais.
+
+## Rodando o projeto em desenvolvimento
+
+Com as dependências instaladas e o `.env.local` configurado, suba o servidor de desenvolvimento:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Depois de aparecer a mensagem `Ready` no terminal, abra o navegador em:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+O servidor de desenvolvimento tem **hot reload**: qualquer alteração salva no código atualiza a página automaticamente, sem precisar reiniciar nada.
 
-## Learn More
+Para parar o servidor, use `Ctrl + C` no terminal.
 
-To learn more about Next.js, take a look at the following resources:
+## Gerando o build de produção
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Para simular como o projeto roda em produção (útil antes de publicar ou entregar uma versão):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build
+npm run start
+```
 
-## Deploy on Vercel
+- `npm run build` compila e otimiza todo o projeto (gera a pasta `.next/`).
+- `npm run start` sobe o servidor já com esse build otimizado, também em `http://localhost:3000`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Se o `npm run build` terminar sem erros, o critério de aceite de "projeto builda em dev/prod" está atendido.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts disponíveis
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run dev` | Roda o projeto em modo desenvolvimento (hot reload) |
+| `npm run build` | Gera o build de produção |
+| `npm run start` | Roda o build de produção já gerado |
+| `npm run lint` | Roda o ESLint para checar problemas no código |
+
+## Estrutura de pastas
+
+```
+src/
+├── app/            # Páginas e rotas (App Router)
+├── components/     # Componentes React (ui/, layout/, map/)
+├── lib/            # Cliente de API, autenticação, funções utilitárias
+└── types/          # Tipos TypeScript do domínio (User, CollectionPoint, etc.)
+```
+
+## Tecnologias utilizadas
+
+- [Next.js](https://nextjs.org/) (App Router)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- ESLint + Prettier
+
+## Problemas comuns
+
+- **`npm install` falha ou trava**: apague a pasta `node_modules` e o arquivo `package-lock.json`, depois rode `npm install` de novo.
+- **Porta 3000 já em uso**: rode `npm run dev -- -p 3001` para subir em outra porta.
+- **Erro de variável de ambiente indefinida**: confirme que o arquivo se chama exatamente `.env.local` (e não `.env.local.txt`) e que está na raiz do projeto.
+- **`git clone` pede usuário/senha**: se o repositório for privado, configure autenticação via SSH ou um Personal Access Token do GitHub.
