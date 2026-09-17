@@ -13,6 +13,7 @@ Consulte pontos de coleta de resíduos recicláveis e eletrônicos, com painel a
 - [Rodando o projeto em desenvolvimento](#rodando-o-projeto-em-desenvolvimento)
 - [Gerando o build de produção](#gerando-o-build-de-produção)
 - [Scripts disponíveis](#scripts-disponíveis)
+- [Padrão de commit (Husky + lint-staged)](#padrão-de-commit-husky--lint-staged)
 - [Tecnologias utilizadas](#tecnologias-utilizadas)
 - [Problemas comuns](#problemas-comuns)
 
@@ -20,11 +21,11 @@ Consulte pontos de coleta de resíduos recicláveis e eletrônicos, com painel a
 
 Antes de começar, instale na sua máquina:
 
-| Ferramenta | Versão mínima | Link |
-| --- | --- | --- |
-| Node.js | 18.18 LTS ou superior | https://nodejs.org |
-| npm | 9 ou superior (já vem com o Node.js) | — |
-| Git | qualquer versão recente | https://git-scm.com |
+| Ferramenta | Versão mínima                        | Link                |
+| ---------- | ------------------------------------ | ------------------- |
+| Node.js    | 18.18 LTS ou superior                | https://nodejs.org  |
+| npm        | 9 ou superior (já vem com o Node.js) | —                   |
+| Git        | qualquer versão recente              | https://git-scm.com |
 
 Para conferir se já tem tudo instalado, abra o terminal e rode:
 
@@ -43,6 +44,7 @@ Se algum comando não for reconhecido, instale a ferramenta correspondente antes
 3. Rode o comando abaixo, substituindo pela URL real do repositório:
 
 ```bash
+
 ```
 
 4. Entre na pasta do projeto que acabou de ser criada:
@@ -71,7 +73,7 @@ Isso vai ler o `package.json` e o `package-lock.json` e baixar todas as dependê
 cp .env.example .env.local
 ```
 
-*(No Windows, se o comando `cp` não funcionar, copie e cole o arquivo manualmente pelo explorador de arquivos, ou use `copy .env.example .env.local` no Prompt de Comando.)*
+_(No Windows, se o comando `cp` não funcionar, copie e cole o arquivo manualmente pelo explorador de arquivos, ou use `copy .env.example .env.local` no Prompt de Comando.)_
 
 2. Abra o `.env.local` e preencha as variáveis necessárias, por exemplo:
 
@@ -116,12 +118,59 @@ Se o `npm run build` terminar sem erros, o critério de aceite de "projeto build
 
 ## Scripts disponíveis
 
-| Comando | O que faz |
-| --- | --- |
-| `npm run dev` | Roda o projeto em modo desenvolvimento (hot reload) |
-| `npm run build` | Gera o build de produção |
-| `npm run start` | Roda o build de produção já gerado |
-| `npm run lint` | Roda o ESLint para checar problemas no código |
+| Comando         | O que faz                                           |
+| --------------- | --------------------------------------------------- |
+| `npm run dev`   | Roda o projeto em modo desenvolvimento (hot reload) |
+| `npm run build` | Gera o build de produção                            |
+| `npm run start` | Roda o build de produção já gerado                  |
+| `npm run lint`  | Roda o ESLint para checar problemas no código       |
+
+## Padrão de commit (Husky + lint-staged)
+
+Este projeto usa **Husky** + **lint-staged** para rodar automaticamente o ESLint e o Prettier antes de cada commit. Isso evita que código fora do padrão (mal formatado, com erro de lint) chegue a entrar no repositório.
+
+### Você não precisa configurar nada
+
+Essa automação já está versionada no projeto (pasta `.husky/` e o bloco `"lint-staged"` no `package.json`). Ao rodar `npm install`, o script `"prepare": "husky"` já reativa os hooks automaticamente na sua máquina — não é preciso instalar nem configurar nada manualmente depois de clonar o repositório.
+
+### O que acontece a cada commit
+
+1. Você edita os arquivos normalmente.
+2. `git add .` (ou `git add arquivo.tsx`) — manda as alterações para a área de staging.
+3. `git commit -m "sua mensagem"` — nesse momento, o Git dispara automaticamente o hook `pre-commit`.
+4. O **lint-staged** roda **só nos arquivos que estão staged** (não no projeto inteiro, para o commit ficar rápido):
+   - Em `.js`/`.jsx`/`.ts`/`.tsx`: primeiro `eslint --fix` (corrige o que der automaticamente), depois `prettier --write` (formata).
+   - Em `.json`/`.md`/`.css`: só `prettier --write`.
+5. Se tudo passar (ou for corrigido automaticamente) → o commit é criado normalmente.
+6. Se o ESLint encontrar um erro que não consegue corrigir sozinho (ex.: variável não usada) → **o commit é bloqueado** até você corrigir manualmente e tentar de novo.
+
+### Testando manualmente (sem precisar commitar)
+
+Para validar que está tudo funcionando sem precisar de um commit de verdade:
+
+```bash
+git add .
+npx lint-staged
+```
+
+Se aparecer uma saída parecida com esta, está tudo certo:
+
+```
+✔ Preparing lint-staged...
+✔ Running tasks for staged files...
+✔ Applying modifications from tasks...
+✔ Cleaning up temporary files...
+```
+
+### Escape de emergência (usar com moderação)
+
+Em algum caso excepcional (ex.: um commit temporário de WIP que você sabe que está quebrado), dá para pular a verificação com:
+
+```bash
+git commit -m "wip" --no-verify
+```
+
+Evite usar isso no dia a dia — é uma porta de escape, não o fluxo padrão da equipe. (sempre que usar deverá avisar o leader do projeto).
 
 ## Tecnologias utilizadas
 
