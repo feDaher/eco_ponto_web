@@ -41,10 +41,10 @@ Se algum comando não for reconhecido, instale a ferramenta correspondente antes
 
 1. Abra o terminal na pasta onde você quer salvar o projeto (ex.: Área de Trabalho, Documentos).
 2. Copie a URL do repositório no GitHub/GitLab (botão verde **Code** → **HTTPS**).
-3. Rode o comando abaixo, substituindo pela URL real do repositório:
+3. Rode o comando abaixo:
 
 ```bash
-
+git clone https://github.com/feDaher/eco_ponto_web.git
 ```
 
 4. Entre na pasta do projeto que acabou de ser criada:
