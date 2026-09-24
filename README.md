@@ -13,7 +13,7 @@ Consulte pontos de coleta de resíduos recicláveis e eletrônicos, com painel a
 - [Rodando o projeto em desenvolvimento](#rodando-o-projeto-em-desenvolvimento)
 - [Gerando o build de produção](#gerando-o-build-de-produção)
 - [Scripts disponíveis](#scripts-disponíveis)
-- [Padrão de commit (Husky + lint-staged)](#padrão-de-commit-husky--lint-staged)
+- [Padrão de commit (Husky + lint-staged + Commitlint)](#padrão-de-commit-husky--lint-staged--commitlint)
 - [Tecnologias utilizadas](#tecnologias-utilizadas)
 - [Problemas comuns](#problemas-comuns)
 
@@ -118,14 +118,15 @@ Se o `npm run build` terminar sem erros, o critério de aceite de "projeto build
 
 ## Scripts disponíveis
 
-| Comando         | O que faz                                           |
-| --------------- | --------------------------------------------------- |
-| `npm run dev`   | Roda o projeto em modo desenvolvimento (hot reload) |
-| `npm run build` | Gera o build de produção                            |
-| `npm run start` | Roda o build de produção já gerado                  |
-| `npm run lint`  | Roda o ESLint para checar problemas no código       |
+| Comando             | O que faz                                           |
+| ------------------- | --------------------------------------------------- |
+| `npm run dev`       | Roda o projeto em modo desenvolvimento (hot reload) |
+| `npm run build`     | Gera o build de produção                            |
+| `npm run start`     | Roda o build de produção já gerado                  |
+| `npm run lint`      | Roda o ESLint para checar problemas no código       |
+| `npm run typecheck` | Checa os tipos do TypeScript (`tsc --noEmit`)       |
 
-## Padrão de commit (Husky + lint-staged)
+## Padrão de commit (Husky + lint-staged + Commitlint)
 
 Este projeto usa **Husky** + **lint-staged** para rodar automaticamente o ESLint e o Prettier antes de cada commit. Isso evita que código fora do padrão (mal formatado, com erro de lint) chegue a entrar no repositório.
 
@@ -143,6 +144,44 @@ Essa automação já está versionada no projeto (pasta `.husky/` e o bloco `"li
    - Em `.json`/`.md`/`.css`: só `prettier --write`.
 5. Se tudo passar (ou for corrigido automaticamente) → o commit é criado normalmente.
 6. Se o ESLint encontrar um erro que não consegue corrigir sozinho (ex.: variável não usada) → **o commit é bloqueado** até você corrigir manualmente e tentar de novo.
+
+### Padrão da mensagem de commit (Commitlint)
+
+Além do lint, o hook `commit-msg` valida a mensagem do commit com o **Commitlint** (regras em `commitlint.config.js`), seguindo o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/):
+
+```
+<tipo>(<escopo opcional>): <descrição>
+```
+
+| Tipo       | Quando usar                                                  |
+| ---------- | ------------------------------------------------------------ |
+| `feat`     | Nova funcionalidade                                          |
+| `fix`      | Correção de bug                                              |
+| `docs`     | Alteração apenas em documentação                             |
+| `style`    | Formatação, sem mudança de lógica (espaços, ponto e vírgula) |
+| `refactor` | Refatoração sem alterar comportamento                        |
+| `perf`     | Melhoria de performance                                      |
+| `test`     | Criação/ajuste de testes                                     |
+| `build`    | Mudanças no build ou dependências                            |
+| `ci`       | Mudanças em pipelines de CI                                  |
+| `chore`    | Tarefas de manutenção que não se encaixam nas demais         |
+| `revert`   | Reversão de um commit anterior                               |
+
+Regras principais: tipo em minúsculo e obrigatório, escopo (se houver) em `kebab-case`, descrição obrigatória, sem ponto final e cabeçalho com até 100 caracteres.
+
+Exemplos válidos:
+
+```bash
+git commit -m "feat(header): adiciona ícones de navegação"
+git commit -m "fix(map): corrige carregamento dos pontos"
+git commit -m "docs: atualiza README"
+```
+
+Exemplos que serão **bloqueados**: `lock`, `Feat: Algo`, `fix: corrige bug.`, `feat(Meu Escopo): algo`.
+
+Para testar uma mensagem sem commitar: `echo "feat: teste" | npx commitlint`.
+
+Além disso, o hook `pre-commit` roda `npm run typecheck` (`tsc --noEmit`) depois do lint-staged.
 
 ### Testando manualmente (sem precisar commitar)
 
@@ -179,6 +218,7 @@ Evite usar isso no dia a dia — é uma porta de escape, não o fluxo padrão da
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - ESLint + Prettier
+- Husky + lint-staged + Commitlint
 
 ## Problemas comuns
 
