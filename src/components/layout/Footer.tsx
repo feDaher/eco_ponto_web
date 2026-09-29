@@ -9,7 +9,7 @@ export function Footer() {
     <footer className="w-full bg-[#EFF4FF] text-slate-700 pt-12 pb-6 px-6 md:px-16 border-t border-slate-200">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
         {/* Bloco 1: Logo e Descrição */}
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col items-center text-center sm:items-start sm:text-left">
           <div className="flex items-center gap-2 font-bold text-xl text-[#36654A]">
             <Image
               src="/icons/logoo.png"
@@ -20,14 +20,14 @@ export function Footer() {
             />
             <span>EcoPonto</span>
           </div>
-          <p className="text-sm text-slate-600 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed max-w-sm">
             Promovendo o descarte consciente e a reciclagem de lixo eletrônico
             para proteger os ecossistemas urbanos e rurais do Brasil.
           </p>
         </div>
 
         {/* Bloco 2: Navegação */}
-        <div>
+        <div className="text-center sm:text-left">
           <h3 className="font-semibold text-xs tracking-wider text-slate-900 uppercase mb-4">
             Navegação
           </h3>
@@ -67,7 +67,7 @@ export function Footer() {
         </div>
 
         {/* Bloco 3: Institucional */}
-        <div>
+        <div className="text-center sm:text-left">
           <h3 className="font-semibold text-xs tracking-wider text-slate-900 uppercase mb-4">
             Institucional
           </h3>
@@ -91,18 +91,19 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/relatorio"
-                  className="hover:underline hover:text-slate-900"
-                >
-                  Relatório de Sustentabilidade
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/contato"
                   className="hover:underline hover:text-slate-900"
                 >
                   Fale Conosco
+                </Link>
+              </li>
+              {/* Oculto a pedido do Felipe, só apagar esse hidden se formos utilizar */}
+              <li className="hidden">
+                <Link
+                  href="/relatorio"
+                  className="hover:underline hover:text-slate-900"
+                >
+                  Relatório de Sustentabilidade
                 </Link>
               </li>
             </ul>
@@ -110,7 +111,7 @@ export function Footer() {
         </div>
 
         {/* Bloco 4: Legal */}
-        <div>
+        <div className="text-center sm:text-left">
           <h3 className="font-semibold text-xs tracking-wider text-slate-900 uppercase mb-4">
             Legal
           </h3>
@@ -154,7 +155,7 @@ export function Footer() {
       </div>
 
       {/* Linha de baixo: Copyright */}
-      <div className="max-w-7xl mx-auto pt-6 border-t border-slate-300/60 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-600">
+      <div className="max-w-7xl mx-auto pt-6 border-t border-slate-300/60 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-600 text-center sm:text-left">
         <p>© {currentYear} EcoPonto. All rights reserved.</p>
         <div className="flex items-center gap-1.5 font-medium text-slate-700">
           <Globe className="w-4 h-4 text-slate-600" />
