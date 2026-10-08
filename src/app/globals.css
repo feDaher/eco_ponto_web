@@ -1,8 +1,25 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
+
+/* Paleta do EcoPonto: use as classes geradas (ex.: bg-brand, text-brand-muted)
+   em vez de cores fixas como bg-[#36654A]. */
+@theme {
+  --color-brand: #36654a;
+  --color-brand-dark: #234734;
+  --color-brand-medium: #4f7f62;
+  --color-brand-muted: #4d6b5b;
+  --color-brand-light: #c9ead6;
+  --color-brand-pale: #baefcc;
+  --color-brand-foreground: #f6fff5;
+  --color-surface: #f8f9ff;
+  --color-surface-alt: #eff4ff;
+  --color-surface-accent: #e6eeff;
+  --color-surface-strong: #dee9fc;
+  --color-ink: #414943;
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -55,8 +72,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: var(--color-brand);
+  --primary-foreground: var(--color-brand-foreground);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -66,7 +83,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--color-brand-medium);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -125,6 +142,7 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    /* scroll-padding compensa o header fixo ao navegar por âncoras (#map) */
+    @apply scroll-pt-20 font-sans motion-safe:scroll-smooth;
   }
 }
