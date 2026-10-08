@@ -6,15 +6,12 @@ import { CtaSection } from '@/components/home/CtaSection';
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col bg-white">
-      {/* Seção Principal */}
+    <div className="flex flex-col bg-white">
       <HeroSection />
-
-      {/* Próximas seções entram aqui */}
       <HowItWorksSection />
       <MapSection />
       <EducationSection />
       <CtaSection />
-    </main>
+    </div>
   );
 }

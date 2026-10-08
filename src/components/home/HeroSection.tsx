@@ -1,5 +1,5 @@
-import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   MapPin,
   BookOpen,
@@ -10,6 +10,7 @@ import {
   LogIn,
   BatteryPlus,
 } from 'lucide-react';
+import { HOME_SECTIONS, ROUTES } from '@/lib/routes';
 
 interface HeroSectionProps {
   isLoggedIn?: boolean;
@@ -17,30 +18,30 @@ interface HeroSectionProps {
 
 export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
   return (
-    <section className="relative w-full bg-[#F8F9FF] p-8 lg:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent),linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] [mask-composite:intersect]">
+    <section className="relative w-full bg-surface py-8 lg:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent),linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] [mask-composite:intersect]">
       <div className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         {/* Bolas de efeito difuso */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-20 -left-20 h-96 w-96 z-10 rounded-full bg-[#C9EAD6] blur-[120px]"
+          className="pointer-events-none absolute -top-20 -left-20 h-96 w-96 z-10 rounded-full bg-brand-light blur-[120px]"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-20 -right-20 z-10 h-[30rem] w-[30rem] rounded-full bg-[#C9EAD6] blur-[140px]"
+          className="pointer-events-none absolute -bottom-20 -right-20 z-10 h-[30rem] w-[30rem] rounded-full bg-brand-light blur-[140px]"
         />
 
         {/* Conteúdo da coluna da esquerda */}
         <div className="relative z-20 lg:col-span-7 flex flex-col items-start space-y-6">
           {/* Essa tag aí em cima */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#C9EAD6] text-[#4D6B5B] text-xs sm:text-sm font-medium tracking-wide">
-            <Recycle className="w-4 h-4 text-[#4D6B5B]" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-light text-brand-muted text-xs sm:text-sm font-medium tracking-wide">
+            <Recycle className="w-4 h-4 text-brand-muted" />
             <span>REDE OFICIAL DE LOGÍSTICA REVERSA</span>
           </div>
 
           {/* Título marcante e descrição */}
           <h1 className="text-3xl sm:text-4xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
             Dê o destino certo ao seu{' '}
-            <span className="text-[#36654A]">lixo eletrônico</span>.
+            <span className="text-brand">lixo eletrônico</span>.
           </h1>
           <p className="text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
             Conectamos cidadãos e empresas a pontos de coleta certificados em
@@ -51,17 +52,17 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
           {/* Botões para descer pra outras partes do home */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto pt-2">
             <a
-              href="#map"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#36654A] text-white font-medium hover:bg-emerald-900 transition-colors shadow-sm"
+              href={`#${HOME_SECTIONS.map}`}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-brand text-white font-medium hover:bg-brand-dark transition-colors shadow-sm"
             >
               <MapPin className="w-5 h-5 text-white" />
               <span>Explorar Mapa de Coleta</span>
             </a>
             <a
-              href="#education"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#DEE9FC] text-[#414943] font-medium hover:bg-slate-200 transition-colors"
+              href={`#${HOME_SECTIONS.education}`}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-surface-strong text-ink font-medium hover:bg-slate-200 transition-colors"
             >
-              <BookOpen className="w-5 h-5 text-[#414943]" />
+              <BookOpen className="w-5 h-5 text-ink" />
               <span>Aprender sobre Reciclagem</span>
             </a>
           </div>
@@ -69,25 +70,19 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
           {/* Estatísticas genéricas */}
           <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-8 border-t border-slate-100 w-full max-w-xl">
             <div>
-              <p className="text-xl sm:text-2xl font-bold text-[#36654A]">
-                100%
-              </p>
+              <p className="text-xl sm:text-2xl font-bold text-brand">100%</p>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 Rastreabilidade LGPD
               </p>
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-bold text-[#36654A]">
-                Rápido
-              </p>
+              <p className="text-xl sm:text-2xl font-bold text-brand">Rápido</p>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 Mapeamento de Pontos
               </p>
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-bold text-[#36654A]">
-                Zero
-              </p>
+              <p className="text-xl sm:text-2xl font-bold text-brand">Zero</p>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 Contaminação no Solo
               </p>
@@ -102,7 +97,7 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
             <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-[#36654A] rounded-lg">
+                  <div className="p-2 bg-brand rounded-lg">
                     <Recycle className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -110,7 +105,7 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
                       Painel Comunitário
                     </h3>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#36654A] animate-pulse"></span>
+                      <span className="w-2 h-2 rounded-full bg-brand animate-pulse"></span>
                       <span className="text-xs text-slate-500">
                         Atualizado em tempo real
                       </span>
@@ -120,18 +115,18 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
               </div>
 
               {/* Informações de coleta do usuário */}
-              <div className="bg-[#36654A] text-white rounded-2xl p-5 space-y-4">
+              <div className="bg-brand text-white rounded-2xl p-5 space-y-4">
                 <div className="flex justify-between items-start">
-                  <span className="text-xs tracking-wider uppercase text-[#F6FFF5] font-semibold">
+                  <span className="text-xs tracking-wider uppercase text-brand-foreground font-semibold">
                     Lixo Eletrônico Recuperado
                   </span>
-                  <Recycle className="w-5 h-5 text-[#C9EAD6] opacity-80" />
+                  <Recycle className="w-5 h-5 text-brand-light opacity-80" />
                 </div>
 
                 <div>
                   <div className="text-3xl font-bold">
                     42.8{' '}
-                    <span className="text-lg font-normal text-[#C9EAD6]">
+                    <span className="text-lg font-normal text-brand-light">
                       kg salvos
                     </span>
                   </div>
@@ -139,15 +134,15 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
 
                 {/* Barra de Progresso */}
                 <div className="space-y-1.5">
-                  <div className="w-full bg-[#4F7F62] rounded-full h-2.5 overflow-hidden">
+                  <div className="w-full bg-brand-medium rounded-full h-2.5 overflow-hidden">
                     <div
-                      className="bg-[#BAEFCC] h-2.5 rounded-full"
+                      className="bg-brand-pale h-2.5 rounded-full"
                       style={{ width: '78%' }}
                     ></div>
                   </div>
-                  <div className="flex justify-between text-xs text-[#F6FFF5]">
+                  <div className="flex justify-between text-xs text-brand-foreground">
                     <span>Meta Mensal: 50 kg</span>
-                    <span className="font-semibold text-[#F6FFF5]">
+                    <span className="font-semibold text-brand-foreground">
                       78% concluído
                     </span>
                   </div>
@@ -156,8 +151,8 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
 
               {/* Sub-cards de métricas pequenas */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#EFF4FF] p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
-                  <div className="p-2 bg-[#C9EAD6] rounded-xl w-fit text-[#4D6B5B] mb-2">
+                <div className="bg-surface-alt p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                  <div className="p-2 bg-brand-light rounded-xl w-fit text-brand-muted mb-2">
                     <Trees className="w-5 h-5" />
                   </div>
                   <div>
@@ -170,8 +165,8 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
                   </div>
                 </div>
 
-                <div className="bg-[#EFF4FF] p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
-                  <div className="p-2 bg-[#DEE9FC] rounded-xl w-fit text-[#4D6B5B] mb-2">
+                <div className="bg-surface-alt p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                  <div className="p-2 bg-surface-strong rounded-xl w-fit text-brand-muted mb-2">
                     <Houses className="w-5 h-5" />
                   </div>
                   <div>
@@ -186,10 +181,10 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
               </div>
 
               {/* Atividade Recente */}
-              <div className="bg-[#F8F9FF] p-3.5 rounded-2xl border border-slate-50 flex items-center justify-between text-xs">
+              <div className="bg-surface p-3.5 rounded-2xl border border-slate-50 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#C9EAD6] rounded-xl text-slate-600">
-                    <BatteryPlus className="w-4 h-4 text-[#4D6B5B]" />
+                  <div className="p-2 bg-brand-light rounded-xl text-slate-600">
+                    <BatteryPlus className="w-4 h-4 text-brand-muted" />
                   </div>
                   <div>
                     <p className="font-semibold text-slate-800">
@@ -203,7 +198,7 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
                     </p>
                   </div>
                 </div>
-                <span className="font-semibold text-[#36654A] px-2 py-1">
+                <span className="font-semibold text-brand px-2 py-1">
                   +40 pts
                 </span>
               </div>
@@ -211,10 +206,10 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
           ) : (
             /* Usuário não logado */
             <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100 text-center space-y-6">
-              <div className="mx-auto w-16 h-16 bg-[#36654A] rounded-2xl flex items-center justify-center text-emerald-700 shadow-inner">
+              <div className="mx-auto w-16 h-16 bg-brand rounded-2xl flex items-center justify-center shadow-inner">
                 <Image
                   src="/icons/ecoponto-logo-icon-white.png"
-                  alt="EcoPonto"
+                  alt=""
                   width={28}
                   height={25}
                   className="h-auto w-8"
@@ -234,21 +229,21 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
 
               {/* Botões de Autenticação */}
               <div className="flex flex-col gap-3 pt-2">
-                <a
-                  href="/login"
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#36654A] text-white font-semibold text-sm hover:bg-emerald-900 transition-colors shadow-sm"
+                <Link
+                  href={ROUTES.register}
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand text-white font-semibold text-sm hover:bg-brand-dark transition-colors shadow-sm"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Cadastrar-se Gratuitamente</span>
-                </a>
+                </Link>
 
-                <a
-                  href="/sign"
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-[#414943] font-medium text-sm hover:bg-slate-200 transition-colors"
+                <Link
+                  href={ROUTES.login}
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-ink font-medium text-sm hover:bg-slate-200 transition-colors"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Já tenho uma conta (Entrar)</span>
-                </a>
+                </Link>
               </div>
             </div>
           )}
