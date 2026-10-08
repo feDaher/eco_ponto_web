@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@googlemaps/markerclusterer": "^2.6.2",
+    "@vis.gl/react-google-maps": "^1.10.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
     "lucide-react": "^1.47.0",
@@ -34,6 +36,7 @@
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@tailwindcss/postcss": "^4",
+    "@types/google.maps": "^3.66.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -80,7 +80,10 @@ _(No Windows, se o comando `cp` não funcionar, copie e cole o arquivo manualmen
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3333
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=coloque_sua_chave_aqui
+NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=DEMO_MAP_ID
 ```
+
+A chave do Google Maps vem do [Google Cloud Console](https://console.cloud.google.com) e precisa das APIs **Maps JavaScript API**, **Places API (New)** e **Geocoding API** ativadas (uma única chave serve para as três). `DEMO_MAP_ID` funciona em desenvolvimento; para produção, crie um Map ID em _Map Management_.
 
 > O `.env.local` **nunca** deve ser commitado no Git (ele já está no `.gitignore`) — cada pessoa do time usa suas próprias chaves/URLs locais.
 
