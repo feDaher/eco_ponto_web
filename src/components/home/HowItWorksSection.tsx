@@ -1,5 +1,6 @@
-import React from 'react';
+import Link from 'next/link';
 import { Navigation, Award, ShieldCheck, ArrowRight } from 'lucide-react';
+import { HOME_SECTIONS, ROUTES } from '@/lib/routes';
 
 const steps = [
   {
@@ -9,7 +10,7 @@ const steps = [
     description:
       'Encontre o ecoponto ou estabelecimento parceiro mais próximo com rotas traçadas, horários de funcionamento e itens válidos.',
     linkText: 'Ver mapa de rotas',
-    href: '#map',
+    href: `#${HOME_SECTIONS.map}`,
   },
   {
     number: '02',
@@ -18,7 +19,7 @@ const steps = [
     description:
       'Leve seus dispositivos quebrados ou sem uso: computadores, pilhas, monitores e periféricos. Descarte rápido e sem burocracia.',
     linkText: 'O que descartar',
-    href: '#education',
+    href: `#${HOME_SECTIONS.education}`,
   },
   {
     number: '03',
@@ -27,19 +28,22 @@ const steps = [
     description:
       'Ganhe pontos ecológicos pelo app, suba de nível como Guardião Digital e receba certificados de redução de pegada de carbono.',
     linkText: 'Saber mais',
-    href: '#account',
+    href: ROUTES.account,
   },
 ];
 
 export const HowItWorksSection = () => {
   return (
-    <section className="w-full bg-[#EFF4FF] py-16 lg:py-24 px-4 sm:px-6 lg:px-8 border-t border-b border-slate-100">
+    <section
+      id={HOME_SECTIONS.howItWorks}
+      className="w-full bg-surface-alt py-16 lg:py-24 px-4 sm:px-6 lg:px-8 border-t border-b border-slate-100"
+    >
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Cabeçalho */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="flex items-center gap-2 text-[#36654A] text-xs font-bold tracking-wider uppercase">
-              <span className="w-2 h-2 rounded-full bg-[#36654A]"></span>
+            <div className="flex items-center gap-2 text-brand text-xs font-bold tracking-wider uppercase">
+              <span className="w-2 h-2 rounded-full bg-brand"></span>
               <span>PASSO A PASSO CONSCIENTE</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-3xl font-bold text-slate-900 leading-tight">
@@ -62,14 +66,14 @@ export const HowItWorksSection = () => {
                 key={step.number}
                 className="group relative bg-white rounded-3xl p-6 lg:p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex-1 flex flex-col justify-between overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#E6EEFF] rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-24 h-24 bg-surface-accent rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110 pointer-events-none" />
 
                 <div className="space-y-6 relative z-10">
-                  <span className="text-3xl lg:text-4xl font-extrabold text-[#36654A] tracking-tight block">
+                  <span className="text-3xl lg:text-4xl font-extrabold text-brand tracking-tight block">
                     {step.number}
                   </span>
 
-                  <div className="w-12 h-12 rounded-2xl bg-[#C9EAD6] flex items-center justify-center text-[##36654A] group-hover:bg-emerald-700 group-hover:text-white transition-colors duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-light flex items-center justify-center text-brand group-hover:bg-emerald-700 group-hover:text-white transition-colors duration-300">
                     <Icon className="w-6 h-6" />
                   </div>
 
@@ -84,13 +88,13 @@ export const HowItWorksSection = () => {
                 </div>
 
                 <div className="pt-6 mt-6 border-t border-slate-100/80 relative z-10">
-                  <a
+                  <Link
                     href={step.href}
                     className="inline-flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 group-hover:text-emerald-700 transition-colors"
                   >
                     <span>{step.linkText}</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </a>
+                  </Link>
                 </div>
               </div>
             );

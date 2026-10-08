@@ -1,4 +1,4 @@
-import React from 'react';
+import Link from 'next/link';
 import {
   Lightbulb,
   Clock,
@@ -7,13 +7,14 @@ import {
   Cpu,
   BatteryCharging,
 } from 'lucide-react';
+import { HOME_SECTIONS, ROUTES } from '@/lib/routes';
 
 // Lista de artigos e tutoriais da seção
 const educationArticles = [
   {
     id: 1,
     tag: 'DIY',
-    tagColor: 'bg-[#C9EAD6] text-[#4D6B5B]',
+    tagColor: 'bg-brand-light text-brand-muted',
     bannerBg: 'bg-gradient-to-br from-emerald-100 to-teal-200 text-emerald-800',
     icon: Wrench,
     readTime: '5 min de leitura',
@@ -22,12 +23,12 @@ const educationArticles = [
     description:
       'Transforme teclados mecânicos antigos em pingentes ecológicos, abotoaduras modernas e chaveiros industriais únicos.',
     linkText: 'Ler passo a passo',
-    href: '#article1',
+    href: `${ROUTES.education}/diy`,
   },
   {
     id: 2,
     tag: 'Conhecimento',
-    tagColor: 'bg-[#C9EAD6] text-[#4D6B5B]',
+    tagColor: 'bg-brand-light text-brand-muted',
     bannerBg: 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700',
     icon: Cpu,
     readTime: '12 min de leitura',
@@ -36,12 +37,12 @@ const educationArticles = [
     description:
       'Estilo industrial usando espelhos e pratos de HDs antigos para decorar salas ou escritórios sustentáveis.',
     linkText: 'Ver tutorial completo',
-    href: '#article2',
+    href: `${ROUTES.education}/conhecimento`,
   },
   {
     id: 3,
     tag: 'Conhecimento',
-    tagColor: 'bg-[#C9EAD6] text-[#4D6B5B]',
+    tagColor: 'bg-brand-light text-brand-muted',
     bannerBg: 'bg-gradient-to-br from-amber-100 to-orange-200 text-amber-800',
     icon: BatteryCharging,
     readTime: '4 min de leitura',
@@ -50,19 +51,22 @@ const educationArticles = [
     description:
       'Como isolar contatos elétricos com fita adesiva e prevenir combustão espontânea antes de levar ao ecoponto.',
     linkText: 'Aprender precauções',
-    href: '#article3',
+    href: `${ROUTES.education}/conhecimento`,
   },
 ];
 
 export const EducationSection = () => {
   return (
-    <section className="w-full bg-[#EFF4FF] py-16 lg:py-24 px-4 sm:px-6 lg:px-8 border-t border-slate-100">
+    <section
+      id={HOME_SECTIONS.education}
+      className="w-full bg-surface-alt py-16 lg:py-24 px-4 sm:px-6 lg:px-8 border-t border-slate-100"
+    >
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold tracking-wider uppercase">
-              <span className="w-2 h-2 rounded-full bg-[#36654A]"></span>
+              <span className="w-2 h-2 rounded-full bg-brand"></span>
               <span>CONHECIMENTO QUE TRANSFORMA</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-3xl font-bold text-slate-900 leading-tight">
@@ -70,22 +74,22 @@ export const EducationSection = () => {
             </h2>
           </div>
 
-          <a
-            href="#articles"
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#36654A] hover:text-emerald-900 transition-colors"
+          <Link
+            href={ROUTES.education}
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-brand hover:text-brand-dark transition-colors"
           >
             <span>Acessar Central de Tutoriais & Dicas</span>
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
 
         {/* Fato ecológico do dia */}
-        <div className="bg-[#36654A] text-white rounded-2xl p-5 sm:p-6 shadow-sm border border-[#36654A] flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="p-3 bg-[#4F7F62] rounded-xl text-[#C9EAD6] shrink-0">
+        <div className="bg-brand text-white rounded-2xl p-5 sm:p-6 shadow-sm border border-brand flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="p-3 bg-brand-medium rounded-xl text-brand-light shrink-0">
             <Lightbulb className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[#C9EAD6]">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-brand-light">
               FATO ECOLÓGICO
             </span>
             <p className="text-xs sm:text-sm text-white leading-relaxed font-medium">
@@ -125,15 +129,15 @@ export const EducationSection = () => {
                   {/* Conteúdo Interno */}
                   <div className="p-6 space-y-3">
                     {/* Tempo e Dificuldade */}
-                    <div className="flex items-center gap-2 text-xs text-[#36654A] font-medium">
-                      <Clock className="w-3.5 h-3.5 text-[#36654A]" />
+                    <div className="flex items-center gap-2 text-xs text-brand font-medium">
+                      <Clock className="w-3.5 h-3.5 text-brand" />
                       <span>{article.readTime}</span>
                       <span>•</span>
                       <span>{article.difficulty}</span>
                     </div>
 
                     {/* Título */}
-                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#36654A] transition-colors">
+                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-brand transition-colors">
                       {article.title}
                     </h3>
 
@@ -146,13 +150,13 @@ export const EducationSection = () => {
 
                 {/* Link para leitura embaixo */}
                 <div className="p-6 pt-0">
-                  <a
+                  <Link
                     href={article.href}
-                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-[#36654A] transition-colors"
+                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-brand transition-colors"
                   >
                     <span>{article.linkText}</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </a>
+                  </Link>
                 </div>
               </div>
             );
