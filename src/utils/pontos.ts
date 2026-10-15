@@ -6,42 +6,42 @@ const points: CollectionPoint[] = [
 
     slug: 'ecoponto-central-manhuacu',
 
-    nome: 'EcoPonto Central Manhuaçu',
+    name: 'EcoPonto Central Manhuaçu',
 
-    descricao:
+    description:
       'Ponto de coleta destinado ao recebimento, triagem e encaminhamento de materiais recicláveis e resíduos eletrônicos.',
 
-    responsavel: 'Cooperativa Regional de Catadores de Manhuaçu',
+    responsiblePerson: 'Cooperativa Regional de Catadores de Manhuaçu',
 
-    imagemPrincipal: '/imagens/ecoponto-central.jpg',
+    mainImage: '/imagens/ecoponto-central.jpg',
 
     status: {
-      verificado: true,
+      verified: true,
 
-      monitorado: true,
+      monitored: true,
 
-      ultimaVerificacao: '2026-09-08',
+      lastVerification: '2026-09-08',
 
-      ultimaAtualizacao: '2026-09-10',
+      lastUpdated: '2026-09-10',
     },
 
-    endereco: {
-      rua: 'Rua Amaral Franco',
+    address: {
+      street: 'Rua Amaral Franco',
 
-      numero: '142',
+      number: '142',
 
-      bairro: 'Centro',
+      neighborhood: 'Centro',
 
-      cidade: 'Manhuaçu',
+      city: 'Manhuaçu',
 
-      estado: 'MG',
+      state: 'MG',
 
-      fusoHorario: 'America/Sao_Paulo',
+      timeZone: 'America/Sao_Paulo',
 
-      cobertura: {
-        raioKm: 15,
+      coverage: {
+        radiusKm: 15,
 
-        descricao: 'Atendimento principal em Manhuaçu e bairros próximos.',
+        description: 'Atendimento principal em Manhuaçu e bairros próximos.',
       },
 
       latitude: -20.2573,
@@ -49,119 +49,119 @@ const points: CollectionPoint[] = [
       longitude: -42.0331,
     },
 
-    contato: {
+    contact: {
       whatsapp: {
-        autorizado: true,
+        authorized: true,
 
-        numero: '5533999999999',
+        phoneNumber: '5533999999999',
       },
     },
 
-    horarios: [
+    schedules: [
       {
-        dia: 'Segunda a Sexta',
+        day: 'Segunda a Sexta',
 
-        aberto: true,
+        isOpen: true,
 
-        inicio: '08:00',
+        startTime: '08:00',
 
-        fim: '18:00',
+        endTime: '18:00',
       },
 
       {
-        dia: 'Sábado',
+        day: 'Sábado',
 
-        aberto: true,
+        isOpen: true,
 
-        inicio: '08:00',
+        startTime: '08:00',
 
-        fim: '12:00',
+        endTime: '12:00',
       },
 
       {
-        dia: 'Domingos e Feriados',
+        day: 'Domingos e Feriados',
 
-        aberto: false,
+        isOpen: false,
 
-        observacao: 'Fechado para atendimento geral',
-      },
-    ],
-
-    categorias: ['Plástico', 'Eletrônico', 'Papel', 'Vidro', 'Metal'],
-
-    itensAceitos: [
-      {
-        nome: 'Laptops & PCs',
-
-        categoria: 'Eletrônico',
-
-        descricao: 'Notebooks, desktops e servidores',
-      },
-
-      {
-        nome: 'Celulares',
-
-        categoria: 'Eletrônico',
-
-        descricao: 'Smartphones e tablets',
-      },
-
-      {
-        nome: 'Baterias & Pilhas',
-
-        categoria: 'Eletrônico',
-
-        descricao: 'Pilhas AA, AAA e baterias de equipamentos',
-      },
-
-      {
-        nome: 'Cabos & Fios',
-
-        categoria: 'Metal',
-
-        descricao: 'Carregadores, fios de cobre e cabos',
-      },
-
-      {
-        nome: 'Monitores & TVs',
-
-        categoria: 'Eletrônico',
-
-        descricao: 'LED, LCD e CRT até 40 polegadas',
-      },
-
-      {
-        nome: 'Eletrodomésticos',
-
-        categoria: 'Eletrônico',
-
-        descricao: 'Micro-ondas, liquidificadores e pequenos aparelhos',
+        note: 'Fechado para atendimento geral',
       },
     ],
 
-    capacidade: {
-      limitePessoaFisica: 50,
+    categories: ['Plástico', 'Eletrônico', 'Papel', 'Vidro', 'Metal'],
 
-      quantidadeMinimaEmpresa: 100,
+    acceptedItems: [
+      {
+        name: 'Laptops & PCs',
 
-      observacaoEmpresa:
+        category: 'Eletrônico',
+
+        description: 'Notebooks, desktops e servidores',
+      },
+
+      {
+        name: 'Celulares',
+
+        category: 'Eletrônico',
+
+        description: 'Smartphones e tablets',
+      },
+
+      {
+        name: 'Baterias & Pilhas',
+
+        category: 'Eletrônico',
+
+        description: 'Pilhas AA, AAA e baterias de equipamentos',
+      },
+
+      {
+        name: 'Cabos & Fios',
+
+        category: 'Metal',
+
+        description: 'Carregadores, fios de cobre e cabos',
+      },
+
+      {
+        name: 'Monitores & TVs',
+
+        category: 'Eletrônico',
+
+        description: 'LED, LCD e CRT até 40 polegadas',
+      },
+
+      {
+        name: 'Eletrodomésticos',
+
+        category: 'Eletrônico',
+
+        description: 'Micro-ondas, liquidificadores e pequenos aparelhos',
+      },
+    ],
+
+    capacity: {
+      individualLimit: 50,
+
+      businessMinimumQuantity: 100,
+
+      businessNote:
         'Para cargas e condições especiais, consulte o responsável. O volume é combinado caso a caso.',
 
-      unidade: 'kg',
+      unit: 'kg',
     },
 
-    informacoesAdicionais: {
-      estacionamento: ['Vagas gratuitas', 'Área para carga e descarga'],
+    additionalInfo: {
+      parking: ['Vagas gratuitas', 'Área para carga e descarga'],
 
-      descarteSeguro: [
+      safeDisposal: [
         'Destruição segura de dados em equipamentos eletrônicos',
         'Orientações de descarte em conformidade com a LGPD',
       ],
 
-      comprovantes: ['Comprovante digital', 'Comprovante físico'],
+      receipts: ['Comprovante digital', 'Comprovante físico'],
     },
 
-    regras: [
+    rules: [
       'Materiais volumosos devem ser agendados previamente.',
 
       'Não são aceitos resíduos perigosos.',
@@ -173,64 +173,64 @@ const points: CollectionPoint[] = [
       'O local não recebe resíduos orgânicos.',
     ],
 
-    avaliacoes: [
+    reviews: [
       {
         id: 1,
 
-        usuario: 'Marcos Andrade',
+        user: 'Marcos Andrade',
 
-        nota: 5,
+        rating: 5,
 
-        comentario:
+        comment:
           'Atendimento super ágil, entreguei duas caixas com baterias e notebooks velhos e consegui resolver tudo rapidamente.',
 
-        data: '2026-09-22',
+        date: '2026-09-22',
 
-        localizacaoUsuario: 'Manhuaçu - Centro',
+        userLocation: 'Manhuaçu - Centro',
       },
 
       {
         id: 2,
 
-        usuario: 'Camila Silveira',
+        user: 'Camila Silveira',
 
-        nota: 5,
+        rating: 5,
 
-        comentario:
+        comment:
           'Ponto muito organizado, fácil de estacionar e a equipe é super atenciosa.',
 
-        data: '2026-09-15',
+        date: '2026-09-15',
 
-        localizacaoUsuario: 'Manhuaçu - Centro',
+        userLocation: 'Manhuaçu - Centro',
       },
 
       {
         id: 3,
 
-        usuario: 'Rodrigo Oliveira',
+        user: 'Rodrigo Oliveira',
 
-        nota: 4,
+        rating: 4,
 
-        comentario:
+        comment:
           'Achei sensacional, só poderia ter mais sinalização na entrada.',
 
-        data: '2026-09-05',
+        date: '2026-09-05',
 
-        localizacaoUsuario: 'Manhuaçu - Vila Palma',
+        userLocation: 'Manhuaçu - Vila Palma',
       },
     ],
 
-    destinacao: {
-      descricao:
+    destination: {
+      description:
         'Os materiais entregues são encaminhados para triagem, beneficiamento e reciclagem por meio de cooperativas parceiras.',
 
-      materialRecicladoToneladas: 14.2,
+      recycledMaterialTons: 14.2,
 
-      percentualRejeitos: 0,
+      rejectedWastePercentage: 0,
 
-      familiasBeneficiadas: 85,
+      familiesBenefited: 85,
 
-      cooperativasParceiras: 3,
+      partnerCooperatives: 3,
     },
   },
 ];

@@ -3,13 +3,13 @@ import { CircleAlert, Scale } from 'lucide-react';
 import type { CollectionPoint } from '@/utils/tipos';
 
 type PointCapacityRulesProps = {
-  capacity: CollectionPoint['capacidade'];
-  rules: CollectionPoint['regras'];
+  capacity: CollectionPoint['capacity'];
+  rules: CollectionPoint['rules'];
 };
 
 function formatQuantity(
   value: number | undefined,
-  unit: CollectionPoint['capacidade']['unidade']
+  unit: CollectionPoint['capacity']['unit']
 ) {
   if (value === undefined) {
     return 'Não informado';
@@ -52,7 +52,7 @@ export function PointCapacityRules({
             Limite pessoa física
           </p>
           <p className="mt-2 text-2xl font-semibold text-emerald-900">
-            {formatQuantity(capacity.limitePessoaFisica, capacity.unidade)}
+            {formatQuantity(capacity.individualLimit, capacity.unit)}
           </p>
           <p className="mt-1 text-xs text-emerald-800">
             Sem necessidade de agendamento.
@@ -61,9 +61,9 @@ export function PointCapacityRules({
         <div className="rounded-md bg-sky-50 p-4">
           <p className="text-xs font-medium text-sky-900">Empresas e LTDA</p>
           <p className="mt-2 text-2xl font-semibold text-sky-900">
-            {capacity.quantidadeMinimaEmpresa === undefined
+            {capacity.businessMinimumQuantity === undefined
               ? 'Consulte o responsável'
-              : `+${formatQuantity(capacity.quantidadeMinimaEmpresa, capacity.unidade).replace(' por entrega', '')}`}
+              : `+${formatQuantity(capacity.businessMinimumQuantity, capacity.unit).replace(' por entrega', '')}`}
           </p>
           <p className="mt-1 text-xs text-sky-900">
             MTR obrigatório. Volumes especiais são combinados caso a caso.
@@ -71,9 +71,9 @@ export function PointCapacityRules({
         </div>
       </div>
 
-      {capacity.observacaoEmpresa && (
+      {capacity.businessNote && (
         <p className="mt-3 rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
-          {capacity.observacaoEmpresa}
+          {capacity.businessNote}
         </p>
       )}
 

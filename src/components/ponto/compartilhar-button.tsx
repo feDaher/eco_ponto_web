@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Share2 } from 'lucide-react';
 
-import { Button } from '../ui/button';
+import { Button } from '../ui/Button';
 
 type ShareButtonProps = {
   title: string;

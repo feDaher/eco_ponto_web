@@ -3,7 +3,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { FilePenLine, Send } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 
 type RegistrationSuggestionFormProps = {
   pointName: string;

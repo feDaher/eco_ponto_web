@@ -19,20 +19,20 @@ export function PointDestination({ destination }: PointDestinationProps) {
   }
 
   const indicators = [
-    destination.materialRecicladoToneladas !== undefined && {
-      value: `${formatNumber(destination.materialRecicladoToneladas, 1)} t`,
+    destination.recycledMaterialTons !== undefined && {
+      value: `${formatNumber(destination.recycledMaterialTons, 1)} t`,
       label: 'Materiais encaminhados',
     },
-    destination.percentualRejeitos !== undefined && {
-      value: `${formatNumber(destination.percentualRejeitos)}%`,
+    destination.rejectedWastePercentage !== undefined && {
+      value: `${formatNumber(destination.rejectedWastePercentage)}%`,
       label: 'De rejeitos enviados a aterro',
     },
-    destination.familiasBeneficiadas !== undefined && {
-      value: formatNumber(destination.familiasBeneficiadas),
+    destination.familiesBenefited !== undefined && {
+      value: formatNumber(destination.familiesBenefited),
       label: 'Famílias beneficiadas',
     },
-    destination.cooperativasParceiras !== undefined && {
-      value: formatNumber(destination.cooperativasParceiras),
+    destination.partnerCooperatives !== undefined && {
+      value: formatNumber(destination.partnerCooperatives),
       label: 'Cooperativas parceiras',
     },
   ].filter((indicator) => indicator !== false);
@@ -58,7 +58,7 @@ export function PointDestination({ destination }: PointDestinationProps) {
           Para onde vai o resíduo após o descarte?
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-emerald-50/90">
-          {destination.descricao}
+          {destination.description}
         </p>
       </div>
 
@@ -73,9 +73,9 @@ export function PointDestination({ destination }: PointDestinationProps) {
         </dl>
       )}
 
-      {destination.relatorioUrl && (
+      {destination.reportUrl && (
         <a
-          href={destination.relatorioUrl}
+          href={destination.reportUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="relative mt-6 inline-flex min-h-10 items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-medium text-emerald-950 transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"

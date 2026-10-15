@@ -3,7 +3,7 @@ import { Clock3 } from 'lucide-react';
 import type { CollectionPoint } from '@/utils/tipos';
 
 type PointHoursProps = {
-  schedules: CollectionPoint['horarios'];
+  schedules: CollectionPoint['schedules'];
 };
 // componente que exibe os horários de funcionamento do ponto de coleta
 export function PointHours({ schedules }: PointHoursProps) {
@@ -29,24 +29,24 @@ export function PointHours({ schedules }: PointHoursProps) {
       <ul className="mt-5 space-y-2">
         {schedules.map((schedule) => (
           <li
-            key={schedule.dia}
+            key={schedule.day}
             className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-md bg-muted/60 px-3 py-3 text-sm"
           >
             <span className="flex items-center gap-2 font-medium">
               <span
                 aria-hidden="true"
-                className={`size-2 rounded-full ${schedule.aberto ? 'bg-emerald-600' : 'bg-muted-foreground/40'}`}
+                className={`size-2 rounded-full ${schedule.isOpen ? 'bg-emerald-600' : 'bg-muted-foreground/40'}`}
               />
-              {schedule.dia}
+              {schedule.day}
             </span>
             <span
               className={
-                schedule.aberto ? 'text-foreground' : 'text-muted-foreground'
+                schedule.isOpen ? 'text-foreground' : 'text-muted-foreground'
               }
             >
-              {schedule.aberto && schedule.inicio && schedule.fim
-                ? `${schedule.inicio} às ${schedule.fim}`
-                : (schedule.observacao ?? 'Fechado')}
+              {schedule.isOpen && schedule.startTime && schedule.endTime
+                ? `${schedule.startTime} às ${schedule.endTime}`
+                : (schedule.note ?? 'Fechado')}
             </span>
           </li>
         ))}

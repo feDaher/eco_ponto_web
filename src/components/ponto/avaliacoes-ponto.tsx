@@ -6,7 +6,7 @@ import { calculateAverage, formatDate } from '@/utils/utils-ponto';
 import { ReviewForm } from './formulario-avaliacao';
 
 type PointReviewsProps = {
-  reviews: CollectionPoint['avaliacoes'];
+  reviews: CollectionPoint['reviews'];
   pointName: string;
 };
 
@@ -15,7 +15,9 @@ export function PointReviews({
   reviews,
   pointName,
 }: PointReviewsProps) {
-  const averageRating = calculateAverage(reviews.map((review) => review.nota));
+  const averageRating = calculateAverage(
+    reviews.map((review) => review.rating)
+  );
 
   return (
     <section
@@ -67,42 +69,36 @@ export function PointReviews({
               <div className="flex items-center justify-between gap-3">
                 <div
                   className="flex text-amber-500"
-                  aria-label={`${review.nota} de 5 estrelas`}
+                  aria-label={`${review.rating} de 5 estrelas`}
                 >
                   {[1, 2, 3, 4, 5].map((starValue) => (
                     <Star
                       key={starValue}
                       aria-hidden="true"
-                      className={`size-4 ${starValue <= review.nota ? 'fill-current' : 'fill-transparent'}`}
+                      className={`size-4 ${starValue <= review.rating ? 'fill-current' : 'fill-transparent'}`}
                     />
                   ))}
                 </div>
                 <time
                   className="shrink-0 text-xs text-muted-foreground"
-                  dateTime={review.data}
+                  dateTime={review.date}
                 >
-                  {formatDate(review.data)}
+                  {formatDate(review.date)}
                 </time>
               </div>
 
-              <p className="mt-3 text-sm leading-relaxed">
-                “{review.comentario}”
-              </p>
+              <p className="mt-3 text-sm leading-relaxed">“{review.comment}”</p>
 
               <div className="mt-4 flex items-center gap-2 border-t border-sky-100 pt-3">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-900">
-                  {review.usuario.trim().charAt(0).toLocaleUpperCase('pt-BR')}
+                  {review.user.trim().charAt(0).toLocaleUpperCase('pt-BR')}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {review.usuario}
-                  </p>
-                  {review.localizacaoUsuario && (
+                  <p className="truncate text-sm font-medium">{review.user}</p>
+                  {review.userLocation && (
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin aria-hidden="true" className="size-3" />
-                      <span className="truncate">
-                        {review.localizacaoUsuario}
-                      </span>
+                      <span className="truncate">{review.userLocation}</span>
                     </p>
                   )}
                 </div>

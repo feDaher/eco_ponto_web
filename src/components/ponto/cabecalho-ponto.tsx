@@ -7,7 +7,7 @@ import {
   Star,
 } from 'lucide-react';
 
-import { buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/Button';
 import { cn } from '@/utils/utils';
 import type { CollectionPoint } from '@/utils/tipos';
 import { calculateAverage, isPointOpen } from '@/utils/utils-ponto';
@@ -22,20 +22,20 @@ type PointHeaderProps = {
 export function PointHeader({ point }: PointHeaderProps) {
   // cabeçalho da ficha do ponto
   const averageRating = calculateAverage(
-    point.avaliacoes.map((review) => review.nota)
+    point.reviews.map((review) => review.rating)
   );
-  const isOpenNow = isPointOpen(point.horarios, point.endereco.fusoHorario);
+  const isOpenNow = isPointOpen(point.schedules, point.address.timeZone);
 
   const isWhatsappAuthorized =
-    point.contato.whatsapp.autorizado && !!point.contato.whatsapp.numero;
+    point.contact.whatsapp.authorized && !!point.contact.whatsapp.phoneNumber;
 
   const whatsappUrl = isWhatsappAuthorized
-    ? `https://wa.me/${point.contato.whatsapp.numero}`
+    ? `https://wa.me/${point.contact.whatsapp.phoneNumber}`
     : null;
 
   const directionsUrl =
     `https://www.google.com/maps/dir/?api=1` +
-    `&destination=${point.endereco.latitude},${point.endereco.longitude}`;
+    `&destination=${point.address.latitude},${point.address.longitude}`;
 
   return (
     <section className="space-y-6">
@@ -79,11 +79,11 @@ export function PointHeader({ point }: PointHeaderProps) {
         {/* Título */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-            {point.nome}
+            {point.name}
           </h1>
 
           <p className="mt-2 text-base text-muted-foreground">
-            {point.responsavel}
+            {point.responsiblePerson}
           </p>
         </div>
 
@@ -93,9 +93,9 @@ export function PointHeader({ point }: PointHeaderProps) {
             <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
 
             <span>
-              {point.endereco.rua}, {point.endereco.numero}
-              <br className="md:hidden" /> — {point.endereco.bairro},{' '}
-              {point.endereco.cidade}-{point.endereco.estado}
+              {point.address.street}, {point.address.number}
+              <br className="md:hidden" /> — {point.address.neighborhood},{' '}
+              {point.address.city}-{point.address.state}
             </span>
           </div>
 
@@ -109,8 +109,8 @@ export function PointHeader({ point }: PointHeaderProps) {
             </div>
 
             <span>
-              ({point.avaliacoes.length}{' '}
-              {point.avaliacoes.length === 1 ? 'avaliação' : 'avaliações'})
+              ({point.reviews.length}{' '}
+              {point.reviews.length === 1 ? 'avaliação' : 'avaliações'})
             </span>
           </div>
         </div>
@@ -155,8 +155,8 @@ export function PointHeader({ point }: PointHeaderProps) {
 
         {/* Compartilhar */}
         <ShareButton
-          title={point.nome}
-          text={`Confira as informações do ${point.nome}`}
+          title={point.name}
+          text={`Confira as informações do ${point.name}`}
         />
       </div>
 

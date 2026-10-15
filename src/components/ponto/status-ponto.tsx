@@ -15,9 +15,9 @@ interface PointStatusProps {
 }
 // componente que exibe o status de verificação do ponto de coleta
 export function PointStatus({ status }: PointStatusProps) {
-  const daysSinceUpdate = calculateDaysSince(status.ultimaAtualizacao);
-  const isReviewNeeded = needsVerification(status.ultimaAtualizacao);
-  const isAwaitingVerification = !status.verificado;
+  const daysSinceUpdate = calculateDaysSince(status.lastUpdated);
+  const isReviewNeeded = needsVerification(status.lastUpdated);
+  const isAwaitingVerification = !status.verified;
   const needsAttention = isReviewNeeded || isAwaitingVerification;
 
   return (
@@ -47,24 +47,24 @@ export function PointStatus({ status }: PointStatusProps) {
             <h2
               className={`font-semibold ${needsAttention ? 'text-amber-950' : 'text-emerald-950'}`}
             >
-              {status.verificado
+              {status.verified
                 ? 'Informações verificadas oficialmente'
                 : 'Verificação pendente'}
             </h2>
 
-            {status.monitorado && <Badge variant="secondary">Monitorado</Badge>}
+            {status.monitored && <Badge variant="secondary">Monitorado</Badge>}
           </div>
 
           <p
             className={`mt-1 text-sm ${needsAttention ? 'text-amber-900' : 'text-emerald-800'}`}
           >
-            {status.verificado ? (
+            {status.verified ? (
               <>
                 <CheckCircle2
                   aria-hidden="true"
                   className="mr-1 inline h-4 w-4"
                 />
-                Última verificação: {formatDate(status.ultimaVerificacao)}.
+                Última verificação: {formatDate(status.lastVerification)}.
               </>
             ) : (
               'Este ponto ainda aguarda verificação oficial.'
@@ -74,7 +74,7 @@ export function PointStatus({ status }: PointStatusProps) {
           <p
             className={`mt-1 text-xs ${needsAttention ? 'text-amber-800' : 'text-emerald-700'}`}
           >
-            Atualizado em {formatDate(status.ultimaAtualizacao)}
+            Atualizado em {formatDate(status.lastUpdated)}
             {daysSinceUpdate !== null &&
               ` · há ${daysSinceUpdate} ${daysSinceUpdate === 1 ? 'dia' : 'dias'}`}
           </p>

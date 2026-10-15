@@ -139,7 +139,7 @@ export function isPointOpen(
 
   const weekdayName = dayName.replace('-feira', '');
   const scheduleForDay = schedules.find((schedule) => {
-    const scheduleDay = normalizeText(schedule.dia);
+    const scheduleDay = normalizeText(schedule.day);
 
     if (scheduleDay.includes('segunda') && scheduleDay.includes('sexta')) {
       return dayNumber >= 1 && dayNumber <= 5;
@@ -156,20 +156,20 @@ export function isPointOpen(
     return scheduleDay.includes(weekdayName);
   });
 
-  if (!scheduleForDay?.aberto) {
+  if (!scheduleForDay?.isOpen) {
     return false;
   }
 
-  if (!scheduleForDay.inicio && !scheduleForDay.fim) {
+  if (!scheduleForDay.startTime && !scheduleForDay.endTime) {
     return true;
   }
 
-  if (!scheduleForDay.inicio || !scheduleForDay.fim) {
+  if (!scheduleForDay.startTime || !scheduleForDay.endTime) {
     return false;
   }
 
-  const startMinutes = getMinutes(scheduleForDay.inicio);
-  const endMinutes = getMinutes(scheduleForDay.fim);
+  const startMinutes = getMinutes(scheduleForDay.startTime);
+  const endMinutes = getMinutes(scheduleForDay.endTime);
 
   if (startMinutes === null || endMinutes === null) {
     return false;

@@ -12,17 +12,17 @@ export function PointAdditionalInfo({
   const groups = [
     {
       title: 'Estacionamento',
-      items: additionalInfo?.estacionamento ?? [],
+      items: additionalInfo?.parking ?? [],
       Icon: CarFront,
     },
     {
       title: 'Descarte seguro',
-      items: additionalInfo?.descarteSeguro ?? [],
+      items: additionalInfo?.safeDisposal ?? [],
       Icon: ShieldCheck,
     },
     {
       title: 'Comprovantes',
-      items: additionalInfo?.comprovantes ?? [],
+      items: additionalInfo?.receipts ?? [],
       Icon: FileCheck2,
     },
   ].filter((group) => group.items.length > 0);

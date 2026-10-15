@@ -12,8 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import type { CollectionPoint } from '@/utils/tipos';
 
 type AcceptedItemsProps = {
-  items: CollectionPoint['itensAceitos'];
-  categories: CollectionPoint['categorias'];
+  items: CollectionPoint['acceptedItems'];
+  categories: CollectionPoint['categories'];
 };
 
 function getItemIcon(name: string) {
@@ -71,21 +71,21 @@ export function AcceptedItems({ items, categories }: AcceptedItemsProps) {
       {items.length > 0 ? (
         <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           {items.map((item) => {
-            const Icon = getItemIcon(item.nome);
+            const Icon = getItemIcon(item.name);
 
             return (
-              <li key={item.nome} className="min-w-0 rounded-md bg-sky-50 p-4">
+              <li key={item.name} className="min-w-0 rounded-md bg-sky-50 p-4">
                 <div className="flex size-9 items-center justify-center rounded-md bg-white text-emerald-800">
                   <Icon aria-hidden="true" className="size-5" />
                 </div>
                 <h3 className="mt-3 break-words text-sm font-semibold">
-                  {item.nome}
+                  {item.name}
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  {item.descricao}
+                  {item.description}
                 </p>
                 <p className="mt-3 text-xs font-medium text-emerald-800">
-                  {item.categoria}
+                  {item.category}
                 </p>
               </li>
             );

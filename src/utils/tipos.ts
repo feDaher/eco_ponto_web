@@ -2,47 +2,47 @@ export type WasteCategory =
   'Plástico' | 'Eletrônico' | 'Papel' | 'Vidro' | 'Metal';
 
 export interface CollectionSchedule {
-  dia: string;
-  aberto: boolean;
-  inicio?: string;
-  fim?: string;
-  observacao?: string;
+  day: string;
+  isOpen: boolean;
+  startTime?: string;
+  endTime?: string;
+  note?: string;
 }
 
 export interface AcceptedItem {
-  nome: string;
-  categoria: WasteCategory;
-  descricao: string;
-  icone?: string;
+  name: string;
+  category: WasteCategory;
+  description: string;
+  icon?: string;
 }
 
 export interface AdditionalPointInfo {
-  estacionamento?: string[];
-  descarteSeguro?: string[];
-  comprovantes?: string[];
+  parking?: string[];
+  safeDisposal?: string[];
+  receipts?: string[];
 }
 
 export interface Review {
   id: number;
-  usuario: string;
-  nota: 1 | 2 | 3 | 4 | 5;
-  comentario: string;
-  data: string;
-  localizacaoUsuario?: string;
+  user: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  comment: string;
+  date: string;
+  userLocation?: string;
 }
 
 export interface WasteDestination {
-  descricao: string;
+  description: string;
 
-  materialRecicladoToneladas?: number;
+  recycledMaterialTons?: number;
 
-  percentualRejeitos?: number;
+  rejectedWastePercentage?: number;
 
-  familiasBeneficiadas?: number;
+  familiesBenefited?: number;
 
-  cooperativasParceiras?: number;
+  partnerCooperatives?: number;
 
-  relatorioUrl?: string;
+  reportUrl?: string;
 }
 
 export interface CollectionPoint {
@@ -50,65 +50,65 @@ export interface CollectionPoint {
 
   slug: string;
 
-  nome: string;
+  name: string;
 
-  descricao: string;
+  description: string;
 
-  responsavel: string;
+  responsiblePerson: string;
 
-  imagemPrincipal: string;
+  mainImage: string;
 
   status: {
-    verificado: boolean;
+    verified: boolean;
 
-    monitorado: boolean;
+    monitored: boolean;
 
-    ultimaVerificacao: string;
+    lastVerification: string;
 
-    ultimaAtualizacao: string;
+    lastUpdated: string;
   };
 
-  endereco: {
-    rua: string;
-    numero: string;
-    bairro: string;
-    cidade: string;
-    estado: string;
-    fusoHorario?: string;
-    cobertura?: {
-      raioKm?: number;
-      descricao?: string;
+  address: {
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    timeZone?: string;
+    coverage?: {
+      radiusKm?: number;
+      description?: string;
     };
 
     latitude: number;
     longitude: number;
   };
 
-  contato: {
+  contact: {
     whatsapp: {
-      autorizado: boolean;
-      numero?: string;
+      authorized: boolean;
+      phoneNumber?: string;
     };
   };
 
-  horarios: CollectionSchedule[];
+  schedules: CollectionSchedule[];
 
-  categorias: WasteCategory[];
+  categories: WasteCategory[];
 
-  itensAceitos: AcceptedItem[];
+  acceptedItems: AcceptedItem[];
 
-  capacidade: {
-    limitePessoaFisica?: number;
-    quantidadeMinimaEmpresa?: number;
-    observacaoEmpresa?: string;
-    unidade: 'kg' | 'unidade' | 'litros';
+  capacity: {
+    individualLimit?: number;
+    businessMinimumQuantity?: number;
+    businessNote?: string;
+    unit: 'kg' | 'unidade' | 'litros';
   };
 
-  regras: string[];
+  rules: string[];
 
-  avaliacoes: Review[];
+  reviews: Review[];
 
-  informacoesAdicionais?: AdditionalPointInfo;
+  additionalInfo?: AdditionalPointInfo;
 
-  destinacao?: WasteDestination;
+  destination?: WasteDestination;
 }

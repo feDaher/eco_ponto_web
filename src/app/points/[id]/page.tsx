@@ -26,16 +26,16 @@ export async function generateMetadata({
     return { title: 'Ponto não encontrado | EcoPonto' };
   }
 
-  const description = `${point.descricao} Endereço: ${point.endereco.rua}, ${point.endereco.numero}, ${point.endereco.bairro}, ${point.endereco.cidade} - ${point.endereco.estado}.`;
+  const description = `${point.description} Endereço: ${point.address.street}, ${point.address.number}, ${point.address.neighborhood}, ${point.address.city} - ${point.address.state}.`;
 
   return {
-    title: `${point.nome} | EcoPonto`,
+    title: `${point.name} | EcoPonto`,
     description,
     openGraph: {
-      title: `${point.nome} | EcoPonto`,
+      title: `${point.name} | EcoPonto`,
       description,
       type: 'website',
-      images: [point.imagemPrincipal],
+      images: [point.mainImage],
     },
   };
 }
@@ -54,20 +54,23 @@ export default async function PointPage({ params }: PointPageProps) {
 
       <PointLocation point={point} />
 
-      <PointAdditionalInfo additionalInfo={point.informacoesAdicionais} />
+      <PointAdditionalInfo additionalInfo={point.additionalInfo} />
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <PointHours schedules={point.horarios} />
-        <PointCapacityRules capacity={point.capacidade} rules={point.regras} />
+        <PointHours schedules={point.schedules} />
+        <PointCapacityRules capacity={point.capacity} rules={point.rules} />
       </div>
 
-      <AcceptedItems items={point.itensAceitos} categories={point.categorias} />
+      <AcceptedItems
+        items={point.acceptedItems}
+        categories={point.categories}
+      />
 
-      <PointDestination destination={point.destinacao} />
+      <PointDestination destination={point.destination} />
 
-      <RegistrationSuggestionForm pointName={point.nome} />
+      <RegistrationSuggestionForm pointName={point.name} />
 
-      <PointReviews reviews={point.avaliacoes} pointName={point.nome} />
+      <PointReviews reviews={point.reviews} pointName={point.name} />
     </div>
   );
 }
