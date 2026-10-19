@@ -23,7 +23,7 @@ Ambiente: Windows (Git Bash / PowerShell). **Python não está instalado**: use 
 ## Convenções
 
 - **Sem comentários no código-fonte** (preferência do usuário).
-- Rotas sempre via `ROUTES` (`src/lib/routes.ts`); detalhes de ponto: `ROUTES.point(id)`.
+- Rotas sempre via `ROUTES` (`src/lib/routes.ts`); detalhes de ponto: `ROUTES.point(slug)`.
 - Cores pelos tokens da marca em `globals.css` (`bg-brand`, `text-brand-muted`, `bg-surface-alt`…).
 - `cn` vem do pacote `cn` e **não** resolve classes Tailwind conflitantes: use variantes em vez de sobrescrever classes.
 - Prettier: aspas simples e ponto e vírgula. Textos de UI em pt-BR.
@@ -44,8 +44,8 @@ A chave da web serve **só para desenhar o mapa** (Maps JavaScript API). A busca
 
 Arquivos:
 
-- `src/types/api.ts`: `CollectionPoint`, `Material`, `LatLng`, `MapBounds`, `PointFilters`
-- `src/services/api.ts`: `getPoints({ bounds, materials, query })` sobre `src/data/mockPoints.ts`. Quando a API tiver a rota, trocar por `fetch(${NEXT_PUBLIC_API_URL}/points?...)`.
+- `src/types/api.ts`: `CollectionPoint`, `Material`, `LatLng`, `MapBounds`, `PointFilters`, `PointDetails` (ficha)
+- `src/services/api.ts`: `getPoints({ bounds, materials, query })` sobre `src/data/mockPoints.ts`. Quando a API tiver a rota, trocar por `fetch(${NEXT_PUBLIC_API_URL}/points?...)`. `getPointBySlug(slug)` junta `mockPoints` + `src/data/mockPointDetails.ts` (só `approved`).
 - `src/services/places.ts`: `suggestPlaces` e `getPlace` chamam o back (`NEXT_PUBLIC_API_URL`), com timeout, validação da resposta e conversão de `latitude`/`longitude` para `LatLng`/`MapBounds`. O session token é um `crypto.randomUUID()`: o back só aceita até 36 caracteres `[A-Za-z0-9_-]`.
 - `src/lib/geo.ts` (distância, bounds, link de rota) e `src/lib/materials.ts` (nome e ícone)
 - `src/components/map/`:
@@ -68,13 +68,20 @@ Comportamentos importantes:
 
 Custos: cota grátis de 10.000/mês por SKU (Dynamic Maps, Autocomplete Requests, Place Details Essentials, Geocoding). Ilimitados: Autocomplete Session Usage e Maps SDK mobile.
 
+## Ficha do ponto (WEB-05): `/points/[slug]`
+
+- Página SSR com `generateMetadata` + JSON-LD `RecyclingCenter`; `cache()` evita buscar o ponto duas vezes.
+- Componentes em `src/components/point/` (base: `SectionCard`, `StarRating`). Mapa: `PointLocationMap` (vis.gl), não iframe.
+- Regras em `src/lib/points.ts`: horários estruturados (`OpeningHours` com `weekdays` 0–6) e `isOpenNow` no fuso `America/Sao_Paulo`; aviso quando `updatedAt` passa de 60 dias (`OUTDATED_AFTER_DAYS`); WhatsApp só se `whatsapp.authorized`.
+- **Sem `loading.tsx`** na rota: com streaming, `notFound()` responde 200 em vez de 404.
+- Formulários de avaliação e sugestão são só demonstração (não persistem).
+
 ## Pendências
 
 - Páginas ainda em `ComingSoon`:
   - `/account`, `/login`, `/register`
   - `/admin`, `/admin/points`, `/admin/users`
   - `/education`, `/education/[category]`
-  - `/points/[id]`
 - Alinhar com mobile/API:
   - materiais: `pilhas`→`batteries`, `eletronicos`→`general-electronics`…, `plastico`→`plastic`, `papel`→`paper`, `vidro`→`glass`, `metal`→`metals`, `oleo`→`cooking-oil`
   - coordenadas: `lat`/`lng` → `latitude`/`longitude`
