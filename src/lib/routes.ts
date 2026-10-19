@@ -8,7 +8,7 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   admin: '/admin',
-  point: (id: string) => `/points/${id}`,
+  point: (slug: string) => `/points/${slug}`,
 } as const;
 
 // Âncoras das seções da home (usadas em `id` e nos links `#...`)
