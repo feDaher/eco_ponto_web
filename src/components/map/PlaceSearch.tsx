@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Loader2, MapPin, Recycle, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPoints } from '@/services/api';
-import { useGeocoder } from './useGeocoder';
-import type { CollectionPoint, LatLng, MapBounds } from '@/types/api';
+import {
+  createSessionToken,
+  getPlace,
+  suggestPlaces,
+  type PlaceResult,
+  type PlaceSuggestion,
+} from '@/services/places';
+import type { CollectionPoint, LatLng } from '@/types/api';
 
-export type PlaceResult = {
-  location: LatLng;
-  viewport?: MapBounds;
-  label: string;
-};
+export type { PlaceResult };
 
 type Option =
   | {
@@ -27,7 +28,7 @@ type Option =
       id: string;
       label: string;
       detail: string;
-      prediction: google.maps.places.PlacePrediction;
+      suggestion: PlaceSuggestion;
     };
 
 type PlaceSearchProps = {
@@ -44,8 +45,6 @@ export function PlaceSearch({
   onPlaceSelect,
   onPointSelect,
 }: PlaceSearchProps) {
-  const places = useMapsLibrary('places');
-  const { geocode } = useGeocoder();
   const listId = useId();
 
   const [input, setInput] = useState('');
@@ -57,28 +56,39 @@ export function PlaceSearch({
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const requestRef = useRef(0);
-  const sessionRef =
-    useRef<google.maps.places.AutocompleteSessionToken>(undefined);
+  const abortRef = useRef<AbortController>(undefined);
+  const sessionRef = useRef<string>(undefined);
 
-  useEffect(() => () => clearTimeout(debounceRef.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+    },
+    []
+  );
+
+  function cancelPendingSuggestions() {
+    requestRef.current++;
+    abortRef.current?.abort();
+  }
+
+  function fetchSuggestions(text: string, near?: LatLng) {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    return suggestPlaces(
+      text,
+      (sessionRef.current ??= createSessionToken()),
+      near,
+      abortRef.current.signal
+    );
+  }
 
   async function fetchOptions(text: string) {
     const requestId = ++requestRef.current;
 
     const [matches, suggestions] = await Promise.all([
       getPoints({ query: text }).catch((): CollectionPoint[] => []),
-      places
-        ? places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-            input: text,
-            sessionToken: (sessionRef.current ??=
-              new places.AutocompleteSessionToken()),
-            includedRegionCodes: ['br'],
-            language: 'pt-BR',
-            locationBias: biasCenter,
-          })
-            .then((res) => res.suggestions)
-            .catch((): google.maps.places.AutocompleteSuggestion[] => [])
-        : Promise.resolve<google.maps.places.AutocompleteSuggestion[]>([]),
+      fetchSuggestions(text, biasCenter),
     ]);
 
     if (requestId !== requestRef.current) return;
@@ -91,21 +101,13 @@ export function PlaceSearch({
         detail: `${point.address} - ${point.neighborhood}`,
         point,
       })),
-      ...suggestions.flatMap((s): Option[] =>
-        s.placePrediction
-          ? [
-              {
-                kind: 'place',
-                id: `place-${s.placePrediction.placeId}`,
-                label:
-                  s.placePrediction.mainText?.text ??
-                  s.placePrediction.text.text,
-                detail: s.placePrediction.secondaryText?.text ?? '',
-                prediction: s.placePrediction,
-              },
-            ]
-          : []
-      ),
+      ...suggestions.map((suggestion): Option => ({
+        kind: 'place',
+        id: `place-${suggestion.placeId}`,
+        label: suggestion.title,
+        detail: suggestion.subtitle,
+        suggestion,
+      })),
     ]);
     setActiveIndex(-1);
     setIsOpen(true);
@@ -117,7 +119,7 @@ export function PlaceSearch({
     clearTimeout(debounceRef.current);
 
     if (text.trim().length < MIN_CHARS) {
-      requestRef.current++;
+      cancelPendingSuggestions();
       setOptions([]);
       setIsOpen(false);
       return;
@@ -138,25 +140,21 @@ export function PlaceSearch({
     }
 
     setIsLoading(true);
-    try {
-      const place = option.prediction.toPlace();
-      await place.fetchFields({
-        fields: ['location', 'viewport', 'formattedAddress'],
-      });
-      if (!place.location) {
-        setNotFound(true);
-        return;
-      }
-      onPlaceSelect({
-        location: place.location.toJSON(),
-        viewport: place.viewport?.toJSON(),
-        label: place.formattedAddress ?? option.label,
-      });
-    } catch {
+    await resolvePlace(option.suggestion);
+  }
+
+  async function resolvePlace(suggestion: PlaceSuggestion) {
+    const place = await getPlace(
+      suggestion,
+      sessionRef.current ?? createSessionToken()
+    );
+    sessionRef.current = undefined;
+    setIsLoading(false);
+
+    if (place) {
+      onPlaceSelect(place);
+    } else {
       setNotFound(true);
-    } finally {
-      sessionRef.current = undefined;
-      setIsLoading(false);
     }
   }
 
@@ -169,18 +167,26 @@ export function PlaceSearch({
       void selectOption(activeOption);
       return;
     }
-    if (!input.trim()) return;
+
+    const text = input.trim();
+    if (!text) return;
 
     setIsOpen(false);
-    setIsLoading(true);
-    const result = await geocode(input);
-    setIsLoading(false);
-
-    if (result) {
-      onPlaceSelect({ ...result, label: result.formattedAddress });
-    } else {
+    cancelPendingSuggestions();
+    if (text.length < MIN_CHARS) {
       setNotFound(true);
+      return;
     }
+
+    setIsLoading(true);
+    const [first] = await fetchSuggestions(text, biasCenter);
+    if (!first) {
+      sessionRef.current = undefined;
+      setIsLoading(false);
+      setNotFound(true);
+      return;
+    }
+    await resolvePlace(first);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
