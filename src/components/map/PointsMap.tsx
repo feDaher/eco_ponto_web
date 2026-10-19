@@ -14,10 +14,9 @@ import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import { DEFAULT_CENTER, DEFAULT_ZOOM, getDirectionsUrl } from '@/lib/geo';
 import type { CollectionPoint, LatLng, MapBounds } from '@/types/api';
+import { MAP_ID } from './GoogleMapsProvider';
 
 export const POINTS_MAP_ID = 'points-map';
-
-const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
 
 type PointsMapProps = {
   points: CollectionPoint[];
@@ -94,7 +93,7 @@ export function PointsMap({
               <p className="font-medium text-brand">{selectedPoint.hours}</p>
               <div className="flex items-center gap-3 pt-1">
                 <Link
-                  href={ROUTES.point(selectedPoint.id)}
+                  href={ROUTES.point(selectedPoint.slug)}
                   className="font-semibold text-brand hover:underline"
                 >
                   Ver detalhes

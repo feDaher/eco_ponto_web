@@ -3,6 +3,7 @@ import type { CollectionPoint } from '@/types/api';
 export const mockPoints: CollectionPoint[] = [
   {
     id: '1',
+    slug: 'ecoponto-central-manhuacu',
     name: 'EcoPonto Central Manhuaçu',
     address: 'Rua Amaral Franco, 142',
     neighborhood: 'Centro',
@@ -10,12 +11,13 @@ export const mockPoints: CollectionPoint[] = [
     cep: '36900-000',
     lat: -20.2582,
     lng: -42.0331,
-    materials: ['pilhas', 'eletronicos'],
-    hours: 'Seg a sex, 8h às 18h',
+    materials: ['pilhas', 'eletronicos', 'metal'],
+    hours: 'Seg a sex, 8h às 18h; sáb, 8h às 12h',
     status: 'approved',
   },
   {
     id: '2',
+    slug: 'ponto-parceiro-casas-bahia',
     name: 'Ponto Parceiro Casas Bahia',
     address: 'Praça Cordovil Pinto, 88',
     neighborhood: 'Centro',
@@ -29,6 +31,7 @@ export const mockPoints: CollectionPoint[] = [
   },
   {
     id: '3',
+    slug: 'cooperativa-reciclaveis-bom-jardim',
     name: 'Cooperativa de Recicláveis Bom Jardim',
     address: 'Rua Bom Jardim, 310',
     neighborhood: 'Bom Jardim',
@@ -42,6 +45,7 @@ export const mockPoints: CollectionPoint[] = [
   },
   {
     id: '4',
+    slug: 'supermercado-coleta-oleo',
     name: 'Supermercado Coleta Óleo',
     address: 'Av. Salime Nacif, 1200',
     neighborhood: 'Coqueiro',
@@ -55,6 +59,7 @@ export const mockPoints: CollectionPoint[] = [
   },
   {
     id: '5',
+    slug: 'escola-estadual-ponto-verde',
     name: 'Escola Estadual - Ponto Verde',
     address: 'Rua Monsenhor Gonzalez, 55',
     neighborhood: 'Santa Terezinha',
@@ -68,6 +73,7 @@ export const mockPoints: CollectionPoint[] = [
   },
   {
     id: '6',
+    slug: 'ferro-velho-sao-vicente',
     name: 'Ferro-Velho São Vicente',
     address: 'Rua São Vicente, 480',
     neighborhood: 'São Vicente',
@@ -81,6 +87,7 @@ export const mockPoints: CollectionPoint[] = [
   },
   {
     id: '7',
+    slug: 'ponto-de-vidro-engenho-da-serra',
     name: 'Ponto de Vidro Engenho da Serra',
     address: 'Rua Engenho da Serra, 21',
     neighborhood: 'Engenho da Serra',
@@ -94,6 +101,7 @@ export const mockPoints: CollectionPoint[] = [
   },
   {
     id: '8',
+    slug: 'ponto-em-analise',
     name: 'Ponto em análise',
     address: 'Rua Teste, 1',
     neighborhood: 'Centro',

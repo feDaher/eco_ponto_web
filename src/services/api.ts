@@ -1,6 +1,7 @@
+import { mockPointDetails } from '@/data/mockPointDetails';
 import { mockPoints } from '@/data/mockPoints';
 import { isInBounds } from '@/lib/geo';
-import type { CollectionPoint, PointFilters } from '@/types/api';
+import type { CollectionPoint, PointDetails, PointFilters } from '@/types/api';
 
 function normalize(text: string) {
   return text
@@ -27,4 +28,15 @@ export async function getPoints({
           `${point.name} ${point.address} ${point.neighborhood}`
         ).includes(q))
   );
+}
+
+export async function getPointBySlug(
+  slug: string
+): Promise<PointDetails | null> {
+  const point = mockPoints.find(
+    (p) => p.slug === slug && p.status === 'approved'
+  );
+  const details = point && mockPointDetails[point.id];
+
+  return point && details ? { ...point, ...details } : null;
 }
