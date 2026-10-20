@@ -8,6 +8,7 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   admin: '/admin',
+  collector: '/collector',
   point: (slug: string) => `/points/${slug}`,
 } as const;
 
@@ -16,6 +17,15 @@ export const HOME_SECTIONS = {
   howItWorks: 'how-it-works',
   map: 'map',
   education: 'education',
+} as const;
+
+export const COLLECTOR_SECTIONS = {
+  overview: 'overview',
+  receipt: 'receipt',
+  history: 'history',
+  point: 'point',
+  hours: 'hours',
+  categories: 'categories',
 } as const;
 
 export type NavItem = {
