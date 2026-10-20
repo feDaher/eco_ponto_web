@@ -51,6 +51,7 @@ export function LoginForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <AuthField
           id="email"
+          maxLength={191}
           label="E-mail"
           type="email"
           autoComplete="email"
@@ -59,6 +60,7 @@ export function LoginForm() {
         />
         <PasswordField
           id="password"
+          maxLength={128}
           label="Senha"
           autoComplete="current-password"
           placeholder="••••••••"

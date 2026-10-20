@@ -89,10 +89,18 @@ Custos: cota grátis de 10.000/mês por SKU (Dynamic Maps, Autocomplete Requests
   - Vermelho e âmbar (alertas) levam `dark:` explícito (ex.: `bg-red-50 dark:bg-red-950/40`).
 - Mapas usam `colorScheme` (`ColorScheme.DARK`/`LIGHT`). Trocar recria o mapa: o `PointsMap` guarda a câmera no `onIdle` para não perder a posição. O InfoWindow é estilizado no escuro via `.gm-style` no `globals.css`.
 
+## Autenticação (WEB-02)
+
+- Login e cadastro falam com `ecoponto-api` (`POST /auth/login`, `POST /auth/register`) em `src/services/auth.ts`, que valida a resposta e converte o status HTTP em mensagem pt-BR (`AuthError`). O cadastro chama o login em seguida, porque a API devolve só o usuário.
+- Perfis da API: `CITIZEN`, `COLLECTOR`, `ADMIN` (`src/types/user.ts`). Cadastro só como `CITIZEN`/`COLLECTOR`; admin vem do seed da API.
+- Sessão (`idToken`, `expiresAt`, `user`) em `localStorage['ecoponto-session']` (`src/lib/session.ts`), lida com `useSyncExternalStore` no `AuthContext` (servidor = `loading`). Expira junto com o token do Firebase (1 h); não há refresh ainda.
+- `RequireRole` protege `/admin` (ADMIN), `/collector` (COLLECTOR, ADMIN) e `/account` (qualquer logado), redirecionando para `/login?next=` ou para `HOME_BY_ROLE`. É só UX: quem garante o acesso é a API.
+- Contas de teste (seed da API): `admin@`, `coletor@`, `cidadao@ecoponto.dev`, senha `Ecoponto@123`.
+
 ## Pendências
 
 - Páginas ainda em `ComingSoon`:
-  - `/account`, `/login`, `/register`
+  - `/account`
   - `/admin`, `/admin/points`, `/admin/users`
   - `/education`, `/education/[category]`
 - Alinhar com mobile/API:
