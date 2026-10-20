@@ -8,7 +8,9 @@ import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES, mainNav } from '@/lib/routes';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { AuthActions } from '@/components/layout/AuthActions';
 
+// Considera ativo também as sub-rotas (ex.: /education/baterias ativa "/education")
 function isActiveRoute(pathname: string, href: string) {
   if (href === ROUTES.home) return pathname === ROUTES.home;
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -66,18 +68,7 @@ export function Header() {
 
         <div className="hidden items-center gap-4 lg:flex">
           <ThemeToggle />
-          <Link
-            href={ROUTES.login}
-            className="text-sm font-medium text-slate-700 transition-colors hover:text-brand-dark"
-          >
-            Entrar
-          </Link>
-          <Link
-            href={ROUTES.register}
-            className="rounded-full bg-brand-solid px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-solid-hover"
-          >
-            Cadastrar-se
-          </Link>
+          <AuthActions variant="desktop" />
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
@@ -126,20 +117,7 @@ export function Header() {
           </nav>
 
           <div className="mt-4 flex flex-col gap-2 border-t border-slate-200 pt-4">
-            <Link
-              href={ROUTES.login}
-              onClick={closeMenu}
-              className="w-full py-2 text-center text-sm font-medium text-slate-700 hover:text-brand-dark"
-            >
-              Entrar
-            </Link>
-            <Link
-              href={ROUTES.register}
-              onClick={closeMenu}
-              className="w-full rounded-full bg-brand-solid py-2 text-center text-sm font-medium text-white hover:bg-brand-solid-hover"
-            >
-              Cadastrar-se
-            </Link>
+            <AuthActions variant="mobile" onNavigate={closeMenu} />
           </div>
         </div>
       )}
