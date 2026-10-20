@@ -28,14 +28,14 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       aria-label={label}
       title={label}
       className={cn(
-        'relative inline-flex size-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-card text-brand shadow-xs transition-colors hover:bg-brand-light focus-visible:outline-2 focus-visible:outline-brand',
+        'relative inline-flex size-9 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-card text-brand shadow-xs transition-colors hover:bg-brand-light focus-visible:outline-2 focus-visible:outline-brand',
         className
       )}
     >
       <Sun
         aria-hidden="true"
         className={cn(
-          'absolute size-[18px] transition-all duration-500 ease-out',
+          'absolute size-4.5 transition-all duration-500 ease-out',
           isDark
             ? 'scale-50 rotate-90 opacity-0'
             : 'scale-100 rotate-0 opacity-100'
@@ -44,7 +44,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       <Moon
         aria-hidden="true"
         className={cn(
-          'absolute size-[18px] transition-all duration-500 ease-out',
+          'absolute size-4.5 transition-all duration-500 ease-out',
           isDark
             ? 'scale-100 rotate-0 opacity-100'
             : 'scale-50 -rotate-90 opacity-0'
