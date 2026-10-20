@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Geist } from "next/font/google";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -25,11 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className={`${inter.variable} flex min-h-screen flex-col font-sans antialiased`}>
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1">
           <div className="container mx-auto px-4 py-8">{children}</div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </body>
     </html>
   );
