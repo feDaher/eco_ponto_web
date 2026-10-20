@@ -1,132 +1,96 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
+import {
+  clearSession,
+  getServerSessionSnapshot,
+  getSessionSnapshot,
+  saveSession,
+  subscribeSession,
+} from '@/lib/session';
+import { AuthError, loginRequest, registerRequest } from '@/services/auth';
+import type { RegisterInput, User } from '@/types/user';
 
-export type UserRole = 'cidadao' | 'coletor' | 'admin';
+type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
-interface AuthContextType {
-  user: any | null;
-  role: UserRole;
+type AuthContextValue = {
+  status: AuthStatus;
+  user: User | null;
   token: string | null;
-  loading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
-  register: (name: string, email: string, pass: string, roleType: UserRole, cnpj?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (input: RegisterInput) => Promise<User>;
   logout: () => void;
-}
+};
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
-  const [role, setRole] = useState<UserRole>('cidadao');
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const router = useRouter();
+  const session = useSyncExternalStore(
+    subscribeSession,
+    getSessionSnapshot,
+    getServerSessionSnapshot
+  );
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('@EcoPonto:token');
-    const savedRole = localStorage.getItem('@EcoPonto:role') as UserRole;
-    const savedUser = localStorage.getItem('@EcoPonto:user');
-    
-    if (savedToken && savedRole) {
-      setToken(savedToken);
-      setRole(savedRole);
-      if (savedUser) setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+    if (!session) return;
+    const timeout = window.setTimeout(
+      clearSession,
+      Math.max(session.expiresAt - Date.now(), 0)
+    );
+    return () => window.clearTimeout(timeout);
+  }, [session]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const next = await loginRequest(email, password);
+    saveSession(next);
+    return next.user;
   }, []);
 
-
-  
-  const login = async (email: string, pass: string) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass }),
-      }).catch(() => null);
-
-      if (response && response.ok) {
-        const data = await response.json();
-        setToken(data.token);
-        setUser(data.user);
-        const userRole = data.user.role || 'cidadao';
-        setRole(userRole);
-
-        localStorage.setItem('@EcoPonto:token', data.token);
-        localStorage.setItem('@EcoPonto:role', userRole);
-        localStorage.setItem('@EcoPonto:user', JSON.stringify(data.user));
-        return;
+  const register = useCallback(
+    async (input: RegisterInput) => {
+      await registerRequest(input);
+      try {
+        return await login(input.email, input.password);
+      } catch {
+        throw new AuthError(
+          'Conta criada! Entre com seu e-mail e senha para continuar.'
+        );
       }
-      throw new Error('Simulacao');
-    } catch {
-      console.warn('Simular o controle das sessões');
-      let simulatedRole: UserRole = 'cidadao';
-      if (email.includes('admin')) simulatedRole = 'admin';
-      else if (email.includes('coletor')) simulatedRole = 'coletor';
-
-      const mockToken = 'mock-jwt-token-123';
-      const mockUser = { name: 'Utilizador Teste', email, role: simulatedRole };
-
-      setToken(mockToken);
-      setUser(mockUser);
-      setRole(simulatedRole);
-
-      localStorage.setItem('@EcoPonto:token', mockToken);
-      localStorage.setItem('@EcoPonto:role', simulatedRole);
-      localStorage.setItem('@EcoPonto:user', JSON.stringify(mockUser));
-    }
-  };
-
-  const register = async (name: string, email: string, pass: string, roleType: UserRole, cnpj?: string) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password: pass, role: roleType, cnpj }),
-      }).catch(() => null);
-
-      if (response && response.ok) {
-        const data = await response.json();
-        setToken(data.token);
-        setUser(data.user);
-        setRole(roleType);
-
-        localStorage.setItem('@EcoPonto:token', data.token);
-        localStorage.setItem('@EcoPonto:role', roleType);
-        localStorage.setItem('@EcoPonto:user', JSON.stringify(data.user));
-        return;
-      }
-      throw new Error('Simulacao');
-    } catch {
-      const mockToken = 'mock-jwt-token-register';
-      const mockUser = { name, email, role: roleType };
-
-      setToken(mockToken);
-      setUser(mockUser);
-      setRole(roleType);
-
-      localStorage.setItem('@EcoPonto:token', mockToken);
-      localStorage.setItem('@EcoPonto:role', roleType);
-      localStorage.setItem('@EcoPonto:user', JSON.stringify(mockUser));
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('@EcoPonto:token');
-    localStorage.removeItem('@EcoPonto:role');
-    localStorage.removeItem('@EcoPonto:user');
-    router.push('/login');
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, role, token, loading, login, register, logout }}>
-      {children}
-    </AuthContext.Provider>
+    },
+    [login]
   );
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      status:
+        session === undefined
+          ? 'loading'
+          : session
+            ? 'authenticated'
+            : 'unauthenticated',
+      user: session?.user ?? null,
+      token: session?.token ?? null,
+      login,
+      register,
+      logout: clearSession,
+    }),
+    [session, login, register]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth precisa estar dentro de <AuthProvider>');
+  }
+  return context;
+}
