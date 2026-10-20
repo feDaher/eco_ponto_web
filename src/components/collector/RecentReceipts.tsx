@@ -43,7 +43,7 @@ export function RecentReceipts() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-surface p-3 text-sm"
             >
               <div className="flex items-center gap-3">
-                <time className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500">
+                <time className="rounded-md border border-slate-200 bg-card px-2 py-1 text-xs font-bold text-slate-500">
                   {receipt.time}
                 </time>
                 <div>

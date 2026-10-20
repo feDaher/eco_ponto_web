@@ -13,9 +13,9 @@ export function PointLocation({ point }: PointLocationProps) {
     <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
       <section
         aria-labelledby="about-heading"
-        className="flex flex-col overflow-hidden rounded-3xl bg-brand text-white shadow-sm"
+        className="flex flex-col overflow-hidden rounded-3xl bg-brand-solid text-white shadow-sm"
       >
-        <div className="relative min-h-48 flex-1 bg-brand-dark sm:min-h-64">
+        <div className="relative min-h-48 flex-1 bg-brand-deep sm:min-h-64">
           {point.imageUrl ? (
             <Image
               src={point.imageUrl}
@@ -50,7 +50,7 @@ export function PointLocation({ point }: PointLocationProps) {
 
       <section
         aria-labelledby="location-heading"
-        className="flex flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-sm"
+        className="flex flex-col rounded-3xl border border-slate-100 bg-card p-5 shadow-sm"
       >
         <h2 id="location-heading" className="text-lg font-bold text-slate-900">
           Localização e cobertura

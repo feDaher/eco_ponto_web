@@ -52,7 +52,7 @@ export function AdminSidebar() {
                     'flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-brand',
                     isActive
                       ? 'border-brand-medium bg-brand-medium text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-surface-alt hover:text-brand lg:border-transparent lg:bg-transparent'
+                      : 'border-slate-200 bg-card text-slate-600 hover:bg-surface-alt hover:text-brand lg:border-transparent lg:bg-transparent'
                   )}
                 >
                   <Icon aria-hidden="true" className="size-4 shrink-0" />

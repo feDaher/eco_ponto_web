@@ -183,7 +183,7 @@ export function PointsExplorer() {
           type="button"
           onClick={locateUser}
           disabled={isLocating}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-brand shadow-sm transition-colors hover:bg-surface-alt disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-card px-4 py-3 text-sm font-semibold text-brand shadow-sm transition-colors hover:bg-surface-alt disabled:opacity-60"
         >
           {isLocating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -194,7 +194,10 @@ export function PointsExplorer() {
         </button>
       </div>
       {locationError && (
-        <p role="alert" className="-mt-2 text-xs text-red-600">
+        <p
+          role="alert"
+          className="-mt-2 text-xs text-red-600 dark:text-red-400"
+        >
           {locationError}
         </p>
       )}
@@ -251,7 +254,7 @@ export function PointsExplorer() {
           {loadError && (
             <div
               role="alert"
-              className="flex items-center justify-between gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-700 dark:text-red-300"
             >
               Não foi possível carregar os pontos de coleta.
               <button
@@ -320,7 +323,7 @@ export function PointsExplorer() {
             <button
               type="button"
               onClick={searchThisArea}
-              className="absolute top-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg transition-colors hover:bg-surface-alt"
+              className="absolute top-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg transition-colors hover:bg-surface-alt"
             >
               <RefreshCw className="h-4 w-4" />
               Buscar nesta área
@@ -332,7 +335,7 @@ export function PointsExplorer() {
       <button
         type="button"
         onClick={() => setMobileView((v) => (v === 'list' ? 'map' : 'list'))}
-        className="fixed bottom-6 left-1/2 z-40 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl lg:hidden"
+        className="fixed bottom-6 left-1/2 z-40 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-50 shadow-xl lg:hidden"
       >
         {mobileView === 'list' ? (
           <>

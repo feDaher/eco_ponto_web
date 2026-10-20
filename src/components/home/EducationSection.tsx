@@ -15,7 +15,8 @@ const educationArticles = [
     id: 1,
     tag: 'DIY',
     tagColor: 'bg-brand-light text-brand-muted',
-    bannerBg: 'bg-gradient-to-br from-emerald-100 to-teal-200 text-emerald-800',
+    bannerBg:
+      'bg-gradient-to-br from-emerald-100 to-teal-200 text-emerald-800 dark:from-emerald-950 dark:to-teal-900/70 dark:text-emerald-300',
     icon: Wrench,
     readTime: '5 min de leitura',
     difficulty: 'Fácil',
@@ -43,7 +44,8 @@ const educationArticles = [
     id: 3,
     tag: 'Conhecimento',
     tagColor: 'bg-brand-light text-brand-muted',
-    bannerBg: 'bg-gradient-to-br from-amber-100 to-orange-200 text-amber-800',
+    bannerBg:
+      'bg-gradient-to-br from-amber-100 to-orange-200 text-amber-800 dark:from-amber-950/70 dark:to-orange-900/50 dark:text-amber-200',
     icon: BatteryCharging,
     readTime: '4 min de leitura',
     difficulty: 'Difícil',
@@ -65,7 +67,7 @@ export const EducationSection = () => {
         {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold tracking-wider uppercase">
+            <div className="flex items-center gap-2 text-brand text-xs font-bold tracking-wider uppercase">
               <span className="w-2 h-2 rounded-full bg-brand"></span>
               <span>CONHECIMENTO QUE TRANSFORMA</span>
             </div>
@@ -84,12 +86,12 @@ export const EducationSection = () => {
         </div>
 
         {/* Fato ecológico do dia */}
-        <div className="bg-brand text-white rounded-2xl p-5 sm:p-6 shadow-sm border border-brand flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="p-3 bg-brand-medium rounded-xl text-brand-light shrink-0">
+        <div className="bg-brand-solid text-white rounded-2xl p-5 sm:p-6 shadow-sm border border-brand-solid flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="p-3 bg-brand-medium rounded-xl text-brand-pale shrink-0">
             <Lightbulb className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-brand-light">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-brand-pale">
               FATO ECOLÓGICO
             </span>
             <p className="text-xs sm:text-sm text-white leading-relaxed font-medium">
@@ -108,7 +110,7 @@ export const EducationSection = () => {
             return (
               <div
                 key={article.id}
-                className="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                className="group bg-card rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
                 <div>
                   {/* "Imagem dele" */}

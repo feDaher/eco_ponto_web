@@ -13,7 +13,7 @@ import {
 } from '@/data/mockCollector';
 
 const OPTION_CLASS =
-  'flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 transition-colors hover:border-brand-medium has-checked:border-brand has-checked:bg-brand-light has-focus-visible:ring-2 has-focus-visible:ring-brand';
+  'flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 bg-card p-3 text-sm text-slate-700 transition-colors hover:border-brand-medium has-checked:border-brand has-checked:bg-brand-light has-focus-visible:ring-2 has-focus-visible:ring-brand';
 
 export function ReceiptForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);

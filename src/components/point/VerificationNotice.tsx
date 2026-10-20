@@ -20,10 +20,11 @@ const TONES = {
   },
   warning: {
     icon: AlertTriangle,
-    box: 'border-amber-200 bg-amber-50',
-    badge: 'bg-amber-100 text-amber-800',
-    title: 'text-amber-950',
-    text: 'text-amber-900',
+    box: 'border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40',
+    badge:
+      'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200',
+    title: 'text-amber-950 dark:text-amber-100',
+    text: 'text-amber-900 dark:text-amber-200',
   },
 };
 
@@ -82,7 +83,7 @@ export function VerificationNotice({ verification }: VerificationNoticeProps) {
           </p>
 
           {outdated && (
-            <p className="pt-1 text-sm font-medium text-amber-900">
+            <p className="pt-1 text-sm font-medium text-amber-900 dark:text-amber-200">
               {days === null
                 ? 'A data da última atualização não foi informada.'
                 : `Estas informações estão há mais de ${OUTDATED_AFTER_DAYS} dias sem atualização e podem estar desatualizadas. Confirme com o responsável antes de ir ao local.`}

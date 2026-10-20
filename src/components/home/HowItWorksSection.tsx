@@ -64,7 +64,7 @@ export const HowItWorksSection = () => {
             return (
               <div
                 key={step.number}
-                className="group relative bg-white rounded-3xl p-6 lg:p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex-1 flex flex-col justify-between overflow-hidden"
+                className="group relative bg-card rounded-3xl p-6 lg:p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex-1 flex flex-col justify-between overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-surface-accent rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110 pointer-events-none" />
 
@@ -73,7 +73,7 @@ export const HowItWorksSection = () => {
                     {step.number}
                   </span>
 
-                  <div className="w-12 h-12 rounded-2xl bg-brand-light flex items-center justify-center text-brand group-hover:bg-emerald-700 group-hover:text-white transition-colors duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-light flex items-center justify-center text-brand group-hover:bg-brand-solid group-hover:text-white transition-colors duration-300">
                     <Icon className="w-6 h-6" />
                   </div>
 
@@ -90,7 +90,7 @@ export const HowItWorksSection = () => {
                 <div className="pt-6 mt-6 border-t border-slate-100/80 relative z-10">
                   <Link
                     href={step.href}
-                    className="inline-flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 group-hover:text-emerald-700 transition-colors"
+                    className="inline-flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 group-hover:text-brand transition-colors"
                   >
                     <span>{step.linkText}</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

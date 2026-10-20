@@ -21,7 +21,7 @@ export function BinCapacity({ bins }: BinCapacityProps) {
       description="Telemetria das últimas 24 horas"
       aside={
         criticalCount > 0 ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/40 px-2.5 py-1 text-xs font-bold text-red-700 dark:text-red-300">
             <AlertTriangle aria-hidden="true" className="size-3.5" />
             {criticalCount === 1
               ? '1 urna cheia'
@@ -44,7 +44,7 @@ export function BinCapacity({ bins }: BinCapacityProps) {
                 <span
                   className={cn(
                     'shrink-0 text-xs font-bold',
-                    isCritical ? 'text-red-700' : 'text-brand'
+                    isCritical ? 'text-red-700 dark:text-red-300' : 'text-brand'
                   )}
                 >
                   {bin.fillPercent}% {isCritical ? 'cheia' : 'ocupada'}

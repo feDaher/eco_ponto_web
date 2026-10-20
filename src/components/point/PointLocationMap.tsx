@@ -1,11 +1,16 @@
 'use client';
 
-import { AdvancedMarker, Map as GoogleMap } from '@vis.gl/react-google-maps';
+import {
+  AdvancedMarker,
+  ColorScheme,
+  Map as GoogleMap,
+} from '@vis.gl/react-google-maps';
 import { MapPin } from 'lucide-react';
 import {
   GoogleMapsProvider,
   MAP_ID,
 } from '@/components/map/GoogleMapsProvider';
+import { useTheme } from '@/components/theme/useTheme';
 import type { LatLng } from '@/types/api';
 
 type PointLocationMapProps = {
@@ -14,10 +19,13 @@ type PointLocationMapProps = {
 };
 
 export function PointLocationMap({ position, title }: PointLocationMapProps) {
+  const theme = useTheme();
+
   return (
     <GoogleMapsProvider>
       <GoogleMap
         mapId={MAP_ID}
+        colorScheme={theme === 'dark' ? ColorScheme.DARK : ColorScheme.LIGHT}
         defaultCenter={position}
         defaultZoom={16}
         gestureHandling="cooperative"
@@ -27,7 +35,7 @@ export function PointLocationMap({ position, title }: PointLocationMapProps) {
         className="h-full w-full"
       >
         <AdvancedMarker position={position} title={title}>
-          <div className="rounded-full bg-brand p-2 text-white shadow-lg ring-4 ring-white">
+          <div className="rounded-full bg-brand-solid p-2 text-white shadow-lg ring-4 ring-white">
             <MapPin className="size-4" />
           </div>
         </AdvancedMarker>

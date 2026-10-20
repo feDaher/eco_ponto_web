@@ -11,13 +11,13 @@ export function ImpactCard({ co2SavedTons, treesEquivalent }: ImpactCardProps) {
   return (
     <section
       aria-labelledby="impact-heading"
-      className="rounded-3xl bg-brand p-5 text-brand-foreground sm:p-6"
+      className="rounded-3xl bg-brand-solid p-5 text-brand-foreground sm:p-6"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2
             id="impact-heading"
-            className="text-xs font-bold tracking-wider text-brand-light uppercase"
+            className="text-xs font-bold tracking-wider text-brand-pale uppercase"
           >
             Impacto ecológico direto
           </h2>
@@ -29,7 +29,7 @@ export function ImpactCard({ co2SavedTons, treesEquivalent }: ImpactCardProps) {
           </p>
         </div>
         <span className="rounded-2xl bg-white/15 p-2.5">
-          <Leaf aria-hidden="true" className="size-5 text-brand-light" />
+          <Leaf aria-hidden="true" className="size-5 text-brand-pale" />
         </span>
       </div>
       <p className="mt-5 border-t border-white/20 pt-3 text-sm">

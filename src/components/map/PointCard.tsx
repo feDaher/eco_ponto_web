@@ -30,7 +30,7 @@ export function PointCard({
       onMouseLeave={() => onHover(null)}
       className={cn(
         'space-y-3 rounded-2xl border p-4 transition-colors',
-        variant === 'muted' ? 'bg-surface-alt' : 'bg-white',
+        variant === 'muted' ? 'bg-surface-alt' : 'bg-card',
         isActive
           ? 'border-brand shadow-md'
           : 'border-slate-100 hover:border-slate-200'
@@ -60,7 +60,7 @@ export function PointCard({
             key={m}
             className={cn(
               'rounded-md border border-slate-200/60 px-2 py-0.5 text-[10px] font-medium text-slate-600',
-              variant === 'muted' ? 'bg-white' : 'bg-surface-alt'
+              variant === 'muted' ? 'bg-card' : 'bg-surface-alt'
             )}
           >
             {MATERIALS[m].label}

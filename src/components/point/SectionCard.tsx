@@ -25,7 +25,7 @@ export function SectionCard({
     <section
       id={id}
       aria-labelledby={headingId}
-      className="scroll-mt-24 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6"
+      className="scroll-mt-24 rounded-3xl border border-slate-100 bg-card p-5 shadow-sm sm:p-6"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">

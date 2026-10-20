@@ -26,7 +26,7 @@ export function PointAdditionalInfo({ info }: PointAdditionalInfoProps) {
       {groups.map(({ title, items, icon: Icon }) => (
         <article
           key={title}
-          className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm"
+          className="rounded-3xl border border-slate-100 bg-card p-5 shadow-sm"
         >
           <div className="flex items-center gap-2">
             <span className="flex size-8 items-center justify-center rounded-xl bg-brand-light text-brand-muted">

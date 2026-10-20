@@ -68,7 +68,7 @@ export function CollectorSidebar() {
             <li key={section} className="shrink-0">
               <a
                 href={`#${section}`}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-medium whitespace-nowrap text-slate-600 transition-colors hover:bg-surface-alt hover:text-brand focus-visible:outline-2 focus-visible:outline-brand lg:border-transparent lg:bg-transparent"
+                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-card px-3.5 py-2.5 text-xs font-medium whitespace-nowrap text-slate-600 transition-colors hover:bg-surface-alt hover:text-brand focus-visible:outline-2 focus-visible:outline-brand lg:border-transparent lg:bg-transparent"
               >
                 <Icon aria-hidden="true" className="size-4 shrink-0" />
                 {label}

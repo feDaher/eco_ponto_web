@@ -6,7 +6,7 @@ import { CtaSection } from '@/components/home/CtaSection';
 
 export default function Home() {
   return (
-    <div className="flex flex-col bg-white">
+    <div className="flex flex-col bg-background">
       <HeroSection />
       <HowItWorksSection />
       <MapSection />
