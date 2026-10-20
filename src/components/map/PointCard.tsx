@@ -72,7 +72,7 @@ export function PointCard({
         <span className="font-medium text-brand">{point.hours}</span>
         <span className="flex shrink-0 items-center gap-3">
           <Link
-            href={ROUTES.point(point.id)}
+            href={ROUTES.point(point.slug)}
             className="font-semibold text-slate-600 hover:text-brand"
           >
             Detalhes

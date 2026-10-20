@@ -1,30 +1,48 @@
-import Sidebar from './components/sidebar/sidebar';
-import Header from './components/header/header';
-import Article from './components/article/article';
-import RecordReceipt from './components/record_receipt/record_receipt';
-import PointData from './components/collection_point_data/point_data';
-import Footer from './components/footer/footer';
+import type { Metadata } from 'next';
+import { CollectorHeader } from '@/components/collector/CollectorHeader';
+import { CollectorSidebar } from '@/components/collector/CollectorSidebar';
+import { CollectorStats } from '@/components/collector/CollectorStats';
+import { OpeningHoursEditor } from '@/components/collector/OpeningHoursEditor';
+import { PendingRequestNotice } from '@/components/collector/PendingRequestNotice';
+import { PointCategories } from '@/components/collector/PointCategories';
+import { PointInfoCard } from '@/components/collector/PointInfoCard';
+import { ReceiptForm } from '@/components/collector/ReceiptForm';
+import { RecentReceipts } from '@/components/collector/RecentReceipts';
+import { COLLECTOR_SECTIONS } from '@/lib/routes';
 
-export default function HomePage() {
+export const metadata: Metadata = {
+  title: 'Painel do Coletor | EcoPonto Digital',
+  description:
+    'Registre recebimentos e gerencie os dados do seu ponto de coleta.',
+  robots: { index: false },
+};
+
+export default function CollectorPage() {
   return (
-      <div className="fixed inset-0 z-50 flex w-screen h-screen overflow-hidden bg-[#f4f6f8] text-slate-800 font-sans selection:bg-emerald-100">
-          <aside className="w-64 bg-[#eff4ff] border-r border-slate-200/80 flex flex-col justify-between shrink-0 h-full overflow-hidden">
-            <Sidebar />
-          </aside>
-          <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-            <div className="shrink-0 z-10">
-              <Header />
+    <div className="bg-surface">
+      <div className="container mx-auto flex flex-col gap-6 px-4 py-8 md:px-6 lg:flex-row">
+        <CollectorSidebar />
+
+        <div
+          id={COLLECTOR_SECTIONS.overview}
+          className="min-w-0 flex-1 scroll-mt-24 space-y-6"
+        >
+          <CollectorHeader />
+          <PendingRequestNotice />
+          <CollectorStats />
+
+          <div className="grid gap-6 xl:grid-cols-3">
+            <div className="space-y-6 xl:col-span-2">
+              <ReceiptForm />
+              <RecentReceipts />
             </div>
-          <main className="flex-1 overflow-y-auto p-6 space-y-5 max-w-[1400px] w-full mx-auto bg-white">
-            <Article />
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <RecordReceipt />
-              </div>
-              <PointData />
+            <div className="space-y-6">
+              <PointInfoCard />
+              <OpeningHoursEditor />
+              <PointCategories />
             </div>
-            <Footer/>
-          </main>
+          </div>
+        </div>
       </div>
     </div>
   );
