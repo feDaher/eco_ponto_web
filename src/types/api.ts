@@ -111,3 +111,28 @@ export type PointFilters = {
   materials?: Material[];
   query?: string;
 };
+
+export type CategoryVolume = {
+  name: string;
+  kg: number;
+};
+
+export type BinLevel = {
+  name: string;
+  fillPercent: number;
+};
+
+export type DashboardStats = {
+  period: string;
+  activePoints: number;
+  activePointsGrowth: number;
+  collectedKg: number;
+  collectedGrowth: number;
+  registeredUsers: number;
+  newUsers: number;
+  traceability: number;
+  co2SavedTons: number;
+  treesEquivalent: number;
+  categories: CategoryVolume[];
+  bins: BinLevel[];
+};

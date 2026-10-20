@@ -8,6 +8,8 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   admin: '/admin',
+  adminPoints: '/admin/points',
+  adminUsers: '/admin/users',
   collector: '/collector',
   point: (slug: string) => `/points/${slug}`,
 } as const;
