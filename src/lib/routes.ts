@@ -1,3 +1,5 @@
+import type { UserRole } from '@/types/user';
+
 // Fonte única das rotas da aplicação: use sempre estas constantes em vez de
 // escrever o caminho "na mão" nos componentes.
 export const ROUTES = {
@@ -41,3 +43,13 @@ export const mainNav: NavItem[] = [
   { label: 'Aprender & Dicas', href: ROUTES.education },
   { label: 'Minha Conta', href: ROUTES.account },
 ];
+
+export const HOME_BY_ROLE: Record<UserRole, string> = {
+  ADMIN: ROUTES.admin,
+  COLLECTOR: ROUTES.collector,
+  CITIZEN: ROUTES.account,
+};
+
+export function safeRedirect(path: string | null | undefined) {
+  return path && path.startsWith('/') && !path.startsWith('//') ? path : null;
+}
