@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES, mainNav } from '@/lib/routes';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 function isActiveRoute(pathname: string, href: string) {
   if (href === ROUTES.home) return pathname === ROUTES.home;
@@ -20,7 +21,7 @@ export function Header() {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-white bg-surface">
+    <header className="sticky top-0 z-50 border-b-2 border-card bg-surface">
       <div className="container mx-auto flex items-center justify-between px-4 py-3 md:px-6">
         <Link
           href={ROUTES.home}
@@ -51,8 +52,8 @@ export function Header() {
                     className={cn(
                       'text-sm font-medium transition-colors',
                       isActive
-                        ? 'rounded-full bg-brand-light px-4 py-1.5 text-green-800'
-                        : 'text-gray-600 hover:text-green-800'
+                        ? 'rounded-full bg-brand-light px-4 py-1.5 text-brand-dark'
+                        : 'text-slate-600 hover:text-brand-dark'
                     )}
                   >
                     {item.label}
@@ -64,36 +65,40 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-4 lg:flex">
+          <ThemeToggle />
           <Link
             href={ROUTES.login}
-            className="text-sm font-medium text-gray-700 transition-colors hover:text-green-800"
+            className="text-sm font-medium text-slate-700 transition-colors hover:text-brand-dark"
           >
             Entrar
           </Link>
           <Link
             href={ROUTES.register}
-            className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-dark"
+            className="rounded-full bg-brand-solid px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-solid-hover"
           >
             Cadastrar-se
           </Link>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsOpen((open) => !open)}
-          className="rounded-lg p-2 text-brand focus-visible:outline-2 focus-visible:outline-brand lg:hidden"
-          aria-label={isOpen ? 'Fechar menu' : 'Abrir menu'}
-          aria-expanded={isOpen}
-          aria-controls="mobile-menu"
-        >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setIsOpen((open) => !open)}
+            className="rounded-lg p-2 text-brand focus-visible:outline-2 focus-visible:outline-brand"
+            aria-label={isOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={isOpen}
+            aria-controls="mobile-menu"
+          >
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {isOpen && (
         <div
           id="mobile-menu"
-          className="border-t border-gray-200 bg-surface px-4 pt-3 pb-6 lg:hidden"
+          className="border-t border-slate-200 bg-surface px-4 pt-3 pb-6 lg:hidden"
         >
           <nav aria-label="Navegação principal (mobile)">
             <ul className="flex flex-col space-y-2">
@@ -108,8 +113,8 @@ export function Header() {
                       className={cn(
                         'block rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                         isActive
-                          ? 'bg-brand-light text-green-800'
-                          : 'text-gray-600 hover:bg-gray-100'
+                          ? 'bg-brand-light text-brand-dark'
+                          : 'text-slate-600 hover:bg-slate-100'
                       )}
                     >
                       {item.label}
@@ -120,18 +125,18 @@ export function Header() {
             </ul>
           </nav>
 
-          <div className="mt-4 flex flex-col gap-2 border-t border-gray-200 pt-4">
+          <div className="mt-4 flex flex-col gap-2 border-t border-slate-200 pt-4">
             <Link
               href={ROUTES.login}
               onClick={closeMenu}
-              className="w-full py-2 text-center text-sm font-medium text-gray-700 hover:text-green-800"
+              className="w-full py-2 text-center text-sm font-medium text-slate-700 hover:text-brand-dark"
             >
               Entrar
             </Link>
             <Link
               href={ROUTES.register}
               onClick={closeMenu}
-              className="w-full rounded-full bg-brand py-2 text-center text-sm font-medium text-white hover:bg-brand-dark"
+              className="w-full rounded-full bg-brand-solid py-2 text-center text-sm font-medium text-white hover:bg-brand-solid-hover"
             >
               Cadastrar-se
             </Link>

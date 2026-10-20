@@ -37,7 +37,7 @@ export function PointDestination({ destination }: PointDestinationProps) {
   return (
     <section
       aria-labelledby="destination-heading"
-      className="relative overflow-hidden rounded-3xl bg-brand-dark p-6 text-white sm:p-8"
+      className="relative overflow-hidden rounded-3xl bg-brand-deep p-6 text-white sm:p-8"
     >
       <Recycle
         aria-hidden="true"
@@ -45,7 +45,7 @@ export function PointDestination({ destination }: PointDestinationProps) {
       />
 
       <div className="relative max-w-3xl">
-        <p className="text-xs font-bold tracking-wider text-brand-light uppercase">
+        <p className="text-xs font-bold tracking-wider text-brand-pale uppercase">
           Destinação responsável
         </p>
         <h2
@@ -63,7 +63,7 @@ export function PointDestination({ destination }: PointDestinationProps) {
         <dl className="relative mt-7 grid gap-5 border-t border-white/20 pt-5 sm:grid-cols-2 lg:grid-cols-4">
           {indicators.map((indicator) => (
             <div key={indicator.label}>
-              <dt className="text-sm text-brand-light">{indicator.label}</dt>
+              <dt className="text-sm text-brand-pale">{indicator.label}</dt>
               <dd className="mt-1 text-3xl font-bold">{indicator.value}</dd>
             </div>
           ))}
@@ -75,7 +75,7 @@ export function PointDestination({ destination }: PointDestinationProps) {
           href={destination.reportUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="relative mt-6 inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-brand-dark transition-colors hover:bg-brand-light"
+          className="relative mt-6 inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-brand-deep transition-colors hover:bg-brand-light"
         >
           Ver relatório de destinação
           <ArrowUpRight aria-hidden="true" className="size-4" />

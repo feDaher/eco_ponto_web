@@ -29,7 +29,7 @@ export const MapSection = () => {
 
           <Link
             href={ROUTES.map}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-brand text-white font-medium hover:bg-brand-dark transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-brand-solid text-white font-medium hover:bg-brand-solid-hover transition-colors shadow-sm"
           >
             <MapPin className="w-5 h-5 text-white" />
             <span>Ver Pontos Próximos de você</span>

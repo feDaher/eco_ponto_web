@@ -76,6 +76,19 @@ Custos: cota grátis de 10.000/mês por SKU (Dynamic Maps, Autocomplete Requests
 - **Sem `loading.tsx`** na rota: com streaming, `notFound()` responde 200 em vez de 404.
 - Formulários de avaliação e sugestão são só demonstração (não persistem).
 
+## Tema claro/escuro (WEB-16)
+
+- Claro é o padrão. A classe `.dark` no `<html>` vem de um script inline no `<head>` (`THEME_INIT_SCRIPT` em `src/lib/theme.ts`), que lê `localStorage['ecoponto-theme']` antes da pintura. O `<html>` tem `suppressHydrationWarning`.
+- `ThemeToggle` (`src/components/theme/`) fica no Header. `useTheme()` usa `useSyncExternalStore` (servidor = `light`). `applyTheme` faz revelação circular com View Transitions a partir do botão. Sem suporte, usa fade (`.theme-fading`). Com `prefers-reduced-motion`, troca na hora.
+- Os tokens mudam de valor em `.dark` (`globals.css`). **Não use `dark:` para cores da marca nem neutras**:
+  - `slate-*` é a escala neutra e **inverte** no escuro (`text-slate-900` fica claro, `bg-slate-100` fica escuro). Não use `gray-*`.
+  - Fundo de card é `bg-card`, de página é `bg-background`/`bg-surface*`. `bg-white` só em elemento que deve continuar branco (ex.: botão branco sobre faixa verde).
+  - `brand`, `brand-dark` e `brand-muted` são para texto, ícones e bordas de destaque (clareiam no escuro). `brand-light` é fundo de chip.
+  - Preenchimento com texto branco: `bg-brand-solid` + `hover:bg-brand-solid-hover`. Faixa verde escura: `bg-brand-deep`. Texto sobre essas faixas: `text-brand-pale`/`text-brand-foreground`.
+  - Gráficos: `bg-chart-1`…`bg-chart-5`.
+  - Vermelho e âmbar (alertas) levam `dark:` explícito (ex.: `bg-red-50 dark:bg-red-950/40`).
+- Mapas usam `colorScheme` (`ColorScheme.DARK`/`LIGHT`). Trocar recria o mapa: o `PointsMap` guarda a câmera no `onIdle` para não perder a posição. O InfoWindow é estilizado no escuro via `.gm-style` no `globals.css`.
+
 ## Pendências
 
 - Páginas ainda em `ComingSoon`:

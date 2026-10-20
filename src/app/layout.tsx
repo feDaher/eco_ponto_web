@@ -1,24 +1,20 @@
 import type { Metadata } from 'next';
-import { Inter, Geist } from 'next/font/google';
+import { Geist } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import './globals.css';
-import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/context/AuthContext';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
+import './globals.css';
 
 const geist = Geist({
   subsets: ['latin'],
   variable: '--font-sans',
 });
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-});
-
 export const metadata: Metadata = {
   title: 'EcoPonto Digital',
-  description: 'Encontre pontos de coleta de resíduos recicláveis e eletrônicos perto de você.',
+  description:
+    'Encontre pontos de coleta de resíduos recicláveis e eletrônicos perto de você.',
 };
 
 export default function RootLayout({
@@ -27,10 +23,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={cn('font-sans', geist.variable)}>
-      <body className={`${inter.variable} flex min-h-screen flex-col font-sans antialiased`}>
+    <html lang="pt-BR" className={geist.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         <AuthProvider>
           <Header />
+          {/* Cada página controla a própria largura (seções full-width ou container) */}
           <main className="flex-1">{children}</main>
           <Footer />
         </AuthProvider>

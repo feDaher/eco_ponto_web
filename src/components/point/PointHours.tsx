@@ -43,7 +43,7 @@ export function PointHours({ schedule, closedOnHolidays }: PointHoursProps) {
               <span className="flex items-center gap-2">
                 {WEEKDAY_LABELS[day]}
                 {isToday && (
-                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] tracking-wide uppercase">
+                  <span className="rounded-full bg-card px-2 py-0.5 text-[10px] tracking-wide uppercase">
                     Hoje
                   </span>
                 )}

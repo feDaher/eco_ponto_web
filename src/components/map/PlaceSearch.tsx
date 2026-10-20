@@ -236,7 +236,7 @@ export function PlaceSearch({
           onKeyDown={handleKeyDown}
           onFocus={() => options.length > 0 && setIsOpen(true)}
           onBlur={() => setIsOpen(false)}
-          className="w-full rounded-full border border-slate-200 bg-white py-3 pr-28 pl-11 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-transparent focus:ring-2 focus:ring-brand focus:outline-none"
+          className="w-full rounded-full border border-slate-200 bg-card py-3 pr-28 pl-11 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-transparent focus:ring-2 focus:ring-brand focus:outline-none"
         />
         {input && (
           <button
@@ -250,7 +250,7 @@ export function PlaceSearch({
         )}
         <button
           type="submit"
-          className="absolute right-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-dark"
+          className="absolute right-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-solid px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-solid-hover"
         >
           {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           Buscar
@@ -258,7 +258,10 @@ export function PlaceSearch({
       </div>
 
       {notFound && (
-        <p role="status" className="mt-2 pl-4 text-xs text-red-600">
+        <p
+          role="status"
+          className="mt-2 pl-4 text-xs text-red-600 dark:text-red-400"
+        >
           Não encontramos esse endereço. Tente incluir a cidade.
         </p>
       )}
@@ -267,7 +270,7 @@ export function PlaceSearch({
         <ul
           id={`${listId}-list`}
           role="listbox"
-          className="absolute z-20 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-slate-100 bg-white py-2 shadow-lg"
+          className="absolute z-20 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-slate-100 bg-card py-2 shadow-lg"
         >
           {options.map((option, index) => {
             const Icon = option.kind === 'point' ? Recycle : MapPin;

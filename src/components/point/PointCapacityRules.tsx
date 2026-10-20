@@ -50,11 +50,11 @@ export function PointCapacityRules({
           {rules.map((rule) => (
             <li
               key={rule}
-              className="flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-950"
+              className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-950/40 px-3 py-2.5 text-sm text-red-950 dark:text-red-200"
             >
               <CircleAlert
                 aria-hidden="true"
-                className="mt-0.5 size-4 shrink-0 text-red-700"
+                className="mt-0.5 size-4 shrink-0 text-red-700 dark:text-red-300"
               />
               {rule}
             </li>

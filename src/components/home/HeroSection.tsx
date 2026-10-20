@@ -53,7 +53,7 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto pt-2">
             <a
               href={`#${HOME_SECTIONS.map}`}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-brand text-white font-medium hover:bg-brand-dark transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-brand-solid text-white font-medium hover:bg-brand-solid-hover transition-colors shadow-sm"
             >
               <MapPin className="w-5 h-5 text-white" />
               <span>Explorar Mapa de Coleta</span>
@@ -94,10 +94,10 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
         <div className="relative z-20 lg:col-span-5 w-full">
           {isLoggedIn ? (
             /* Usuário logado */
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 space-y-6">
+            <div className="bg-card rounded-3xl p-6 shadow-xl border border-slate-100 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-brand rounded-lg">
+                  <div className="p-2 bg-brand-solid rounded-lg">
                     <Recycle className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -115,18 +115,18 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
               </div>
 
               {/* Informações de coleta do usuário */}
-              <div className="bg-brand text-white rounded-2xl p-5 space-y-4">
+              <div className="bg-brand-solid text-white rounded-2xl p-5 space-y-4">
                 <div className="flex justify-between items-start">
                   <span className="text-xs tracking-wider uppercase text-brand-foreground font-semibold">
                     Lixo Eletrônico Recuperado
                   </span>
-                  <Recycle className="w-5 h-5 text-brand-light opacity-80" />
+                  <Recycle className="w-5 h-5 text-brand-pale opacity-80" />
                 </div>
 
                 <div>
                   <div className="text-3xl font-bold">
                     42.8{' '}
-                    <span className="text-lg font-normal text-brand-light">
+                    <span className="text-lg font-normal text-brand-pale">
                       kg salvos
                     </span>
                   </div>
@@ -205,8 +205,8 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
             </div>
           ) : (
             /* Usuário não logado */
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100 text-center space-y-6">
-              <div className="mx-auto w-16 h-16 bg-brand rounded-2xl flex items-center justify-center shadow-inner">
+            <div className="bg-card rounded-3xl p-8 shadow-xl border border-slate-100 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 bg-brand-solid rounded-2xl flex items-center justify-center shadow-inner">
                 <Image
                   src="/icons/ecoponto-logo-icon-white.png"
                   alt=""
@@ -231,7 +231,7 @@ export const HeroSection = ({ isLoggedIn = false }: HeroSectionProps) => {
               <div className="flex flex-col gap-3 pt-2">
                 <Link
                   href={ROUTES.register}
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand text-white font-semibold text-sm hover:bg-brand-dark transition-colors shadow-sm"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-solid text-white font-semibold text-sm hover:bg-brand-solid-hover transition-colors shadow-sm"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Cadastrar-se Gratuitamente</span>
