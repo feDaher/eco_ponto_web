@@ -8,7 +8,6 @@ import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES, mainNav } from '@/lib/routes';
 
-// Considera ativo também as sub-rotas (ex.: /education/baterias ativa "/education")
 function isActiveRoute(pathname: string, href: string) {
   if (href === ROUTES.home) return pathname === ROUTES.home;
   return pathname === href || pathname.startsWith(`${href}/`);
