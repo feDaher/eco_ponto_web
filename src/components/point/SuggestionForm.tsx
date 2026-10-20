@@ -31,7 +31,7 @@ export function SuggestionForm({ pointName }: SuggestionFormProps) {
   return (
     <section
       aria-labelledby="suggestion-heading"
-      className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6"
+      className="rounded-3xl border border-slate-100 bg-card p-5 shadow-sm sm:p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

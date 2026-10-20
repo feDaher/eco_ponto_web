@@ -9,7 +9,7 @@ export function PendingRequestNotice() {
       aria-labelledby="pending-request-heading"
       className="flex flex-col gap-4 rounded-2xl border border-surface-accent bg-surface-strong p-4 sm:flex-row sm:items-start"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-brand">
         <FileClock aria-hidden="true" className="size-5" />
       </span>
 
@@ -21,7 +21,7 @@ export function PendingRequestNotice() {
           >
             {title}
           </h2>
-          <span className="rounded bg-white/70 px-2 py-0.5 text-[11px] font-semibold text-brand">
+          <span className="rounded bg-card/70 px-2 py-0.5 text-[11px] font-semibold text-brand">
             Em análise pelo fiscal ({protocol})
           </span>
         </div>

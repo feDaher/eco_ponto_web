@@ -20,7 +20,7 @@ export default function PointNotFound() {
 
       <Link
         href={ROUTES.map}
-        className="mt-7 inline-flex min-h-10 items-center gap-2 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+        className="mt-7 inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-solid px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-solid-hover"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
         Ver pontos de coleta

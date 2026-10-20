@@ -14,7 +14,7 @@ export function GoogleMapsProvider({
 }) {
   if (!API_KEY || API_KEY === 'coloque_sua_chave_aqui') {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+      <div className="rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 p-6 text-sm text-amber-900 dark:text-amber-200">
         Defina <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> no{' '}
         <code>.env.local</code> e reinicie o <code>npm run dev</code> para ver o
         mapa.

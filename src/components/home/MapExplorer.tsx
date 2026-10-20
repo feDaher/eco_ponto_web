@@ -155,7 +155,7 @@ function MapPreview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 items-stretch gap-6 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm lg:grid-cols-12 lg:p-6">
+      <div className="grid grid-cols-1 items-stretch gap-6 rounded-3xl border border-slate-100 bg-card p-4 shadow-sm lg:grid-cols-12 lg:p-6">
         <div className="relative h-[380px] lg:col-span-8 lg:h-[480px]">
           <PointsMap
             points={points}
@@ -168,7 +168,7 @@ function MapPreview() {
             className="h-full border border-slate-100"
           />
 
-          <div className="pointer-events-none absolute top-3 left-3 inline-flex items-center gap-2 rounded-full border border-slate-100 bg-white/95 px-3.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm backdrop-blur-md">
+          <div className="pointer-events-none absolute top-3 left-3 inline-flex items-center gap-2 rounded-full border border-slate-100 bg-card/95 px-3.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm backdrop-blur-md">
             <span className="h-2 w-2 animate-pulse rounded-full bg-brand" />
             {isLoading
               ? 'Carregando pontos...'
@@ -179,7 +179,7 @@ function MapPreview() {
             {searched || userLocation.location ? (
               <div
                 aria-live="polite"
-                className="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-100 bg-white/95 px-4 py-2 text-xs font-medium text-slate-700 shadow-sm backdrop-blur-md"
+                className="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-100 bg-card/95 px-4 py-2 text-xs font-medium text-slate-700 shadow-sm backdrop-blur-md"
               >
                 <Navigation className="h-3.5 w-3.5 shrink-0 text-brand" />
                 <span className="truncate">
@@ -197,7 +197,7 @@ function MapPreview() {
                 type="button"
                 onClick={handleLocate}
                 disabled={userLocation.isLocating}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-brand shadow-md transition-colors hover:bg-surface-alt disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-xs font-semibold text-brand shadow-md transition-colors hover:bg-surface-alt disabled:opacity-60"
               >
                 {userLocation.isLocating ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -210,7 +210,7 @@ function MapPreview() {
             {userLocation.error && (
               <p
                 role="alert"
-                className="rounded-lg bg-white/95 px-3 py-1 text-[11px] text-red-600 shadow-sm"
+                className="rounded-lg bg-card/95 px-3 py-1 text-[11px] text-red-600 dark:text-red-400 shadow-sm"
               >
                 {userLocation.error}
               </p>
@@ -244,7 +244,7 @@ function MapPreview() {
             ) : loadError ? (
               <p
                 role="alert"
-                className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-700"
+                className="rounded-2xl bg-red-50 dark:bg-red-950/40 p-4 text-center text-sm text-red-700 dark:text-red-300"
               >
                 Não foi possível carregar os pontos de coleta.
               </p>

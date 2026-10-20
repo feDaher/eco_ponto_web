@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AdvancedMarker,
+  ColorScheme,
   InfoWindow,
   Map as GoogleMap,
   useMap,
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import { DEFAULT_CENTER, DEFAULT_ZOOM, getDirectionsUrl } from '@/lib/geo';
 import type { CollectionPoint, LatLng, MapBounds } from '@/types/api';
+import { useTheme } from '@/components/theme/useTheme';
 import { MAP_ID } from './GoogleMapsProvider';
 
 export const POINTS_MAP_ID = 'points-map';
@@ -42,19 +44,30 @@ export function PointsMap({
   className,
 }: PointsMapProps) {
   const selectedPoint = points.find((p) => p.id === selectedId);
+  const theme = useTheme();
+  const [camera, setCamera] = useState({
+    center: DEFAULT_CENTER,
+    zoom: DEFAULT_ZOOM,
+  });
 
   return (
     <div className={cn('relative overflow-hidden rounded-2xl', className)}>
       <GoogleMap
         id={POINTS_MAP_ID}
         mapId={MAP_ID}
-        defaultCenter={DEFAULT_CENTER}
-        defaultZoom={DEFAULT_ZOOM}
+        colorScheme={theme === 'dark' ? ColorScheme.DARK : ColorScheme.LIGHT}
+        defaultCenter={camera.center}
+        defaultZoom={camera.zoom}
         gestureHandling={gestureHandling}
         disableDefaultUI
         zoomControl
         clickableIcons={false}
         onIdle={(e) => {
+          const center = e.map.getCenter();
+          const zoom = e.map.getZoom();
+          if (center && zoom !== undefined) {
+            setCamera({ center: center.toJSON(), zoom });
+          }
           const bounds = e.map.getBounds();
           if (bounds) onIdle?.(bounds.toJSON());
         }}
@@ -208,8 +221,8 @@ function PointMarker({
         className={cn(
           'rounded-full p-2 text-white shadow-lg ring-4 transition-transform',
           isActive
-            ? 'scale-125 bg-brand-dark ring-brand-pale'
-            : 'bg-brand ring-white'
+            ? 'scale-125 bg-brand-deep ring-brand-pale'
+            : 'bg-brand-solid ring-white'
         )}
       >
         <MapPin className="h-4 w-4" />

@@ -38,7 +38,7 @@ export function AcceptedItems({ items, materials }: AcceptedItemsProps) {
                 key={item.name}
                 className="min-w-0 rounded-2xl bg-surface-alt p-4"
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-white text-brand">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-card text-brand">
                   <Icon aria-hidden="true" className="size-5" />
                 </span>
                 <h3 className="mt-3 text-sm font-semibold break-words text-slate-900">

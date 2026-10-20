@@ -20,7 +20,7 @@ export function ComingSoon({ title, description }: ComingSoonProps) {
       </p>
       <Link
         href={ROUTES.home}
-        className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-dark"
+        className="rounded-full bg-brand-solid px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-solid-hover"
       >
         Voltar para o início
       </Link>

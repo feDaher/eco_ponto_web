@@ -3,11 +3,11 @@ import { cn } from '@/lib/utils';
 import type { CategoryVolume } from '@/types/api';
 
 const COLORS = [
-  'bg-brand-dark',
-  'bg-brand',
-  'bg-brand-medium',
-  'bg-brand-muted',
-  'bg-brand-pale',
+  'bg-chart-1',
+  'bg-chart-2',
+  'bg-chart-3',
+  'bg-chart-4',
+  'bg-chart-5',
 ];
 
 const kg = new Intl.NumberFormat('pt-BR');
