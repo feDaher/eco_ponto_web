@@ -10,6 +10,9 @@ const MESSAGES: Record<number, string> = {
   400: 'Confira os dados informados.',
   401: 'E-mail ou senha inválidos.',
   409: 'Este e-mail já está cadastrado.',
+  429: 'Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.',
+  502: 'Serviço de autenticação indisponível. Tente novamente em instantes.',
+  503: 'Serviço de autenticação indisponível. Tente novamente em instantes.',
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

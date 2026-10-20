@@ -99,6 +99,7 @@ export function RegisterForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <AuthField
           id="name"
+          maxLength={191}
           label={role === 'COLLECTOR' ? 'Nome do responsável' : 'Nome completo'}
           autoComplete="name"
           placeholder="João Silva"
@@ -106,6 +107,7 @@ export function RegisterForm() {
         />
         <AuthField
           id="email"
+          maxLength={191}
           label="E-mail"
           type="email"
           autoComplete="email"
@@ -115,6 +117,7 @@ export function RegisterForm() {
         <div className="grid gap-4 sm:grid-cols-2">
           <AuthField
             id="phone"
+            maxLength={20}
             label="Telefone"
             type="tel"
             autoComplete="tel"
@@ -124,6 +127,7 @@ export function RegisterForm() {
           />
           <AuthField
             id="city"
+            maxLength={191}
             label="Cidade"
             autoComplete="address-level2"
             placeholder="Manhuaçu"
@@ -132,6 +136,7 @@ export function RegisterForm() {
         </div>
         <PasswordField
           id="password"
+          maxLength={128}
           label="Senha"
           autoComplete="new-password"
           placeholder="Mínimo de 6 caracteres"
@@ -140,6 +145,7 @@ export function RegisterForm() {
         />
         <PasswordField
           id="confirmPassword"
+          maxLength={128}
           label="Confirmar senha"
           autoComplete="new-password"
           placeholder="Repita a senha"
