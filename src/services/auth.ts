@@ -4,7 +4,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
 const TIMEOUT_MS = 10000;
 const ROLES: UserRole[] = ['CITIZEN', 'COLLECTOR', 'ADMIN'];
 
-export class AuthError extends Error {}
+export class AuthError extends Error {
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'AuthError';
+    this.status = status;
+  }
+}
 
 const MESSAGES: Record<number, string> = {
   400: 'Confira os dados informados.',
@@ -64,7 +72,9 @@ async function post(path: string, body: unknown): Promise<unknown> {
 
   if (!response.ok) {
     throw new AuthError(
-      MESSAGES[response.status] ?? 'Não foi possível concluir. Tente novamente.'
+      MESSAGES[response.status] ??
+        'Não foi possível concluir. Tente novamente.',
+      response.status
     );
   }
 

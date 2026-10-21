@@ -95,6 +95,7 @@ Custos: cota grátis de 10.000/mês por SKU (Dynamic Maps, Autocomplete Requests
 - Perfis da API: `CITIZEN`, `COLLECTOR`, `ADMIN` (`src/types/user.ts`). Cadastro só como `CITIZEN`/`COLLECTOR`; admin vem do seed da API.
 - Sessão (`idToken`, `expiresAt`, `user`) em `localStorage['ecoponto-session']` (`src/lib/session.ts`), lida com `useSyncExternalStore` no `AuthContext` (servidor = `loading`). Expira junto com o token do Firebase (1 h); não há refresh ainda.
 - `RequireRole` protege `/admin` (ADMIN), `/collector` (COLLECTOR, ADMIN) e `/account` (qualquer logado), redirecionando para `/login?next=` ou para `HOME_BY_ROLE`. É só UX: quem garante o acesso é a API.
+- Validação: React Hook Form + Zod (`@hookform/resolvers` **v5**, a v6 dá conflito de peer). Schemas e mensagens em `src/lib/authSchemas.ts`; `mode: 'onTouched'`; `noValidate` no form. `AuthField`/`PasswordField` recebem `error` (borda vermelha, `aria-invalid`, mensagem com ícone) e `hint`. Erros da API: `AuthError.status` (401 marca a senha, 409 marca o e-mail); o resto vai em `root.server`. Cadastro exige senha com 8+ caracteres, letra e número.
 - Contas de teste (seed da API): `admin@`, `coletor@`, `cidadao@ecoponto.dev`, senha `Ecoponto@123`.
 
 ## Pendências
