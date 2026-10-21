@@ -122,6 +122,20 @@ export type BinLevel = {
   fillPercent: number;
 };
 
+export type WasteCategory = {
+  id: string;
+  name: string;
+  active: boolean;
+};
+
+export type OutdatedPoint = Pick<
+  PointDetails,
+  'id' | 'slug' | 'name' | 'address' | 'neighborhood' | 'materials' | 'schedule'
+> & {
+  updatedAt: string;
+  days: number | null;
+};
+
 export type DashboardStats = {
   period: string;
   activePoints: number;

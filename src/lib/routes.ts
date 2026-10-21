@@ -13,6 +13,7 @@ export const ROUTES = {
   admin: '/admin',
   adminPoints: '/admin/points',
   adminUsers: '/admin/users',
+  adminCategories: '/admin/categories',
   collector: '/collector',
   point: (slug: string) => `/points/${slug}`,
 } as const;

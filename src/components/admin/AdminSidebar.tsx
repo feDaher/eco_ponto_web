@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   MapPinned,
+  Tags,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -20,6 +21,11 @@ type AdminNavItem = {
 const adminNav: AdminNavItem[] = [
   { label: 'Visão geral', href: ROUTES.admin, icon: LayoutDashboard },
   { label: 'Pontos de coleta', href: ROUTES.adminPoints, icon: MapPinned },
+  {
+    label: 'Categorias e horários',
+    href: ROUTES.adminCategories,
+    icon: Tags,
+  },
   { label: 'Usuários', href: ROUTES.adminUsers, icon: Users },
 ];
 

@@ -1,7 +1,13 @@
 import { mockPointDetails } from '@/data/mockPointDetails';
 import { mockPoints } from '@/data/mockPoints';
 import { isInBounds } from '@/lib/geo';
-import type { CollectionPoint, PointDetails, PointFilters } from '@/types/api';
+import { daysSince, isOutdated } from '@/lib/points';
+import type {
+  CollectionPoint,
+  OutdatedPoint,
+  PointDetails,
+  PointFilters,
+} from '@/types/api';
 
 function normalize(text: string) {
   return text
@@ -39,4 +45,30 @@ export async function getPointBySlug(
   const details = point && mockPointDetails[point.id];
 
   return point && details ? { ...point, ...details } : null;
+}
+
+export async function getOutdatedPoints(
+  now = Date.now()
+): Promise<OutdatedPoint[]> {
+  return mockPoints.flatMap((point) => {
+    const details =
+      point.status === 'approved' ? mockPointDetails[point.id] : undefined;
+    if (!details || !isOutdated(details.verification.updatedAt, now)) {
+      return [];
+    }
+
+    return [
+      {
+        id: point.id,
+        slug: point.slug,
+        name: point.name,
+        address: point.address,
+        neighborhood: point.neighborhood,
+        materials: point.materials,
+        schedule: details.schedule,
+        updatedAt: details.verification.updatedAt,
+        days: daysSince(details.verification.updatedAt, now),
+      },
+    ];
+  });
 }
