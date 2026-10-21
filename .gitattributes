@@ -1,0 +1,8 @@
+# Força LF no repositório e na cópia de trabalho (evita aviso do Prettier no Windows)
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.webp binary

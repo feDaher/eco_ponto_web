@@ -1,64 +1,84 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
-import { Manrope } from 'next/font/google';
 import { notFound } from 'next/navigation';
+import { GuideCategoryNav } from '@/components/education/GuideCategoryNav';
+import { GuideCta } from '@/components/education/GuideCta';
+import { GuideFaq } from '@/components/education/GuideFaq';
+import { GuideHeader } from '@/components/education/GuideHeader';
+import { GuideImpact } from '@/components/education/GuideImpact';
+import { GuideLocations } from '@/components/education/GuideLocations';
+import { GuideSorting } from '@/components/education/GuideSorting';
+import { GuideSteps } from '@/components/education/GuideSteps';
+import { getPoints } from '@/services/api';
+import {
+  getGuideBySlug,
+  getGuideCategories,
+  getGuideSlugs,
+} from '@/services/education';
 
-import { CategoryStrip } from '@/components/educacao/faixa-categorias';
-import { AcceptedVsNotAccepted } from '@/components/educacao/guia/aceito-vs-nao-aceito';
-import { AccreditedLocations } from '@/components/educacao/guia/locais-credenciados';
-import { EnvironmentalImpact } from '@/components/educacao/guia/impacto-ambiental';
-import { EsgCta } from '@/components/educacao/guia/cta-esg';
-import { GuideFaq } from '@/components/educacao/guia/faq-guia';
-import { GuideHeader } from '@/components/educacao/guia/cabecalho-guia';
-import { StepByStep } from '@/components/educacao/guia/passo-a-passo';
-import { findGuideBySlug } from '@/utils/guias';
+const getGuide = cache(getGuideBySlug);
 
-const manrope = Manrope({
-  subsets: ['latin'],
-  variable: '--font-manrope',
-});
+type EducationCategoryPageProps = {
+  params: Promise<{ category: string }>;
+};
+
+export async function generateStaticParams() {
+  const slugs = await getGuideSlugs();
+  return slugs.map((category) => ({ category }));
+}
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ category: string }>;
-}): Promise<Metadata> {
+}: EducationCategoryPageProps): Promise<Metadata> {
   const { category } = await params;
-  const guide = await findGuideBySlug(category);
+  const guide = await getGuide(category);
 
   if (!guide) {
-    return { title: 'Guia não encontrado | EcoPonto' };
+    return {
+      title: 'Guia não encontrado | EcoPonto',
+      robots: { index: false },
+    };
   }
 
+  const title = `${guide.title} | EcoPonto`;
+
   return {
-    title: `${guide.tituloH1} | EcoPonto`,
-    description: guide.subtitulo,
+    title,
+    description: guide.description,
+    openGraph: {
+      title,
+      description: guide.description,
+      type: 'article',
+      locale: 'pt_BR',
+    },
   };
 }
 
-export default async function Page({
+export default async function EducationCategoryPage({
   params,
-}: {
-  params: Promise<{ category: string }>;
-}) {
+}: EducationCategoryPageProps) {
   const { category } = await params;
-  const guide = await findGuideBySlug(category);
+  const guide = await getGuide(category);
 
-  if (!guide) {
-    notFound();
-  }
+  if (!guide) notFound();
+
+  const [categories, points] = await Promise.all([
+    getGuideCategories(),
+    getPoints({ materials: [guide.material] }),
+  ]);
 
   return (
-    <div
-      className={`${manrope.variable} space-y-2 bg-[#F8F9FF] [font-family:var(--font-manrope)]`}
-    >
-      <GuideHeader guide={guide} />
-      <CategoryStrip categories={guide.categorias} activeSlug={guide.slug} />
-      <StepByStep steps={guide.passos} />
-      <AcceptedVsNotAccepted sorting={guide.triagem} />
-      <EnvironmentalImpact impact={guide.impacto} />
-      <AccreditedLocations locations={guide.locais} />
-      <GuideFaq items={guide.faq} />
-      <EsgCta cta={guide.ctaEsg} />
+    <div className="bg-surface">
+      <div className="container mx-auto space-y-12 px-4 py-8 md:py-12">
+        <GuideCategoryNav categories={categories} activeSlug={guide.slug} />
+        <GuideHeader guide={guide} pointCount={points.length} />
+        <GuideSteps steps={guide.steps} />
+        <GuideSorting sorting={guide.sorting} />
+        <GuideImpact impact={guide.impact} />
+        <GuideLocations heading={guide.locations} points={points} />
+        <GuideFaq faq={guide.faq} />
+        <GuideCta />
+      </div>
     </div>
   );
 }
