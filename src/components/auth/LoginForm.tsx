@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { loginSchema, type LoginValues } from '@/lib/authSchemas';
 import { HOME_BY_ROLE, ROUTES, safeRedirect } from '@/lib/routes';
 import { AuthError } from '@/services/auth';
 import { AuthField, FormError, PasswordField, SUBMIT_CLASS } from './AuthField';
@@ -13,8 +16,16 @@ export function LoginForm() {
   const { status, user, login } = useAuth();
   const router = useRouter();
   const next = safeRedirect(useSearchParams().get('next'));
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onTouched',
+    defaultValues: { email: '', password: '' },
+  });
 
   useEffect(() => {
     if (status === 'authenticated' && user) {
@@ -22,20 +33,22 @@ export function LoginForm() {
     }
   }, [status, user, next, router]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-
-    setError(null);
-    setPending(true);
+  const onSubmit = async ({ email, password }: LoginValues) => {
     try {
-      await login(String(data.get('email')), String(data.get('password')));
+      await login(email, password);
     } catch (err) {
-      setError(
-        err instanceof AuthError ? err.message : 'Erro inesperado ao entrar.'
-      );
-    } finally {
-      setPending(false);
+      if (err instanceof AuthError && err.status === 401) {
+        setError('password', {
+          type: 'server',
+          message:
+            'E-mail ou senha incorretos. Confira os dados e tente novamente.',
+        });
+        return;
+      }
+      setError('root.server', {
+        message:
+          err instanceof AuthError ? err.message : 'Erro inesperado ao entrar.',
+      });
     }
   };
 
@@ -48,33 +61,39 @@ export function LoginForm() {
         Insira seus dados para acessar seu painel.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="mt-6 space-y-4"
+      >
         <AuthField
           id="email"
-          maxLength={191}
           label="E-mail"
           type="email"
           autoComplete="email"
+          inputMode="email"
           placeholder="nome@email.com"
-          required
+          maxLength={191}
+          error={errors.email?.message}
+          {...register('email')}
         />
         <PasswordField
           id="password"
-          maxLength={128}
           label="Senha"
           autoComplete="current-password"
           placeholder="••••••••"
-          minLength={6}
-          required
+          maxLength={128}
+          error={errors.password?.message}
+          {...register('password')}
         />
 
-        <FormError message={error} />
+        <FormError message={errors.root?.server?.message} />
 
-        <button type="submit" disabled={pending} className={SUBMIT_CLASS}>
-          {pending && (
+        <button type="submit" disabled={isSubmitting} className={SUBMIT_CLASS}>
+          {isSubmitting && (
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />
           )}
-          {pending ? 'Entrando...' : 'Entrar no painel'}
+          {isSubmitting ? 'Entrando...' : 'Entrar no painel'}
         </button>
       </form>
 

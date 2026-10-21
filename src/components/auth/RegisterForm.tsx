@@ -1,17 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import {
+  PASSWORD_RULES,
+  formatPhone,
+  registerSchema,
+  type RegisterValues,
+} from '@/lib/authSchemas';
 import { HOME_BY_ROLE, ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { AuthError } from '@/services/auth';
-import type { RegisterInput } from '@/types/user';
-import { AuthField, FormError, PasswordField, SUBMIT_CLASS } from './AuthField';
+import {
+  AuthField,
+  FieldMessage,
+  FormError,
+  PasswordChecklist,
+  PasswordField,
+  SUBMIT_CLASS,
+} from './AuthField';
 
-type AccountRole = RegisterInput['role'];
+type AccountRole = RegisterValues['role'];
 
 const ACCOUNT_TYPES: { role: AccountRole; label: string }[] = [
   { role: 'CITIZEN', label: 'Cidadão' },
@@ -19,11 +33,33 @@ const ACCOUNT_TYPES: { role: AccountRole; label: string }[] = [
 ];
 
 export function RegisterForm() {
-  const { status, user, register } = useAuth();
+  const { status, user, register: registerAccount } = useAuth();
   const router = useRouter();
-  const [role, setRole] = useState<AccountRole>('CITIZEN');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    setError,
+    trigger,
+    formState: { errors, isSubmitting, touchedFields },
+  } = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      role: 'CITIZEN',
+      name: '',
+      email: '',
+      phone: '',
+      city: '',
+      password: '',
+      confirmPassword: '',
+      terms: false,
+    },
+  });
+  const role = useWatch({ control, name: 'role' });
+  const password = useWatch({ control, name: 'password' });
+  const phoneField = register('phone');
 
   useEffect(() => {
     if (status === 'authenticated' && user) {
@@ -31,35 +67,30 @@ export function RegisterForm() {
     }
   }, [status, user, router]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const field = (name: string) => String(data.get(name) ?? '').trim();
+  const onSubmit = async (values: RegisterValues) => {
+    const { role, name, email, phone, city, password } = values;
 
-    if (data.get('password') !== data.get('confirmPassword')) {
-      setError('As senhas não coincidem.');
-      return;
-    }
-
-    setError(null);
-    setPending(true);
     try {
-      await register({
-        name: field('name'),
-        email: field('email'),
-        phone: field('phone'),
-        city: field('city'),
-        password: String(data.get('password')),
-        role,
-      });
+      await registerAccount({ role, name, email, phone, city, password });
     } catch (err) {
-      setError(
-        err instanceof AuthError
-          ? err.message
-          : 'Erro inesperado ao criar a conta.'
-      );
-    } finally {
-      setPending(false);
+      if (err instanceof AuthError && err.status === 409) {
+        setError(
+          'email',
+          {
+            type: 'server',
+            message:
+              'Este e-mail já está cadastrado. Entre com ele ou use outro e-mail.',
+          },
+          { shouldFocus: true }
+        );
+        return;
+      }
+      setError('root.server', {
+        message:
+          err instanceof AuthError
+            ? err.message
+            : 'Erro inesperado ao criar a conta.',
+      });
     }
   };
 
@@ -83,7 +114,7 @@ export function RegisterForm() {
             key={option.role}
             type="button"
             aria-pressed={role === option.role}
-            onClick={() => setRole(option.role)}
+            onClick={() => setValue('role', option.role)}
             className={cn(
               'flex-1 cursor-pointer rounded-lg py-2 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-brand',
               role === option.role
@@ -96,96 +127,127 @@ export function RegisterForm() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="mt-6 space-y-4"
+      >
         <AuthField
           id="name"
-          maxLength={191}
           label={role === 'COLLECTOR' ? 'Nome do responsável' : 'Nome completo'}
           autoComplete="name"
           placeholder="João Silva"
-          required
+          maxLength={191}
+          error={errors.name?.message}
+          {...register('name')}
         />
         <AuthField
           id="email"
-          maxLength={191}
           label="E-mail"
           type="email"
+          inputMode="email"
           autoComplete="email"
           placeholder="nome@email.com"
-          required
+          maxLength={191}
+          error={errors.email?.message}
+          {...register('email')}
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <AuthField
             id="phone"
-            maxLength={20}
             label="Telefone"
             type="tel"
-            autoComplete="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
             placeholder="(33) 99999-9999"
-            minLength={8}
-            required
+            maxLength={15}
+            error={errors.phone?.message}
+            {...phoneField}
+            onChange={(event) => {
+              event.target.value = formatPhone(event.target.value);
+              return phoneField.onChange(event);
+            }}
           />
           <AuthField
             id="city"
-            maxLength={191}
             label="Cidade"
             autoComplete="address-level2"
             placeholder="Manhuaçu"
-            required
+            maxLength={191}
+            error={errors.city?.message}
+            {...register('city')}
           />
         </div>
         <PasswordField
           id="password"
-          maxLength={128}
           label="Senha"
           autoComplete="new-password"
-          placeholder="Mínimo de 6 caracteres"
-          minLength={6}
-          required
+          placeholder="Crie uma senha"
+          maxLength={128}
+          error={errors.password?.message}
+          hint={<PasswordChecklist value={password} rules={PASSWORD_RULES} />}
+          {...register('password', {
+            onChange: () => {
+              if (touchedFields.confirmPassword) {
+                void trigger('confirmPassword');
+              }
+            },
+          })}
         />
         <PasswordField
           id="confirmPassword"
-          maxLength={128}
           label="Confirmar senha"
           autoComplete="new-password"
           placeholder="Repita a senha"
-          minLength={6}
-          required
+          maxLength={128}
+          error={errors.confirmPassword?.message}
+          {...register('confirmPassword')}
         />
 
-        <label className="flex items-start gap-2.5 text-xs leading-snug text-slate-500">
-          <input
-            type="checkbox"
-            required
-            className="mt-0.5 size-4 shrink-0 cursor-pointer accent-brand-solid"
-          />
-          <span>
-            Eu concordo com os{' '}
-            <Link
-              href="/termos"
-              className="font-semibold text-slate-700 underline"
-            >
-              Termos de Uso
-            </Link>{' '}
-            e a{' '}
-            <Link
-              href="/privacidade"
-              className="font-semibold text-slate-700 underline"
-            >
-              Política de Privacidade
-            </Link>
-            .
-          </span>
-        </label>
+        <div>
+          <label className="flex items-start gap-2.5 text-xs leading-snug text-slate-500">
+            <input
+              type="checkbox"
+              aria-invalid={errors.terms ? true : undefined}
+              aria-describedby={errors.terms ? 'terms-error' : undefined}
+              className={cn(
+                'mt-0.5 size-4 shrink-0 cursor-pointer accent-brand-solid',
+                errors.terms &&
+                  'rounded outline-2 outline-offset-1 outline-red-500'
+              )}
+              {...register('terms')}
+            />
+            <span>
+              Eu concordo com os{' '}
+              <Link
+                href="/termos"
+                className="font-semibold text-slate-700 underline"
+              >
+                Termos de Uso
+              </Link>{' '}
+              e a{' '}
+              <Link
+                href="/privacidade"
+                className="font-semibold text-slate-700 underline"
+              >
+                Política de Privacidade
+              </Link>
+              .
+            </span>
+          </label>
+          <FieldMessage id="terms" error={errors.terms?.message} />
+        </div>
 
-        <FormError message={error} />
+        <FormError message={errors.root?.server?.message} />
 
-        <button type="submit" disabled={pending} className={SUBMIT_CLASS}>
-          {pending && (
+        <button type="submit" disabled={isSubmitting} className={SUBMIT_CLASS}>
+          {isSubmitting && (
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />
           )}
-          {pending ? 'Criando conta...' : 'Criar conta'}
-          {!pending && <ArrowRight aria-hidden="true" className="size-4" />}
+          {isSubmitting ? 'Criando conta...' : 'Criar conta'}
+          {!isSubmitting && (
+            <ArrowRight aria-hidden="true" className="size-4" />
+          )}
         </button>
       </form>
 
