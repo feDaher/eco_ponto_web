@@ -14,9 +14,18 @@ export async function getGuideBySlug(
 
 export async function getGuideCategories(): Promise<GuideCategory[]> {
   return Promise.all(
-    mockGuides.map(async ({ slug, label, icon, material }) => {
-      const points = await getPoints({ materials: [material] });
-      return { slug, label, icon, pointCount: points.length };
-    })
+    mockGuides.map(
+      async ({ slug, label, icon, description, readingMinutes, material }) => {
+        const points = await getPoints({ materials: [material] });
+        return {
+          slug,
+          label,
+          icon,
+          description,
+          readingMinutes,
+          pointCount: points.length,
+        };
+      }
+    )
   );
 }

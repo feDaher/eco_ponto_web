@@ -98,5 +98,7 @@ export type GuideCategory = {
   slug: string;
   label: string;
   icon: LucideIcon;
+  description: string;
+  readingMinutes: number;
   pointCount: number;
 };
