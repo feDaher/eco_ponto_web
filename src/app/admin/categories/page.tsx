@@ -1,138 +1,81 @@
-'use client';
+import { connection } from 'next/server';
+import { ClockAlert, Tags } from 'lucide-react';
+import { AlertPointsTable } from '@/components/admin/AlertPointsTable';
+import { CategoryTable } from '@/components/admin/CategoryTable';
+import { SectionCard } from '@/components/point/SectionCard';
+import { StatCard } from '@/components/ui/StatCard';
+import { OUTDATED_AFTER_DAYS } from '@/lib/points';
+import { getOutdatedPoints } from '@/services/api';
+import {
+  getActivePointCounts,
+  getWasteCategories,
+} from '@/services/categories';
 
-import { useState } from 'react';
+export default async function AdminCategoriesPage() {
+  await connection();
 
-import { Download, Plus, Archive, ClockAlert, History } from 'lucide-react';
-
-import MetricCard from '@/components/admin/MetricCard';
-import CategoryTable from '@/components/admin/CategoryTable';
-import AlertPointsTable from '@/components/admin/AlertPointsTable';
-import NewCategoryModal from '@/components/admin/NewCategoryModal';
-import AuditTable from '@/components/admin/AuditTable';
-
-export default function CategoriasPage() {
-  const [aba, setAba] = useState(1);
-  const [modalAberto, setModalAberto] = useState(false);
+  const [categories, pointCounts, outdatedPoints] = await Promise.all([
+    getWasteCategories(),
+    getActivePointCounts(),
+    getOutdatedPoints(),
+  ]);
+  const activeCount = categories.filter((category) => category.active).length;
 
   return (
-    <div className="pt-1 px-12 bg-[#F8F9FF]">
-      <div className="flex items-center gap-3 mb-2">
-        <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-800">
-          ● Painel de Configuração Operacional
-        </span>
+    <div className="space-y-6">
+      <header className="space-y-1">
+        <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-light px-2.5 py-1 text-xs font-semibold text-brand-dark">
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-brand" />
+          Configuração operacional
+        </p>
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+          Categorias e horários
+        </h1>
+        <p className="text-sm text-slate-600">
+          Gerencie as categorias de resíduo e atualize os horários dos pontos
+          sem confirmação há mais de {OUTDATED_AFTER_DAYS} dias.
+        </p>
+      </header>
 
-        <span className="text-gray-400">•</span>
-      </div>
-
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="max-w-xl text-3xl font-semibold leading-tight text-gray-900">
-            Gestão de Categorias e Horários de Coleta
-          </h1>
-
-          <p className="mt-2 max-w-xl text-base leading-snug text-gray-600">
-            Administre as categorias de resíduos eletrônicos homologados,
-            diretrizes de destinação licenciada e atualize a malha horária dos
-            ecopontos com sinalização de desatualização cadastral.
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-medium text-gray-800 shadow-sm"
-          >
-            <Download size={17} />
-            Exportar Parâmetros (CSV/PDF)
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setModalAberto(true)}
-            className="flex items-center gap-2 rounded-xl bg-[#36654A] px-4 py-3 text-sm font-medium text-white"
-          >
-            <Plus size={18} />
-            Nova Categoria de Resíduo
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-8 grid grid-cols-4 gap-5">
-        <MetricCard tipo={1} />
-        <MetricCard tipo={2} />
-        <MetricCard tipo={3} />
-        <MetricCard tipo={4} />
-      </div>
-
-      <div className="mt-5 flex justify-center gap-5">
-        <button
-          type="button"
-          onClick={() => setAba(1)}
-          className={`inline-flex w-fit items-center gap-3 rounded-2xl px-5 py-1 ${
-            aba === 1
-              ? 'bg-green-800 text-white'
-              : 'bg-white text-gray-700 shadow-sm'
-          }`}
-        >
-          <Archive size={21} />
-          <span className="text-lg font-medium">
-            Categorias de Resíduos (CRUD)
-          </span>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              aba === 1 ? 'bg-white/20' : 'bg-gray-100'
-            }`}
-          >
-            8
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setAba(2)}
-          className={`inline-flex w-fit gap-3 rounded-2xl px-5 py-3 text-left ${
-            aba === 2
-              ? 'bg-green-800 text-white'
-              : 'bg-white text-gray-700 shadow-sm'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <ClockAlert size={20} />
-            <span className="text-lg font-medium">
-              Pontos com Horários em Alerta
+      <div className="grid gap-4 sm:grid-cols-2">
+        <StatCard label="Categorias ativas" icon={Tags}>
+          <p className="text-3xl font-bold text-slate-900">
+            {activeCount}
+            <span className="ml-1.5 text-sm font-medium text-slate-500">
+              de {categories.length}
             </span>
-          </div>
-          <span
-            className={`rounded-full px-4 py-1 text-sm font-semibold ${
-              aba === 2 ? 'bg-white/20 text-white' : 'bg-red-100 text-red-700'
-            }`}
-          >
-            4 pendentes
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setAba(3)}
-          className={`flex w-fit items-center gap-2 rounded-2xl px-5 py-3 text-left ${
-            aba === 3
-              ? 'bg-green-800 text-white'
-              : 'bg-white text-gray-700 shadow-sm'
-          }`}
-        >
-          <History size={18} />
-          <span className="text-lg font-medium">Histórico de Auditoria</span>
-        </button>
+          </p>
+        </StatCard>
+        <StatCard label="Horários desatualizados" icon={ClockAlert}>
+          <p className="text-3xl font-bold text-slate-900">
+            {outdatedPoints.length}
+            <span className="ml-1.5 text-sm font-medium text-slate-500">
+              {outdatedPoints.length === 1 ? 'ponto' : 'pontos'}
+            </span>
+          </p>
+        </StatCard>
       </div>
 
-      {aba === 1 && <CategoryTable />}
+      <SectionCard
+        id="categories"
+        title="Categorias de resíduo"
+        description="Cadastre, renomeie ou desative as categorias aceitas pelos pontos."
+        icon={Tags}
+      >
+        <CategoryTable
+          initialCategories={categories}
+          pointCounts={pointCounts}
+        />
+      </SectionCard>
 
-      {aba === 2 && <AlertPointsTable />}
-
-      {aba === 3 && <AuditTable />}
-      {modalAberto && (
-        <NewCategoryModal onClose={() => setModalAberto(false)} />
-      )}
+      <SectionCard
+        id="outdated-hours"
+        title="Pontos com horário desatualizado"
+        description={`Pontos sem confirmação de horário há mais de ${OUTDATED_AFTER_DAYS} dias.`}
+        icon={ClockAlert}
+      >
+        <AlertPointsTable initialPoints={outdatedPoints} />
+      </SectionCard>
     </div>
   );
 }
