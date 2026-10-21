@@ -24,7 +24,7 @@ const educationArticles = [
     description:
       'Transforme teclados mecânicos antigos em pingentes ecológicos, abotoaduras modernas e chaveiros industriais únicos.',
     linkText: 'Ler passo a passo',
-    href: `${ROUTES.education}/diy`,
+    href: ROUTES.education,
   },
   {
     id: 2,
@@ -38,7 +38,7 @@ const educationArticles = [
     description:
       'Estilo industrial usando espelhos e pratos de HDs antigos para decorar salas ou escritórios sustentáveis.',
     linkText: 'Ver tutorial completo',
-    href: `${ROUTES.education}/conhecimento`,
+    href: ROUTES.education,
   },
   {
     id: 3,
@@ -53,7 +53,7 @@ const educationArticles = [
     description:
       'Como isolar contatos elétricos com fita adesiva e prevenir combustão espontânea antes de levar ao ecoponto.',
     linkText: 'Aprender precauções',
-    href: `${ROUTES.education}/conhecimento`,
+    href: ROUTES.educationCategory('baterias-pilhas'),
   },
 ];
 

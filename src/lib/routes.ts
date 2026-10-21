@@ -6,6 +6,7 @@ export const ROUTES = {
   home: '/',
   map: '/map',
   education: '/education',
+  educationCategory: (slug: string) => `/education/${slug}`,
   account: '/account',
   login: '/login',
   register: '/register',
@@ -21,6 +22,14 @@ export const HOME_SECTIONS = {
   howItWorks: 'how-it-works',
   map: 'map',
   education: 'education',
+} as const;
+
+export const GUIDE_SECTIONS = {
+  steps: 'steps',
+  sorting: 'sorting',
+  impact: 'impact',
+  locations: 'locations',
+  faq: 'faq',
 } as const;
 
 export const COLLECTOR_SECTIONS = {
