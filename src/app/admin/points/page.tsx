@@ -1,5 +1,5 @@
-import { ComingSoon } from '@/components/layout/ComingSoon';
+import PointsModerationPage from '@/components/admin/point-moderation/point-moderation-page';
 
-export default function AdminPointsPage() {
-  return <ComingSoon title="Aprovação de Pontos de Coleta" />;
+export default function Page() {
+  return <PointsModerationPage />;
 }
