@@ -7,6 +7,7 @@ import {
   MapPinned,
   Tags,
   Users,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
@@ -21,12 +22,9 @@ type AdminNavItem = {
 const adminNav: AdminNavItem[] = [
   { label: 'Visão geral', href: ROUTES.admin, icon: LayoutDashboard },
   { label: 'Pontos de coleta', href: ROUTES.adminPoints, icon: MapPinned },
-  {
-    label: 'Categorias e horários',
-    href: ROUTES.adminCategories,
-    icon: Tags,
-  },
+  { label: 'Categorias e horários', href: ROUTES.adminCategories, icon: Tags },
   { label: 'Usuários', href: ROUTES.adminUsers, icon: Users },
+  { label: 'Auditoria', href: ROUTES.adminAudit, icon: ClipboardList },
 ];
 
 export function AdminSidebar() {
