@@ -1,7 +1,7 @@
 export type Material =
   'pilhas' | 'eletronicos' | 'plastico' | 'papel' | 'vidro' | 'metal' | 'oleo';
 
-export type PointStatus = 'pending' | 'approved' | 'rejected';
+export type PointStatus = 'pending' | 'approved' | 'rejected' | 'removed';
 
 export type LatLng = {
   lat: number;
@@ -149,4 +149,51 @@ export type DashboardStats = {
   treesEquivalent: number;
   categories: CategoryVolume[];
   bins: BinLevel[];
+};
+
+export type RequestCategory = 'community' | 'specialized' | 'retail';
+
+export type Attachment = {
+  name: string;
+  description: string;
+  kind: 'document' | 'photo';
+};
+
+export type PointRequest = CollectionPoint & {
+  protocol: string;
+  category: RequestCategory;
+  requester: string;
+  cnpj: string;
+  contact: string;
+  structure: string;
+  capacity: string;
+  submittedAt: string;
+  photoCaption: string;
+  attachments: Attachment[];
+};
+
+export type ModerationDecision = 'approved' | 'rejected' | 'removed';
+
+export type AuditEntry = {
+  id: string;
+  protocol: string;
+  establishment: string;
+  city: string;
+  decision: ModerationDecision;
+  analyst: string;
+  decidedAt: string;
+  reason?: string;
+};
+
+export type RegionMetrics = {
+  approved: number;
+  rejected: number;
+  previousApprovalRate: number;
+};
+
+export type ModerationData = {
+  regions: string[];
+  requests: PointRequest[];
+  audit: AuditEntry[];
+  metrics: Record<string, RegionMetrics>;
 };
