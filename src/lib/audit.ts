@@ -26,7 +26,6 @@ type ParamsReader = { get(name: string): string | null };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const BRASILIA_OFFSET = '-03:00';
 const TIME_ZONE = 'America/Sao_Paulo';
-const DAY_MS = 86_400_000;
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: TIME_ZONE,
@@ -88,20 +87,6 @@ export function countActiveFilters(filters: AuditFiltersValue): number {
     (filters.userId ? 1 : 0) +
     (filters.from || filters.to ? 1 : 0)
   );
-}
-
-export function validateFilters(filters: AuditFiltersValue): string | null {
-  if (filters.from && filters.to) {
-    const days =
-      (Date.parse(`${filters.to}T00:00:00Z`) -
-        Date.parse(`${filters.from}T00:00:00Z`)) /
-      DAY_MS;
-    if (days < 0) return 'A data inicial não pode ser depois da data final.';
-    if (days + 1 > MAX_PERIOD_DAYS) {
-      return `O período pode ter no máximo ${MAX_PERIOD_DAYS} dias.`;
-    }
-  }
-  return null;
 }
 
 export function toQuery(
