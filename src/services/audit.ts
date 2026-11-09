@@ -1,9 +1,16 @@
-import { MOCK_AUDIT_LOGS } from './mock-data';
-import {
-  AuditApiError,
-  type AuditLogsQuery,
-  type AuditLogsResponse,
-} from '@/types/audit';
+import { mockAuditLogs } from '@/data/mockAuditLogs';
+import { MAX_PERIOD_DAYS } from '@/lib/audit';
+import type { AuditLogsQuery, AuditLogsResponse } from '@/types/audit';
+
+export class AuditApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'AuditApiError';
+    this.status = status;
+  }
+}
 
 const MOCK_SETTINGS: {
   delayMs: number;
@@ -15,47 +22,29 @@ const MOCK_SETTINGS: {
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
-const MAX_PERIOD_MS = 90 * 86_400_000;
+const DAY_MS = 86_400_000;
 
-function normalize(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase();
-}
 export async function fetchAuditLogs(
   query: AuditLogsQuery
 ): Promise<AuditLogsResponse> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_SETTINGS.delayMs));
 
   if (MOCK_SETTINGS.forceError) {
-    throw new AuditApiError(
-      MOCK_SETTINGS.forceError,
-      'Erro simulado pelo mock'
-    );
+    throw new AuditApiError(MOCK_SETTINGS.forceError, 'Erro simulado no mock');
   }
 
   const { action, userId, from, to, cursor } = query;
 
   if (from && to) {
     const span = Date.parse(to) - Date.parse(from);
-    if (span < 0 || span > MAX_PERIOD_MS) {
+    if (span < 0 || span > MAX_PERIOD_DAYS * DAY_MS) {
       throw new AuditApiError(400, 'Período inválido');
     }
   }
 
-  let list = MOCK_AUDIT_LOGS;
+  let list = mockAuditLogs;
   if (action) list = list.filter((item) => item.action === action);
-  if (userId) {
-    const term = normalize(userId);
-    list = list.filter(
-      (item) =>
-        item.user !== null &&
-        (item.user.id === userId ||
-          normalize(item.user.name).includes(term) ||
-          normalize(item.user.email).includes(term))
-    );
-  }
+  if (userId) list = list.filter((item) => item.user?.id === userId);
   if (from) list = list.filter((item) => item.createdAt >= from);
   if (to) list = list.filter((item) => item.createdAt <= to);
 

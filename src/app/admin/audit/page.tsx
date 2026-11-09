@@ -6,7 +6,8 @@ import { AuditTable } from '@/components/admin/AuditTable';
 import { SectionCard } from '@/components/point/SectionCard';
 
 export const metadata: Metadata = {
-  title: 'Trilha de auditoria | EcoPonto Admin',
+  title: 'Trilha de auditoria | EcoPonto Digital',
+  robots: { index: false },
 };
 export default function AuditoriaPage() {
   return (

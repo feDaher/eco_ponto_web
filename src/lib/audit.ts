@@ -2,13 +2,17 @@ import type { AuditAction, AuditLogsQuery } from '@/types/audit';
 
 export const MAX_PERIOD_DAYS = 90;
 
-/** Valores dos filtros como ficam na URL. `from` e `to` são datas "YYYY-MM-DD". */
-export interface AuditFiltersValue {
+export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
+  ACCESS_DENIED: 'Acesso negado',
+  RESOURCE_CHANGED: 'Alteração',
+};
+
+export type AuditFiltersValue = {
   action: AuditAction | '';
   userId: string;
   from: string;
   to: string;
-}
+};
 
 export const EMPTY_FILTERS: AuditFiltersValue = {
   action: '',
@@ -20,8 +24,24 @@ export const EMPTY_FILTERS: AuditFiltersValue = {
 type ParamsReader = { get(name: string): string | null };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-// O Brasil não tem mais horário de verão, então Brasília é sempre UTC-3.
 const BRASILIA_OFFSET = '-03:00';
+const TIME_ZONE = 'America/Sao_Paulo';
+const DAY_MS = 86_400_000;
+
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: TIME_ZONE,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+const timeFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: TIME_ZONE,
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false,
+});
 
 function isAction(value: string | null): value is AuditAction {
   return value === 'ACCESS_DENIED' || value === 'RESOURCE_CHANGED';
@@ -32,7 +52,6 @@ function validDate(value: string | null): string {
   return Number.isNaN(Date.parse(`${value}T00:00:00Z`)) ? '' : value;
 }
 
-/** Lê os filtros da URL, ignorando valores inválidos. */
 export function parseFilters(params: ParamsReader): AuditFiltersValue {
   const action = params.get('action');
   return {
@@ -54,7 +73,15 @@ export function filtersToSearchParams(
   return params;
 }
 
-/** Quantidade de filtros ativos. O período (inicial e/ou final) conta como um só. */
+export function auditUserHref(
+  pathname: string,
+  filters: AuditFiltersValue,
+  userId: string
+) {
+  const query = filtersToSearchParams({ ...filters, userId }).toString();
+  return `${pathname}?${query}`;
+}
+
 export function countActiveFilters(filters: AuditFiltersValue): number {
   return (
     (filters.action ? 1 : 0) +
@@ -63,13 +90,12 @@ export function countActiveFilters(filters: AuditFiltersValue): number {
   );
 }
 
-/** Mesma regra do BE-18: período com no máximo 90 dias. Retorna a mensagem de erro ou null. */
 export function validateFilters(filters: AuditFiltersValue): string | null {
   if (filters.from && filters.to) {
     const days =
       (Date.parse(`${filters.to}T00:00:00Z`) -
         Date.parse(`${filters.from}T00:00:00Z`)) /
-      86_400_000;
+      DAY_MS;
     if (days < 0) return 'A data inicial não pode ser depois da data final.';
     if (days + 1 > MAX_PERIOD_DAYS) {
       return `O período pode ter no máximo ${MAX_PERIOD_DAYS} dias.`;
@@ -78,7 +104,6 @@ export function validateFilters(filters: AuditFiltersValue): string | null {
   return null;
 }
 
-/** Converte os filtros da tela para os parâmetros da API (datas em ISO 8601, dia inteiro em Brasília). */
 export function toQuery(
   filters: AuditFiltersValue
 ): Pick<AuditLogsQuery, 'action' | 'userId' | 'from' | 'to'> {
@@ -92,4 +117,14 @@ export function toQuery(
       ? new Date(`${filters.to}T23:59:59.999${BRASILIA_OFFSET}`).toISOString()
       : undefined,
   };
+}
+
+export function formatDateTime(iso: string): { date: string; time: string } {
+  const date = new Date(iso);
+  return { date: dateFormatter.format(date), time: timeFormatter.format(date) };
+}
+
+export function formatDateBR(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
 }

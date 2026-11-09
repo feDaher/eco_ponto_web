@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   Ban,
   CloudOff,
@@ -10,43 +11,59 @@ import {
   RefreshCw,
   SearchX,
   ShieldAlert,
+  type LucideIcon,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
-import { fetchAuditLogs } from '@/lib/fetchAuditLogs';
-import { parseFilters, toQuery } from '@/lib/filters';
-import { formatDateTime } from '@/lib/format';
 import {
   AUDIT_ACTION_LABEL,
-  AuditApiError,
-  type AuditAction,
-  type AuditLogItem,
-  type AuditLogUser,
-} from '@/types/audit';
+  auditUserHref,
+  formatDateTime,
+  parseFilters,
+  toQuery,
+  type AuditFiltersValue,
+} from '@/lib/audit';
+import { ROUTES } from '@/lib/routes';
+import { cn } from '@/lib/utils';
+import { AuditApiError, fetchAuditLogs } from '@/services/audit';
+import type { AuditAction, AuditLogItem, AuditLogUser } from '@/types/audit';
+import {
+  AUDIT_BUTTON_CLASS,
+  AUDIT_BUTTON_TONES,
+  AUDIT_PILL_CLASS,
+} from './auditStyles';
 
 const PAGE_SIZE = 20;
 
 type Status = 'loading' | 'success' | 'error';
-const monoClass = 'font-mono text-[13px] text-card-foreground';
+
+const MONO_CLASS = 'font-mono text-xs text-slate-800';
+const METHOD_CLASS =
+  'inline-block rounded-lg bg-surface-accent px-2 py-0.5 font-mono text-xs font-bold text-slate-800';
+const TH_CLASS =
+  'px-3 py-4 text-left text-xs font-bold tracking-wider text-slate-500 uppercase';
+const TD_CLASS = 'px-3 py-4 align-middle';
+
+const ACTION_STYLES: Record<
+  AuditAction,
+  { icon: LucideIcon; className: string }
+> = {
+  ACCESS_DENIED: {
+    icon: Ban,
+    className: 'bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300',
+  },
+  RESOURCE_CHANGED: {
+    icon: Pencil,
+    className: 'bg-surface-strong text-slate-800',
+  },
+};
 
 function ActionBadge({ action }: { action: AuditAction }) {
-  const denied = action === 'ACCESS_DENIED';
-  const Icon = denied ? Ban : Pencil;
+  const { icon: Icon, className } = ACTION_STYLES[action];
 
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'gap-1.5 whitespace-nowrap rounded-full border-transparent px-3 py-1 text-[13px] font-semibold',
-        denied
-          ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
-          : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-      )}
-    >
-      <Icon className="size-3.5" aria-hidden="true" />
+    <span className={cn(AUDIT_PILL_CLASS, className)}>
+      <Icon aria-hidden="true" className="size-3.5" />
       {AUDIT_ACTION_LABEL[action]}
-    </Badge>
+    </span>
   );
 }
 
@@ -54,35 +71,48 @@ function StatusBadge({ code, prefix }: { code: number; prefix?: string }) {
   const ok = code >= 200 && code < 300;
 
   return (
-    <Badge
-      variant="outline"
+    <span
       className={cn(
-        'rounded-full border-transparent px-3 py-1 text-[13px] font-bold tabular-nums',
+        AUDIT_PILL_CLASS,
+        'font-bold tabular-nums',
         ok
-          ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
-          : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+          ? 'bg-brand-light text-brand-dark'
+          : 'bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300'
       )}
     >
       {prefix ? `${prefix} ${code}` : code}
-    </Badge>
+    </span>
   );
 }
 
-function UserInfo({ user }: { user: AuditLogUser | null }) {
+function UserInfo({
+  user,
+  filterHref,
+}: {
+  user: AuditLogUser | null;
+  filterHref: (userId: string) => string;
+}) {
   if (!user) {
     return (
-      <div className="font-semibold italic text-muted-foreground">
+      <span className="block font-semibold text-slate-500 italic">
         Usuário removido
-      </div>
+      </span>
     );
   }
 
   return (
     <>
-      <div className="font-semibold text-card-foreground">{user.name}</div>
-      <div className="mt-0.5 break-all text-[13px] text-muted-foreground">
+      <Link
+        href={filterHref(user.id)}
+        scroll={false}
+        title={`Filtrar registros de ${user.name}`}
+        className="font-semibold text-slate-900 underline-offset-4 hover:text-brand hover:underline focus-visible:outline-2 focus-visible:outline-brand"
+      >
+        {user.name}
+      </Link>
+      <span className="mt-0.5 block text-xs break-all text-slate-500">
         {user.email}
-      </div>
+      </span>
     </>
   );
 }
@@ -91,10 +121,7 @@ function LoadingSkeleton() {
   return (
     <div aria-hidden="true" className="mt-6 flex flex-col gap-3">
       {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          key={index}
-          className="h-[72px] animate-pulse rounded-2xl bg-muted"
-        />
+        <div key={index} className="h-18 animate-pulse rounded-2xl bg-muted" />
       ))}
     </div>
   );
@@ -106,23 +133,18 @@ function MessageState({
   description,
   action,
 }: {
-  icon: typeof SearchX;
+  icon: LucideIcon;
   title: string;
   description: string;
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mt-6 flex flex-col items-center gap-3 rounded-[20px] border border-border bg-card px-6 py-12 text-center">
+    <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-card px-6 py-12 text-center">
       <span className="flex size-12 items-center justify-center rounded-full bg-brand-light text-brand">
-        <Icon className="size-6" aria-hidden="true" />
+        <Icon aria-hidden="true" className="size-6" />
       </span>
-
-      <h3 className="text-lg font-bold text-card-foreground">{title}</h3>
-
-      <p className="max-w-md text-[15px] text-muted-foreground">
-        {description}
-      </p>
-
+      <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+      <p className="max-w-md text-sm text-slate-600">{description}</p>
       {action}
     </div>
   );
@@ -158,26 +180,22 @@ function ErrorState({
           : 'Ocorreu um erro ao consultar a trilha de auditoria. Tente novamente em instantes.'
       }
       action={
-        <Button
+        <button
           type="button"
-          variant="outline"
           onClick={onRetry}
-          className="mt-2 h-12 gap-2 rounded-[14px] border-border bg-card px-6 text-[15px] font-semibold text-card-foreground hover:bg-muted"
+          className={cn(AUDIT_BUTTON_CLASS, AUDIT_BUTTON_TONES.outline, 'mt-2')}
         >
-          <RefreshCw className="size-4" aria-hidden="true" />
+          <RefreshCw aria-hidden="true" className="size-4" />
           Tentar novamente
-        </Button>
+        </button>
       }
     />
   );
 }
-const thClass =
-  'px-3 py-[15px] text-left text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground';
-const tdClass = 'px-3 py-4 align-middle';
+
 export function AuditTable() {
   const searchParams = useSearchParams();
   const paramsKey = searchParams.toString();
-
   const [reloadToken, setReloadToken] = useState(0);
 
   return (
@@ -197,6 +215,7 @@ function AuditTableContent({
   onRetry: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [items, setItems] = useState<AuditLogItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -205,7 +224,14 @@ function AuditTableContent({
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreFailed, setLoadMoreFailed] = useState(false);
 
-  const currentKey = useRef(paramsKey);
+  const filters: AuditFiltersValue = parseFilters(
+    new URLSearchParams(paramsKey)
+  );
+  const filterHref = (userId: string) =>
+    auditUserHref(pathname, filters, userId);
+  const loginHref = `${ROUTES.login}?next=${encodeURIComponent(
+    paramsKey ? `${pathname}?${paramsKey}` : pathname
+  )}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -216,18 +242,16 @@ function AuditTableContent({
     })
       .then((response) => {
         if (cancelled) return;
-
         setItems(response.items);
         setNextCursor(response.nextCursor);
         setStatus('success');
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-
         const code = error instanceof AuditApiError ? error.status : 500;
 
         if (code === 401) {
-          router.replace('/login');
+          router.replace(loginHref);
           return;
         }
 
@@ -238,28 +262,25 @@ function AuditTableContent({
     return () => {
       cancelled = true;
     };
-  }, [paramsKey, router]);
+  }, [paramsKey, loginHref, router]);
 
   async function handleLoadMore() {
     if (!nextCursor || loadingMore) return;
-    const keyAtStart = paramsKey;
 
     setLoadingMore(true);
     setLoadMoreFailed(false);
     try {
       const response = await fetchAuditLogs({
-        ...toQuery(parseFilters(new URLSearchParams(paramsKey))),
+        ...toQuery(filters),
         cursor: nextCursor,
         limit: PAGE_SIZE,
       });
-      if (currentKey.current !== keyAtStart) return;
       setItems((previous) => [...previous, ...response.items]);
       setNextCursor(response.nextCursor);
     } catch (error: unknown) {
-      if (currentKey.current !== keyAtStart) return;
       const code = error instanceof AuditApiError ? error.status : 500;
       if (code === 401) {
-        router.replace('/login');
+        router.replace(loginHref);
       } else if (code === 403) {
         setErrorStatus(403);
         setStatus('error');
@@ -276,7 +297,7 @@ function AuditTableContent({
       ? 'Carregando registros de auditoria.'
       : status === 'error'
         ? 'Não foi possível exibir os registros.'
-        : `${items.length} registros exibidos.`;
+        : `${items.length} ${items.length === 1 ? 'registro exibido' : 'registros exibidos'}.`;
 
   return (
     <div>
@@ -300,7 +321,7 @@ function AuditTableContent({
 
       {status === 'success' && items.length > 0 && (
         <>
-          <div className="mt-6 hidden overflow-hidden rounded-2xl border border-slate-100 bg-card xl:block">
+          <div className="mt-6 hidden overflow-hidden rounded-2xl border border-slate-200 bg-card xl:block">
             <table className="w-full table-fixed border-collapse text-sm">
               <colgroup>
                 <col className="w-[13%]" />
@@ -314,61 +335,60 @@ function AuditTableContent({
                 Registros de auditoria, do mais recente para o mais antigo
               </caption>
               <thead>
-                <tr className="bg-surface-alt text-[11px] tracking-wider text-slate-500 uppercase">
-                  <th scope="col" className={thClass}>
+                <tr className="bg-surface-alt">
+                  <th scope="col" className={TH_CLASS}>
                     Data e hora
                   </th>
-                  <th scope="col" className={thClass}>
+                  <th scope="col" className={TH_CLASS}>
                     Usuário
                   </th>
-                  <th scope="col" className={thClass}>
+                  <th scope="col" className={TH_CLASS}>
                     Ação
                   </th>
-                  <th scope="col" className={thClass}>
+                  <th scope="col" className={TH_CLASS}>
                     Método e rota
                   </th>
-                  <th scope="col" className={thClass}>
+                  <th scope="col" className={TH_CLASS}>
                     Recurso
                   </th>
-                  <th scope="col" className={thClass}>
+                  <th scope="col" className={TH_CLASS}>
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-card">
+              <tbody className="divide-y divide-slate-100">
                 {items.map((item) => {
                   const { date, time } = formatDateTime(item.createdAt);
                   return (
                     <tr key={item.id}>
-                      <td className={cn(tdClass, 'whitespace-nowrap')}>
+                      <td className={cn(TD_CLASS, 'whitespace-nowrap')}>
                         <time dateTime={item.createdAt}>
-                          <div className="font-semibold text-card-foreground">
+                          <span className="block font-semibold text-slate-900">
                             {date}
-                          </div>
-                          <div className="mt-0.5 text-[13px] tabular-nums text-muted-foreground">
-                            {time}{' '}
-                          </div>
-                          <div className="mt-0.5 text-[13px] tabular-nums text-muted-foreground"></div>
+                          </span>
+                          <span className="mt-0.5 block text-xs text-slate-500 tabular-nums">
+                            {time}
+                          </span>
                         </time>
                       </td>
-                      <td className={tdClass}>
-                        <UserInfo user={item.user} />
+                      <td className={TD_CLASS}>
+                        <UserInfo user={item.user} filterHref={filterHref} />
                       </td>
-                      <td className={tdClass}>
+                      <td className={TD_CLASS}>
                         <ActionBadge action={item.action} />
                       </td>
-                      <td className={tdClass}>
-                        <span className="inline-block rounded-lg bg-surface-accent px-2 py-0.5 font-mono text-xs font-bold text-foreground">
-                          {item.method}
-                        </span>
-                        <div className={cn(monoClass, 'mt-1 break-all')}>
+                      <td className={TD_CLASS}>
+                        <span className={METHOD_CLASS}>{item.method}</span>
+                        <span
+                          className={cn(MONO_CLASS, 'mt-1 block break-all')}
+                        >
                           {item.route}
-                        </div>
+                        </span>
                       </td>
-                      <td className={cn(tdClass, monoClass)}>
+                      <td className={cn(TD_CLASS, MONO_CLASS)}>
                         {item.resourceId ?? '—'}
                       </td>
-                      <td className={tdClass}>
+                      <td className={TD_CLASS}>
                         <StatusBadge code={item.statusCode} />
                       </td>
                     </tr>
@@ -378,7 +398,6 @@ function AuditTableContent({
             </table>
           </div>
 
-          {/* Celular: cartões */}
           <ul
             aria-label="Registros de auditoria"
             className="mt-4 flex flex-col gap-3 xl:hidden"
@@ -388,32 +407,30 @@ function AuditTableContent({
               return (
                 <li
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-[22px] border border-border bg-card p-4 shadow-sm"
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-card p-4 shadow-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <ActionBadge action={item.action} />
                     <time
                       dateTime={item.createdAt}
-                      className="text-right text-[13px] font-semibold text-muted-foreground"
+                      className="text-right text-xs font-semibold text-slate-500"
                     >
                       {date} · {time}
                     </time>
                   </div>
-                  <div className="text-[15px]">
-                    <UserInfo user={item.user} />
+                  <div className="text-sm">
+                    <UserInfo user={item.user} filterHref={filterHref} />
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                    <span className="inline-block rounded-lg bg-surface-accent px-2 py-0.5 font-mono text-xs font-bold text-foreground">
-                      {item.method}
-                    </span>
-                    <span className={cn(monoClass, 'break-all')}>
+                    <span className={METHOD_CLASS}>{item.method}</span>
+                    <span className={cn(MONO_CLASS, 'break-all')}>
                       {item.route}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between border-t border-border pt-3 text-[13px] text-muted-foreground">
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
                     <span>
                       Recurso:{' '}
-                      <span className={monoClass}>
+                      <span className={MONO_CLASS}>
                         {item.resourceId ?? '—'}
                       </span>
                     </span>
@@ -425,7 +442,7 @@ function AuditTableContent({
           </ul>
 
           <div className="mt-5 flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-slate-500">
               Exibindo {items.length}{' '}
               {items.length === 1 ? 'registro' : 'registros'}, do mais recente
               para o mais antigo.
@@ -441,26 +458,29 @@ function AuditTableContent({
                 </p>
               )}
               {nextCursor && (
-                <Button
+                <button
                   type="button"
-                  variant="outline"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
                   aria-busy={loadingMore}
-                  className="h-[52px] w-full gap-2 rounded-2xl border-border bg-card px-6 text-[15px] font-semibold text-card-foreground hover:bg-muted md:h-12 md:w-auto md:rounded-[14px]"
+                  className={cn(
+                    AUDIT_BUTTON_CLASS,
+                    AUDIT_BUTTON_TONES.outline,
+                    'w-full md:w-auto'
+                  )}
                 >
                   {loadingMore ? (
                     <>
                       <Loader2
-                        className="size-[18px] animate-spin"
                         aria-hidden="true"
+                        className="size-4 animate-spin"
                       />
                       Carregando...
                     </>
                   ) : (
                     'Carregar mais'
                   )}
-                </Button>
+                </button>
               )}
             </div>
           </div>

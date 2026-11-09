@@ -30,7 +30,7 @@ const USERS = {
 type UserKey = keyof typeof USERS;
 
 interface Template {
-  user: UserKey | null; // null = usuário apagado (LGPD)
+  user: UserKey | null;
   action: AuditAction;
   method: string;
   route: string;
@@ -127,4 +127,5 @@ function buildLogs(): AuditLogItem[] {
 
   return items;
 }
-export const MOCK_AUDIT_LOGS: AuditLogItem[] = buildLogs();
+
+export const mockAuditLogs: AuditLogItem[] = buildLogs();
