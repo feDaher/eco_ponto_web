@@ -7,6 +7,7 @@ import {
   MapPinned,
   Tags,
   Users,
+  ShieldAlert,
   type LucideIcon,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
@@ -25,6 +26,11 @@ const adminNav: AdminNavItem[] = [
     label: 'Categorias e horários',
     href: ROUTES.adminCategories,
     icon: Tags,
+  },
+  {
+    label: 'Moderação de Avaliações',
+    href: ROUTES.adminModeration,
+    icon: ShieldAlert,
   },
   { label: 'Usuários', href: ROUTES.adminUsers, icon: Users },
 ];
