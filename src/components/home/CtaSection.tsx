@@ -1,9 +1,63 @@
+'use client';
 import Image from 'next/image';
 import Link from 'next/link';
-import { UserPlus, MapPin, UserCheck } from 'lucide-react';
-import { HOME_SECTIONS, ROUTES } from '@/lib/routes';
+import { UserPlus, MapPin, UserCheck, ShieldCheck } from 'lucide-react';
+import { HOME_BY_ROLE, HOME_SECTIONS, ROUTES } from '@/lib/routes';
+import { useAuth } from '@/context/AuthContext';
 
-export const CtaSection = ({ loggedIn = false }: { loggedIn?: boolean }) => {
+export const CtaSection = () => {
+  const { status, user } = useAuth();
+
+  const isAuthenticated = status === 'authenticated' && Boolean(user);
+  const isStaff = isAuthenticated && user?.role !== 'CITIZEN';
+
+  const getCtaContent = () => {
+    if (!isAuthenticated || !user) {
+      return {
+        title: 'Pronto para fazer a diferença pelo meio ambiente?',
+        description:
+          'Junte-se a centenas de moradores de Manhuaçu. Cadastre-se gratuitamente, registre suas entregas e transforme lixo eletrônico em preservação real.',
+        primaryHref: ROUTES.register,
+        primaryLabel: 'Criar Conta Gratuita',
+        PrimaryIcon: UserPlus,
+      };
+    }
+
+    if (user.role === 'ADMIN') {
+      return {
+        title: 'Painel Administrativo do EcoPonto',
+        description:
+          'Você está conectado como Administrador. Acesse sua área de gestão para moderar avaliações, gerenciar pontos de coleta e acompanhar o sistema.',
+        primaryHref: HOME_BY_ROLE.ADMIN,
+        primaryLabel: 'Painel Admin',
+        PrimaryIcon: ShieldCheck,
+      };
+    }
+
+    if (user.role === 'COLLECTOR') {
+      return {
+        title: 'Área Operacional do Coletor',
+        description:
+          'Você está conectado como Coletor. Acesse seu painel para acompanhar coletas agendadas, validar entregas e gerenciar suas rotas.',
+        primaryHref: HOME_BY_ROLE.COLLECTOR,
+        primaryLabel: 'Painel do Coletor',
+        PrimaryIcon: ShieldCheck,
+      };
+    }
+
+    return {
+      title: 'Que bom ter você de volta! Pronto para reciclar hoje?',
+      description:
+        'Encontre os pontos de coleta mais próximos de você, registre seu descarte e acompanhe o seu impacto ecológico.',
+      primaryHref: HOME_BY_ROLE.CITIZEN,
+      primaryLabel: 'Meu Painel',
+      PrimaryIcon: UserCheck,
+    };
+  };
+
+  const { title, description, primaryHref, primaryLabel, PrimaryIcon } =
+    getCtaContent();
+
   return (
     <section className="w-full bg-background py-12 lg:py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -34,32 +88,23 @@ export const CtaSection = ({ loggedIn = false }: { loggedIn?: boolean }) => {
 
             {/* Título Principal */}
             <h2 className="text-2xl sm:text-3xl lg:text-3xl font-extrabold text-white leading-tight">
-              {loggedIn
-                ? 'Que bom ter você de volta! Pronto para reciclar hoje?'
-                : 'Pronto para fazer a diferença pelo meio ambiente?'}
+              {title}
             </h2>
 
             {/* Descrição */}
             <p className="text-sm sm:text-base text-brand-foreground leading-relaxed max-w-2xl">
-              {loggedIn
-                ? 'Encontre os pontos de coleta mais próximos de você, registre seu descarte e acompanhe o seu impacto ecológico.'
-                : 'Junte-se a centenas de moradores de Manhuaçu. Cadastre-se gratuitamente, registre suas entregas e transforme lixo eletrônico em preservação real.'}
+              {description}
             </p>
           </div>
 
           {/* Botões */}
           <div className="relative z-20 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
-            {/* Só o primeiro botão muda entre logado e não logado */}
             <Link
-              href={loggedIn ? ROUTES.account : ROUTES.register}
+              href={primaryHref}
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-brand-medium hover:bg-brand-deep text-brand-foreground font-semibold text-sm transition-colors border border-brand-medium"
             >
-              {loggedIn ? (
-                <UserCheck className="w-4 h-4 text-brand-foreground" />
-              ) : (
-                <UserPlus className="w-4 h-4 text-brand-foreground" />
-              )}
-              <span>{loggedIn ? 'Meu Painel' : 'Criar Conta Gratuita'}</span>
+              <PrimaryIcon className="w-4 h-4 text-brand-foreground" />
+              <span>{primaryLabel}</span>
             </Link>
 
             <a
@@ -67,7 +112,9 @@ export const CtaSection = ({ loggedIn = false }: { loggedIn?: boolean }) => {
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white text-brand-solid font-bold text-sm hover:bg-brand-pale transition-colors shadow-md"
             >
               <MapPin className="w-4 h-4 text-brand" />
-              <span>Buscar Pontos Agora</span>
+              <span>
+                {isStaff ? 'Ver Mapa de Pontos' : 'Buscar Pontos Agora'}
+              </span>
             </a>
           </div>
         </div>
