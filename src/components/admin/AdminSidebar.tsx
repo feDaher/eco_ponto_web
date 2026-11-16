@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  BarChart3,
   LayoutDashboard,
   MapPinned,
   Tags,
@@ -23,6 +24,11 @@ const adminNav: AdminNavItem[] = [
   { label: 'Visão geral', href: ROUTES.admin, icon: LayoutDashboard },
   { label: 'Pontos de coleta', href: ROUTES.adminPoints, icon: MapPinned },
   { label: 'Categorias e horários', href: ROUTES.adminCategories, icon: Tags },
+  {
+    label: 'Relatórios e Exportação',
+    href: ROUTES.adminReports,
+    icon: BarChart3,
+  },
   { label: 'Usuários', href: ROUTES.adminUsers, icon: Users },
   { label: 'Auditoria', href: ROUTES.adminAudit, icon: ClipboardList },
 ];
