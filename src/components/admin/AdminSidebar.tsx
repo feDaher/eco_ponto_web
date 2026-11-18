@@ -7,6 +7,7 @@ import {
   MapPinned,
   Tags,
   Users,
+  BarChart3,
   ClipboardList,
   MessageSquareWarning,
   type LucideIcon,
@@ -29,6 +30,7 @@ const adminNav: AdminNavItem[] = [
     href: ROUTES.adminReviews,
     icon: MessageSquareWarning,
   },
+  { label: 'Relatórios', href: ROUTES.adminReports, icon: BarChart3 },
   { label: 'Usuários', href: ROUTES.adminUsers, icon: Users },
   { label: 'Auditoria', href: ROUTES.adminAudit, icon: ClipboardList },
 ];
