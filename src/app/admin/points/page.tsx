@@ -1,5 +1,14 @@
-import { ComingSoon } from '@/components/layout/ComingSoon';
+import type { Metadata } from 'next';
+import { PointModeration } from '@/components/admin/moderation/PointModeration';
+import { getModerationData } from '@/services/moderation';
 
-export default function AdminPointsPage() {
-  return <ComingSoon title="Aprovação de Pontos de Coleta" />;
+export const metadata: Metadata = {
+  title: 'Moderação de pontos | EcoPonto Digital',
+  robots: { index: false },
+};
+
+export default async function AdminPointsPage() {
+  const data = await getModerationData();
+
+  return <PointModeration initialData={data} />;
 }

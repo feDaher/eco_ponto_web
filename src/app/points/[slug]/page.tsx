@@ -11,7 +11,7 @@ import { PointLocation } from '@/components/point/PointLocation';
 import { PointReviews } from '@/components/point/PointReviews';
 import { SuggestionForm } from '@/components/point/SuggestionForm';
 import { VerificationNotice } from '@/components/point/VerificationNotice';
-import { averageRating } from '@/lib/points';
+import { averageRating, publicReviews } from '@/lib/points';
 import { getPointBySlug } from '@/services/api';
 import type { PointDetails, Weekday } from '@/types/api';
 
@@ -36,6 +36,8 @@ function getDescription(point: PointDetails) {
 }
 
 function buildJsonLd(point: PointDetails) {
+  const reviews = publicReviews(point.reviews);
+
   return {
     '@context': 'https://schema.org',
     '@type': 'RecyclingCenter',
@@ -61,11 +63,11 @@ function buildJsonLd(point: PointDetails) {
       closes: hours.closes,
     })),
     aggregateRating:
-      point.reviews.length > 0
+      reviews.length > 0
         ? {
             '@type': 'AggregateRating',
-            ratingValue: averageRating(point.reviews).toFixed(1),
-            reviewCount: point.reviews.length,
+            ratingValue: averageRating(reviews).toFixed(1),
+            reviewCount: reviews.length,
           }
         : undefined,
   };
@@ -134,7 +136,11 @@ export default async function PointPage({ params }: PointPageProps) {
           materials={point.materials}
         />
         <PointDestination destination={point.destination} />
-        <PointReviews reviews={point.reviews} pointName={point.name} />
+        <PointReviews
+          reviews={point.reviews}
+          pointSlug={point.slug}
+          pointName={point.name}
+        />
         <SuggestionForm pointName={point.name} />
       </div>
     </div>

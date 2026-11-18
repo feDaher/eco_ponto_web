@@ -3,7 +3,6 @@ import { Geist } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AuthProvider } from '@/context/AuthContext';
-import { EvaluationProvider } from '@/components/admin/EvaluationContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import './globals.css';
 
@@ -30,11 +29,10 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <AuthProvider>
-          <EvaluationProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </EvaluationProvider>
+          <Header />
+          {/* Cada página controla a própria largura (seções full-width ou container) */}
+          <main className="flex-1">{children}</main>
+          <Footer />
         </AuthProvider>
       </body>
     </html>
