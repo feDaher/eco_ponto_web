@@ -8,7 +8,12 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/Button';
 import { getDirectionsUrl } from '@/lib/geo';
-import { averageRating, isOpenNow, pluralize } from '@/lib/points';
+import {
+  averageRating,
+  isOpenNow,
+  pluralize,
+  publicReviews,
+} from '@/lib/points';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { PointDetails } from '@/types/api';
@@ -20,7 +25,8 @@ type PointHeaderProps = {
 
 export function PointHeader({ point }: PointHeaderProps) {
   const isOpen = isOpenNow(point.schedule);
-  const rating = averageRating(point.reviews);
+  const reviews = publicReviews(point.reviews);
+  const rating = averageRating(reviews);
   const whatsappUrl = point.whatsapp?.authorized
     ? `https://wa.me/${point.whatsapp.phone}`
     : null;
@@ -64,7 +70,7 @@ export function PointHeader({ point }: PointHeaderProps) {
             <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             {point.address} - {point.neighborhood}, {point.city}
           </p>
-          {point.reviews.length > 0 && (
+          {reviews.length > 0 && (
             <p className="flex items-center gap-1.5">
               <Star
                 aria-hidden="true"
@@ -73,7 +79,7 @@ export function PointHeader({ point }: PointHeaderProps) {
               <span className="font-semibold text-slate-900">
                 {rating.toFixed(1).replace('.', ',')}
               </span>
-              ({pluralize(point.reviews.length, 'avaliação', 'avaliações')})
+              ({pluralize(reviews.length, 'avaliação', 'avaliações')})
             </p>
           )}
         </div>
