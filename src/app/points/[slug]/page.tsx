@@ -137,8 +137,7 @@ export default async function PointPage({ params }: PointPageProps) {
         />
         <PointDestination destination={point.destination} />
         <PointReviews
-          reviews={point.reviews}
-          pointSlug={point.slug}
+          reviews={publicReviews(point.reviews)}
           pointName={point.name}
         />
         <SuggestionForm pointName={point.name} />

@@ -59,15 +59,18 @@ export type Review = {
   comment: string;
   date: string;
   neighborhood?: string;
-  authorBadge?: string;
-  flag?: string;
   hidden?: boolean;
 };
 
-export type ModeratedReview = Review & {
-  key: string;
-  pointSlug: string;
-  pointName: string;
+export type ModerationReview = {
+  id: string;
+  rating: Review['rating'];
+  comment: string | null;
+  isHidden: boolean;
+  createdAt: string;
+  updatedAt: string;
+  author: { id: string; name: string };
+  collectionPoint: { id: string; name: string };
 };
 
 export type PointVerification = {

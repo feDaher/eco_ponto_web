@@ -1,15 +1,12 @@
 import type { Metadata } from 'next';
 import { ReviewModeration } from '@/components/admin/reviews/ReviewModeration';
-import { getModeratedReviews } from '@/services/reviews';
 
 export const metadata: Metadata = {
   title: 'Moderação de avaliações | EcoPonto Digital',
   robots: { index: false },
 };
 
-export default async function AdminReviewsPage() {
-  const reviews = await getModeratedReviews();
-
+export default function AdminReviewsPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
@@ -21,12 +18,13 @@ export default async function AdminReviewsPage() {
           Moderação de avaliações
         </h1>
         <p className="text-sm text-slate-600">
-          As avaliações são publicadas automaticamente na ficha do ponto.
-          Acompanhe os relatos e oculte os conteúdos impróprios.
+          As avaliações são publicadas automaticamente na página do ponto.
+          Oculte os conteúdos impróprios e exclua apenas o que não pode ser
+          mantido.
         </p>
       </header>
 
-      <ReviewModeration reviews={reviews} />
+      <ReviewModeration />
     </div>
   );
 }

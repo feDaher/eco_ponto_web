@@ -1,9 +1,5 @@
-'use client';
-
 import { MapPin, MessageSquareQuote } from 'lucide-react';
 import { averageRating, formatDate, pluralize } from '@/lib/points';
-import { useReviewModeration } from '@/lib/reviewModeration';
-import { reviewKey } from '@/lib/reviews';
 import type { Review } from '@/types/api';
 import { ReviewForm } from './ReviewForm';
 import { SectionCard } from './SectionCard';
@@ -11,19 +7,10 @@ import { StarRating } from './StarRating';
 
 type PointReviewsProps = {
   reviews: Review[];
-  pointSlug: string;
   pointName: string;
 };
 
-export function PointReviews({
-  reviews: allReviews,
-  pointSlug,
-  pointName,
-}: PointReviewsProps) {
-  const { isHidden } = useReviewModeration();
-  const reviews = allReviews.filter(
-    (review) => !isHidden(reviewKey(pointSlug, review.id), review)
-  );
+export function PointReviews({ reviews, pointName }: PointReviewsProps) {
   const average = averageRating(reviews);
   const averageLabel = average.toFixed(1).replace('.', ',');
   const countLabel = pluralize(reviews.length, 'avaliação', 'avaliações');
