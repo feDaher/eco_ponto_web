@@ -131,6 +131,7 @@ export const categoryUnderReview = {
   description:
     'Aguardando vistoria técnica do Corpo de Bombeiros e laudo com responsabilidade técnica (ART).',
 };
+
 export type CollectorMaterial = {
   id: string;
   name: string;
@@ -140,7 +141,7 @@ export type CollectorMaterial = {
   accepting: boolean;
 };
 
-export const collectorMaterials = [
+export const collectorMaterials: CollectorMaterial[] = [
   {
     id: 'informatica',
     name: 'Informática & Placas-Mãe',
@@ -168,8 +169,7 @@ export const collectorMaterials = [
   {
     id: 'grandes',
     name: 'Grandes Eletros / Linha Branca',
-    description:
-      'Refrigeradores, fogões, lavadoras • Galpão em capacidade máxima',
+    description: 'Refrigeradores, fogões e lavadoras',
     storedKg: 700,
     capacityKg: 700,
     accepting: false,

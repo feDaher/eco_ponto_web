@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Boxes,
   ClipboardPlus,
@@ -8,57 +11,63 @@ import {
   MapPin,
   type LucideIcon,
 } from 'lucide-react';
-import { COLLECTOR_SECTIONS } from '@/lib/routes';
 import { collectorProfile } from '@/data/mockCollector';
+import { COLLECTOR_SECTIONS, ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-
-const COLLECTOR_HOME = '/collector';
-const COLLECTOR_MATERIALS = '/collector/materials';
 
 type SidebarItem = {
   label: string;
   href: string;
+  page: string;
   icon: LucideIcon;
 };
+
+function section(id: string) {
+  return `${ROUTES.collector}#${id}`;
+}
 
 const sidebarItems: SidebarItem[] = [
   {
     label: 'Visão geral',
-    href: `${COLLECTOR_HOME}#${COLLECTOR_SECTIONS.overview}`,
+    href: section(COLLECTOR_SECTIONS.overview),
+    page: ROUTES.collector,
     icon: LayoutDashboard,
   },
   {
     label: 'Registrar recebimento',
-    href: `${COLLECTOR_HOME}#${COLLECTOR_SECTIONS.receipt}`,
+    href: section(COLLECTOR_SECTIONS.receipt),
+    page: '',
     icon: ClipboardPlus,
   },
   {
     label: 'Histórico e MTRs',
-    href: `${COLLECTOR_HOME}#${COLLECTOR_SECTIONS.history}`,
+    href: section(COLLECTOR_SECTIONS.history),
+    page: '',
     icon: History,
   },
   {
     label: 'Meu ponto de coleta',
-    href: `${COLLECTOR_HOME}#${COLLECTOR_SECTIONS.point}`,
+    href: section(COLLECTOR_SECTIONS.point),
+    page: '',
     icon: MapPin,
   },
   {
     label: 'Horários de funcionamento',
-    href: `${COLLECTOR_HOME}#${COLLECTOR_SECTIONS.hours}`,
+    href: section(COLLECTOR_SECTIONS.hours),
+    page: '',
     icon: Clock,
   },
   {
     label: 'Materiais e capacidade',
-    href: COLLECTOR_MATERIALS,
+    href: ROUTES.collectorMaterials,
+    page: ROUTES.collectorMaterials,
     icon: Boxes,
   },
 ];
 
-export function CollectorSidebar({
-  activePage = 'overview',
-}: {
-  activePage?: 'overview' | 'materials';
-}) {
+export function CollectorSidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="lg:sticky lg:top-24 lg:w-64 lg:shrink-0 lg:self-start">
       <div className="hidden rounded-2xl border border-slate-200/70 bg-surface-alt p-4 lg:block">
@@ -73,11 +82,8 @@ export function CollectorSidebar({
 
       <nav aria-label="Painel do coletor" className="lg:mt-4">
         <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0">
-          {sidebarItems.map(({ label, href, icon: Icon }) => {
-            const active =
-              activePage === 'materials'
-                ? label === 'Materiais e capacidade'
-                : label === 'Visão geral';
+          {sidebarItems.map(({ label, href, page, icon: Icon }) => {
+            const active = page === pathname;
 
             return (
               <li key={href} className="shrink-0">
@@ -85,10 +91,10 @@ export function CollectorSidebar({
                   href={href}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-brand',
+                    'flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-xs whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-brand',
                     active
-                      ? 'bg-brand-light font-bold text-brand-dark'
-                      : 'text-slate-600 hover:bg-surface-alt hover:text-brand'
+                      ? 'border-transparent bg-brand-light font-semibold text-brand-dark'
+                      : 'border-slate-200 bg-card font-medium text-slate-600 hover:bg-surface-alt hover:text-brand lg:border-transparent lg:bg-transparent'
                   )}
                 >
                   <Icon aria-hidden="true" className="size-4 shrink-0" />

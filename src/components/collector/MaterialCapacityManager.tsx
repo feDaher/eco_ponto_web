@@ -1,25 +1,53 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Search, Settings2 } from 'lucide-react';
-import { SectionCard } from '@/components/point/SectionCard';
-import { Button } from '@/components/ui/Button';
-import { collectorMaterials } from '@/data/mockCollector';
 import { CapacitySummary } from '@/components/collector/CapacitySummary';
+import { MaterialItem, fillPercent } from '@/components/collector/MaterialItem';
+import { SectionCard } from '@/components/point/SectionCard';
+import { buttonVariants } from '@/components/ui/Button';
 import {
-  MaterialItem,
-  type Material,
-} from '@/components/collector/MaterialItem';
+  collectorMaterials,
+  type CollectorMaterial,
+} from '@/data/mockCollector';
+import { COLLECTOR_SECTIONS, ROUTES } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 
 const CRITICAL_FILL_PERCENT = 85;
+const DEMO_NOTICE = 'Demonstração: nada foi salvo.';
+
+function normalize(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
+}
 
 export function MaterialCapacityManager() {
-  const [materials, setMaterials] = useState<Material[]>(collectorMaterials);
+  const [materials, setMaterials] =
+    useState<CollectorMaterial[]>(collectorMaterials);
   const [query, setQuery] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
 
-  function toggleReceiving(id: string) {
+  function update(id: string, patch: Partial<CollectorMaterial>) {
     setMaterials((current) =>
-      current.map((m) => (m.id === id ? { ...m, accepting: !m.accepting } : m))
+      current.map((m) => (m.id === id ? { ...m, ...patch } : m))
+    );
+  }
+
+  function toggleReceiving(material: CollectorMaterial) {
+    const accepting = !material.accepting;
+    update(material.id, { accepting });
+    setMessage(
+      `${material.name}: recepção ${accepting ? 'reaberta' : 'pausada'} no app público. ${DEMO_NOTICE}`
+    );
+  }
+
+  function changeLimit(material: CollectorMaterial, capacityKg: number) {
+    update(material.id, { capacityKg });
+    setMessage(
+      `${material.name}: limite alterado para ${capacityKg.toLocaleString('pt-BR')} kg. ${DEMO_NOTICE}`
     );
   }
 
@@ -27,9 +55,7 @@ export function MaterialCapacityManager() {
     const stored = materials.reduce((sum, m) => sum + m.storedKg, 0);
     const capacity = materials.reduce((sum, m) => sum + m.capacityKg, 0);
     const critical = materials.filter(
-      (m) =>
-        m.accepting &&
-        (m.storedKg / m.capacityKg) * 100 >= CRITICAL_FILL_PERCENT
+      (m) => m.accepting && fillPercent(m) >= CRITICAL_FILL_PERCENT
     ).length;
 
     return {
@@ -40,12 +66,11 @@ export function MaterialCapacityManager() {
     };
   }, [materials]);
 
-  const visible = materials.filter((m) =>
-    m.name.toLowerCase().includes(query.trim().toLowerCase())
-  );
+  const term = normalize(query.trim());
+  const visible = materials.filter((m) => normalize(m.name).includes(term));
 
   return (
-    <div id="material-capacity" className="scroll-mt-24 space-y-6">
+    <div className="space-y-6">
       <CapacitySummary
         percent={totals.percent}
         storedKg={totals.stored}
@@ -58,59 +83,75 @@ export function MaterialCapacityManager() {
         <div className="xl:col-span-2">
           <SectionCard
             id="material-list"
-            title="Gestão de Resíduos e Baias"
-            description="Controle o fluxo de entrada, estoque físico e status de recepção no app público."
+            title="Gestão de resíduos e baias"
+            description="Controle o estoque físico, o limite de cada baia e se o material aparece como aceito no app público."
           >
-            <div className="relative mb-4">
-              <Search
-                aria-hidden="true"
-                className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Filtrar resíduo..."
-                aria-label="Filtrar resíduo"
-                className="w-full rounded-full border border-slate-200 bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand sm:w-64"
-              />
-            </div>
-
-            <ul className="space-y-3">
-              {visible.map((m) => (
-                <MaterialItem
-                  key={m.id}
-                  material={m}
-                  criticalPercent={CRITICAL_FILL_PERCENT}
-                  onToggle={toggleReceiving}
+            <div className="space-y-4">
+              <label className="relative block sm:w-64">
+                <span className="sr-only">Filtrar resíduo</span>
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
                 />
-              ))}
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Filtrar resíduo"
+                  className="w-full rounded-full border border-slate-200 bg-card py-2 pr-3 pl-9 text-sm text-slate-800 outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                />
+              </label>
 
-              {visible.length === 0 && (
-                <li className="py-6 text-center text-sm text-slate-500">
-                  Nenhum resíduo encontrado.
-                </li>
+              {message && (
+                <p
+                  role="status"
+                  className="rounded-xl bg-brand-light px-4 py-3 text-sm font-medium text-brand-dark"
+                >
+                  {message}
+                </p>
               )}
-            </ul>
+
+              <ul className="space-y-3">
+                {visible.map((m) => (
+                  <MaterialItem
+                    key={m.id}
+                    material={m}
+                    criticalPercent={CRITICAL_FILL_PERCENT}
+                    onToggle={toggleReceiving}
+                    onLimitChange={changeLimit}
+                  />
+                ))}
+
+                {visible.length === 0 && (
+                  <li className="py-6 text-center text-sm text-slate-500">
+                    Nenhum resíduo encontrado.
+                  </li>
+                )}
+              </ul>
+            </div>
           </SectionCard>
         </div>
 
-        <aside className="h-fit rounded-2xl border border-border bg-card p-5">
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-card p-5">
           <span className="grid size-10 place-items-center rounded-xl bg-brand-light text-brand">
             <Settings2 aria-hidden="true" className="size-5" />
           </span>
 
-          <h2 className="mt-4 font-semibold text-card-foreground">
-            Alterar Portfólio de Coleta
+          <h2 className="mt-4 font-semibold text-slate-900">
+            Alterar portfólio de coleta
           </h2>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Gerencie os tipos de materiais que seu ponto recebe. Adicione ou
-            remova categorias do seu portfólio rapidamente.
+          <p className="mt-1 text-sm text-slate-600">
+            Para incluir ou remover tipos de material, solicite a alteração das
+            categorias aceitas pelo seu ponto.
           </p>
 
-          <Button className="mt-4 w-full">Alterar categorias aceitas</Button>
+          <Link
+            href={`${ROUTES.collector}#${COLLECTOR_SECTIONS.categories}`}
+            className={cn(buttonVariants({ size: 'lg' }), 'mt-4 w-full')}
+          >
+            Alterar categorias aceitas
+          </Link>
         </aside>
       </div>
     </div>

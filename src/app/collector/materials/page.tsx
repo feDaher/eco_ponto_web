@@ -18,11 +18,11 @@ export default function CollectorMaterialsPage() {
 
         <div className="min-w-0 flex-1 space-y-6">
           <CollectorHeader />
-          <header>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-              Materiais Aceitos &amp; Gestão de Capacidade
-            </h1>
-            <p className="mt-2 text-sm text-slate-500">
+          <header className="space-y-1">
+            <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+              Materiais aceitos e gestão de capacidade
+            </h2>
+            <p className="text-sm text-slate-600">
               Monitore o estoque e limites de armazenamento por tipo de resíduo.
             </p>
           </header>
