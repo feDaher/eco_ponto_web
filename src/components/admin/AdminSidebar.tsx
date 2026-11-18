@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BarChart3,
   LayoutDashboard,
   MapPinned,
   Tags,
   Users,
+  BarChart3,
   ClipboardList,
+  MessageSquareWarning,
   type LucideIcon,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/routes';
@@ -25,10 +26,11 @@ const adminNav: AdminNavItem[] = [
   { label: 'Pontos de coleta', href: ROUTES.adminPoints, icon: MapPinned },
   { label: 'Categorias e horários', href: ROUTES.adminCategories, icon: Tags },
   {
-    label: 'Relatórios e Exportação',
-    href: ROUTES.adminReports,
-    icon: BarChart3,
+    label: 'Avaliações',
+    href: ROUTES.adminReviews,
+    icon: MessageSquareWarning,
   },
+  { label: 'Relatórios', href: ROUTES.adminReports, icon: BarChart3 },
   { label: 'Usuários', href: ROUTES.adminUsers, icon: Users },
   { label: 'Auditoria', href: ROUTES.adminAudit, icon: ClipboardList },
 ];

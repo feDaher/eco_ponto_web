@@ -93,6 +93,10 @@ export function isOpenNow(schedule: OpeningHours[], now = new Date()) {
   );
 }
 
+export function publicReviews(reviews: Review[]) {
+  return reviews.filter((review) => !review.hidden);
+}
+
 export function averageRating(reviews: Review[]) {
   if (reviews.length === 0) return 0;
   return (
