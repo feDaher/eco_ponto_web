@@ -1,5 +1,4 @@
-import { getSessionSnapshot } from '@/lib/session';
-import {
+import type {
   CategoryRow,
   ExportFormat,
   ExportScope,
@@ -11,123 +10,200 @@ import {
   ReportSummary,
 } from '@/types/reports';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
+const TIMEOUT_MS = 20000;
 
-function getAuthHeaders(): HeadersInit {
-  if (typeof window === 'undefined') return {};
-  const session = getSessionSnapshot();
-  return session?.token ? { Authorization: `Bearer ${session.token}` } : {};
+export const MAX_PERIOD_DAYS = 366;
+
+export class ReportApiError extends Error {
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'ReportApiError';
+    this.status = status;
+  }
 }
 
-function buildQueryParams(
+const MESSAGES: Record<number, string> = {
+  400: 'Confira os filtros: o período precisa ser válido e ter no máximo 366 dias.',
+  401: 'Sua sessão expirou. Entre novamente para continuar.',
+  403: 'Seu perfil não tem acesso aos relatórios.',
+  429: 'Muitas requisições em pouco tempo. Aguarde e tente novamente.',
+};
+
+const FILE_PREFIXES: Record<ExportScope, string> = {
+  general: 'relatorio-geral',
+  category: 'tabela-categorias',
+  manifests: 'manifestos',
+  geospatial: 'trilha-geoespacial',
+};
+
+type Rows<T> = { rows: T[]; totalWeightKg: number };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function buildQuery(
   filters: ReportFiltersState,
-  extra?: Record<string, string | number>
+  extra: Record<string, string | number> = {}
 ) {
-  const params = new URLSearchParams();
-  params.set('from', filters.from);
-  params.set('to', filters.to);
+  const params = new URLSearchParams({ from: filters.from, to: filters.to });
+  const search = filters.search?.trim();
 
   if (filters.categoryId) params.set('categoryId', filters.categoryId);
   if (filters.region) params.set('region', filters.region);
   if (filters.status) params.set('status', filters.status);
-  if (filters.search) params.set('search', filters.search);
-
-  if (extra) {
-    Object.entries(extra).forEach(([key, value]) => {
-      params.set(key, String(value));
-    });
-  }
+  if (search) params.set('search', search);
+  Object.entries(extra).forEach(([key, value]) =>
+    params.set(key, String(value))
+  );
 
   return params.toString();
 }
 
-function unwrapArray<T>(payload: unknown, keys: string[]): T[] {
-  if (Array.isArray(payload)) return payload as T[];
-  if (payload && typeof payload === 'object') {
-    const record = payload as Record<string, unknown>;
-    for (const key of keys) {
-      if (Array.isArray(record[key])) return record[key] as T[];
-    }
+async function request(token: string, path: string): Promise<Response> {
+  if (!API_URL) {
+    throw new ReportApiError('API não configurada (NEXT_PUBLIC_API_URL).');
   }
-  return [];
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch {
+    throw new ReportApiError(
+      'Não foi possível conectar ao servidor. Tente novamente.'
+    );
+  }
+
+  if (!response.ok) {
+    throw new ReportApiError(
+      MESSAGES[response.status] ??
+        'Não foi possível carregar o relatório. Tente novamente.',
+      response.status
+    );
+  }
+
+  return response;
 }
 
-export const reportsService = {
-  async getFilterOptions(): Promise<FilterOptions> {
-    const res = await fetch(`${API_URL}/reports/filter-options`, {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) throw new Error('Erro ao carregar opções de filtro.');
-    return res.json();
-  },
+async function getJson<T>(
+  token: string,
+  path: string,
+  isValid: (value: unknown) => boolean
+): Promise<T> {
+  const response = await request(token, path);
+  const body: unknown = await response.json().catch(() => null);
+  if (!isValid(body)) {
+    throw new ReportApiError('Resposta inesperada do servidor.');
+  }
+  return body as T;
+}
 
-  async getSummary(filters: ReportFiltersState): Promise<ReportSummary> {
-    const query = buildQueryParams(filters);
-    const res = await fetch(`${API_URL}/reports/summary?${query}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) throw new Error('Erro ao buscar resumo do período.');
-    return res.json();
-  },
+function hasRows(value: unknown) {
+  return isRecord(value) && Array.isArray(value.rows);
+}
 
-  async getByCategory(filters: ReportFiltersState): Promise<CategoryRow[]> {
-    const query = buildQueryParams(filters);
-    const res = await fetch(`${API_URL}/reports/by-category?${query}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) throw new Error('Erro ao buscar volume por categoria.');
-    const data: unknown = await res.json();
-    return unwrapArray<CategoryRow>(data, ['items', 'categories', 'data']);
-  },
+export function validatePeriod(from: string, to: string): string | null {
+  if (!from || !to) return 'Informe a data inicial e a final.';
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`);
+  if (Number.isNaN(start) || Number.isNaN(end)) return 'Período inválido.';
+  if (start > end) return 'A data inicial deve ser anterior à final.';
+  if ((end - start) / 86400000 + 1 > MAX_PERIOD_DAYS) {
+    return `O período pode ter no máximo ${MAX_PERIOD_DAYS} dias.`;
+  }
+  return null;
+}
 
-  async getByPoint(filters: ReportFiltersState): Promise<PointRow[]> {
-    const query = buildQueryParams(filters);
-    const res = await fetch(`${API_URL}/reports/by-point?${query}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok)
-      throw new Error('Erro ao buscar densidade por ponto de coleta.');
-    const data: unknown = await res.json();
-    return unwrapArray<PointRow>(data, ['items', 'points', 'data']);
-  },
+export function getFilterOptions(token: string) {
+  return getJson<FilterOptions>(
+    token,
+    '/reports/filter-options',
+    (value) =>
+      isRecord(value) &&
+      Array.isArray(value.categories) &&
+      Array.isArray(value.regions) &&
+      Array.isArray(value.statuses)
+  );
+}
 
-  async getManifests(
-    filters: ReportFiltersState,
-    page = 1,
-    pageSize = 5
-  ): Promise<Paged<ManifestRow>> {
-    const query = buildQueryParams(filters, { page, pageSize });
-    const res = await fetch(`${API_URL}/reports/manifests?${query}`, {
-      headers: getAuthHeaders(),
-    });
-    if (!res.ok) throw new Error('Erro ao listar manifestos.');
-    return res.json();
-  },
+export function getSummary(token: string, filters: ReportFiltersState) {
+  return getJson<ReportSummary>(
+    token,
+    `/reports/summary?${buildQuery(filters)}`,
+    (value) =>
+      isRecord(value) &&
+      isRecord(value.totals) &&
+      isRecord(value.comparison) &&
+      isRecord(value.co2) &&
+      isRecord(value.activePoints)
+  );
+}
 
-  async exportFile(
-    filters: ReportFiltersState,
-    scope: ExportScope,
-    format: ExportFormat
-  ): Promise<void> {
-    const query = buildQueryParams(filters, { scope, format });
-    const res = await fetch(`${API_URL}/reports/export?${query}`, {
-      headers: getAuthHeaders(),
-    });
+export async function getByCategory(
+  token: string,
+  filters: ReportFiltersState
+): Promise<CategoryRow[]> {
+  const body = await getJson<Rows<CategoryRow>>(
+    token,
+    `/reports/by-category?${buildQuery(filters)}`,
+    hasRows
+  );
+  return body.rows;
+}
 
-    if (!res.ok) {
-      throw new Error(
-        'Falha ao exportar arquivo. Verifique os filtros selecionados.'
-      );
-    }
+export async function getByPoint(
+  token: string,
+  filters: ReportFiltersState
+): Promise<PointRow[]> {
+  const body = await getJson<Rows<PointRow>>(
+    token,
+    `/reports/by-point?${buildQuery(filters)}`,
+    hasRows
+  );
+  return body.rows;
+}
 
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `relatorio-${scope}-${filters.from}-a-${filters.to}.${format}`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  },
-};
+export function getManifests(
+  token: string,
+  filters: ReportFiltersState,
+  page: number,
+  pageSize: number
+) {
+  return getJson<Paged<ManifestRow>>(
+    token,
+    `/reports/manifests?${buildQuery(filters, { page, pageSize })}`,
+    (value) => isRecord(value) && Array.isArray(value.items)
+  );
+}
+
+export async function exportReport(
+  token: string,
+  filters: ReportFiltersState,
+  scope: ExportScope,
+  format: ExportFormat
+): Promise<void> {
+  const response = await request(
+    token,
+    `/reports/export?${buildQuery(filters, { scope, format })}`
+  );
+  const blob = await response.blob();
+  const prefix =
+    scope === 'general' && format === 'pdf'
+      ? 'relatorio-oficial'
+      : FILE_PREFIXES[scope];
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${prefix}-${filters.from}-a-${filters.to}.${format}`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

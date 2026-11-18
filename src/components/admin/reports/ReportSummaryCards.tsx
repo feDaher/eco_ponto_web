@@ -46,7 +46,7 @@ export function ReportSummaryCards({
             </p>
           </div>
           <div className="flex size-10 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
-            <Recycle className="size-5" />
+            <Recycle aria-hidden="true" className="size-5" />
           </div>
         </div>
 
@@ -54,9 +54,15 @@ export function ReportSummaryCards({
           {variation !== null ? (
             <>
               {variation >= 0 ? (
-                <TrendingUp className="size-3.5 text-brand-dark" />
+                <TrendingUp
+                  aria-hidden="true"
+                  className="size-3.5 text-brand-dark"
+                />
               ) : (
-                <TrendingDown className="size-3.5 text-red-600 dark:text-red-400" />
+                <TrendingDown
+                  aria-hidden="true"
+                  className="size-3.5 text-red-600 dark:text-red-400"
+                />
               )}
               <span
                 className={
@@ -92,7 +98,7 @@ export function ReportSummaryCards({
             </p>
           </div>
           <div className="flex size-10 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
-            <Leaf className="size-5" />
+            <Leaf aria-hidden="true" className="size-5" />
           </div>
         </div>
 
@@ -118,7 +124,7 @@ export function ReportSummaryCards({
             </p>
           </div>
           <div className="flex size-10 items-center justify-center rounded-xl bg-brand-light text-brand-dark">
-            <MapPin className="size-5" />
+            <MapPin aria-hidden="true" className="size-5" />
           </div>
         </div>
 

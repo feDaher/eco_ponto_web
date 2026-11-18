@@ -1,13 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Download, FileText } from 'lucide-react';
-import { CategoryAndPointSection } from '@/components/reports/CategoryAndPointSection';
-import { ManifestsTable } from '@/components/reports/ManifestsTable';
-import { ReportFiltersBar } from '@/components/reports/ReportFiltersBar';
-import { ReportSummaryCards } from '@/components/reports/ReportSummaryCards';
-import { reportsService } from '@/services/report.services';
+import { CategoryAndPointSection } from '@/components/admin/reports/CategoryAndPointSection';
+import { ManifestsTable } from '@/components/admin/reports/ManifestsTable';
+import { ReportFiltersBar } from '@/components/admin/reports/ReportFiltersBar';
+import { ReportSummaryCards } from '@/components/admin/reports/ReportSummaryCards';
+import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 import {
+  ReportApiError,
+  exportReport,
+  getByCategory,
+  getByPoint,
+  getFilterOptions,
+  getManifests,
+  getSummary,
+  validatePeriod,
+} from '@/services/reports';
+import type {
   CategoryRow,
   ExportFormat,
   ExportScope,
@@ -19,194 +30,207 @@ import {
   ReportSummary,
 } from '@/types/reports';
 
-function getInitialPeriod(): { from: string; to: string } {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
+const MANIFEST_PAGE_SIZE = 5;
 
-  return {
-    from: `${year}-${month}-01`,
-    to: `${year}-${month}-${day}`,
-  };
+function getInitialPeriod(): ReportFiltersState {
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+  }).format(new Date());
+
+  return { from: `${today.slice(0, 8)}01`, to: today };
 }
 
 export default function AdminReportsPage() {
-  const [filters, setFilters] = useState<ReportFiltersState>(() =>
-    getInitialPeriod()
-  );
-  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(
-    null
-  );
+  const { token, logout } = useAuth();
+  const [draft, setDraft] = useState<ReportFiltersState>(getInitialPeriod);
+  const [applied, setApplied] = useState<ReportFiltersState>(getInitialPeriod);
+  const [manifestPage, setManifestPage] = useState(1);
+  const [reloadKey, setReloadKey] = useState(0);
 
+  const [options, setOptions] = useState<FilterOptions | null>(null);
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [points, setPoints] = useState<PointRow[]>([]);
   const [manifests, setManifests] = useState<Paged<ManifestRow> | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingManifests, setIsLoadingManifests] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    const initial = getInitialPeriod();
+  const toMessage = useCallback(
+    (err: unknown) => {
+      if (err instanceof ReportApiError) {
+        if (err.status === 401) logout();
+        return err.message;
+      }
+      return 'Não foi possível carregar o relatório. Tente novamente.';
+    },
+    [logout]
+  );
 
-    reportsService
-      .getFilterOptions()
-      .then((options) => {
-        if (isMounted) setFilterOptions(options);
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+
+    getFilterOptions(token)
+      .then((result) => {
+        if (active) setOptions(result);
       })
       .catch(() => {});
 
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+
     Promise.all([
-      reportsService.getSummary(initial),
-      reportsService.getByCategory(initial),
-      reportsService.getByPoint(initial),
-      reportsService.getManifests(initial, 1, 5),
+      getSummary(token, applied),
+      getByCategory(token, applied),
+      getByPoint(token, applied),
     ])
-      .then(([summaryRes, categoryRes, pointRes, manifestsRes]) => {
-        if (!isMounted) return;
+      .then(([summaryRes, categoryRes, pointRes]) => {
+        if (!active) return;
         setSummary(summaryRes);
         setCategories(categoryRes);
         setPoints(pointRes);
-        setManifests(manifestsRes);
       })
-      .catch((err) => {
-        if (!isMounted) return;
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Erro ao carregar os dados do relatório.'
-        );
+      .catch((err: unknown) => {
+        if (active) setError(toMessage(err));
       })
       .finally(() => {
-        if (isMounted) setIsLoading(false);
+        if (active) setIsLoading(false);
       });
 
     return () => {
-      isMounted = false;
+      active = false;
     };
-  }, []);
+  }, [token, applied, reloadKey, toMessage]);
 
-  const fetchReportData = async (
-    currentFilters: ReportFiltersState,
-    page = 1
-  ) => {
-    setIsLoading(true);
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+
+    getManifests(token, applied, manifestPage, MANIFEST_PAGE_SIZE)
+      .then((result) => {
+        if (active) setManifests(result);
+      })
+      .catch((err: unknown) => {
+        if (active) setError(toMessage(err));
+      })
+      .finally(() => {
+        if (active) setIsLoadingManifests(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [token, applied, manifestPage, reloadKey, toMessage]);
+
+  function apply(next: ReportFiltersState) {
+    const invalid = validatePeriod(next.from, next.to);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+
     setError(null);
+    setIsLoading(true);
+    setIsLoadingManifests(true);
+    setManifestPage(1);
+    setApplied({ ...next, search: next.search?.trim() || undefined });
+    setReloadKey((key) => key + 1);
+  }
 
-    try {
-      const [summaryRes, categoryRes, pointRes, manifestsRes] =
-        await Promise.all([
-          reportsService.getSummary(currentFilters),
-          reportsService.getByCategory(currentFilters),
-          reportsService.getByPoint(currentFilters),
-          reportsService.getManifests(currentFilters, page, 5),
-        ]);
-
-      setSummary(summaryRes);
-      setCategories(categoryRes);
-      setPoints(pointRes);
-      setManifests(manifestsRes);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao carregar os dados do relatório.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSearch = () => {
-    fetchReportData(filters, 1);
-  };
-
-  const handleReset = () => {
+  function reset() {
     const initial = getInitialPeriod();
-    setFilters(initial);
-    fetchReportData(initial, 1);
-  };
+    setDraft(initial);
+    apply(initial);
+  }
 
-  const handlePageChange = async (newPage: number) => {
-    try {
-      const manifestsRes = await reportsService.getManifests(
-        filters,
-        newPage,
-        5
-      );
-      setManifests(manifestsRes);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao mudar de página.');
-    }
-  };
+  function changeManifestPage(page: number) {
+    setIsLoadingManifests(true);
+    setManifestPage(page);
+  }
 
-  const handleExport = async (scope: ExportScope, format: ExportFormat) => {
+  async function handleExport(scope: ExportScope, format: ExportFormat) {
+    if (!token) return;
     setIsExporting(true);
     setError(null);
-
     try {
-      await reportsService.exportFile(filters, scope, format);
+      await exportReport(token, applied, scope, format);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Erro ao exportar o relatório.'
-      );
+      setError(toMessage(err));
     } finally {
       setIsExporting(false);
     }
-  };
+  }
+
+  const exportDisabled = isExporting || isLoading;
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div className="space-y-1">
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-light px-2.5 py-1 text-xs font-semibold text-brand-dark">
+            <span
+              aria-hidden="true"
+              className="size-1.5 rounded-full bg-brand"
+            />
+            Inteligência de dados
+          </p>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-            Relatórios e Exportação de Dados
+            Relatórios e exportação
           </h1>
           <p className="text-sm text-slate-600">
-            Gere e exporte relatórios analíticos de descartes, volumes por
-            categoria e distribuição geográfica.
+            Gere e exporte relatórios de descartes, volumes por categoria e
+            distribuição geográfica.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            disabled={isExporting || !filters.from || !filters.to}
-            onClick={() => handleExport('general', 'csv')}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-card px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+          <Button
+            variant="outline"
+            size="lg"
+            className="cursor-pointer"
+            disabled={exportDisabled}
+            onClick={() => void handleExport('general', 'csv')}
           >
-            <Download className="size-4" />
-            Exportar CSV (.csv)
-          </button>
-
-          <button
-            type="button"
-            disabled={isExporting || !filters.from || !filters.to}
-            onClick={() => handleExport('general', 'pdf')}
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-solid px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow-sm transition hover:bg-brand-solid-hover disabled:opacity-50"
+            <Download aria-hidden="true" />
+            Exportar CSV
+          </Button>
+          <Button
+            size="lg"
+            className="cursor-pointer"
+            disabled={exportDisabled}
+            onClick={() => void handleExport('general', 'pdf')}
           >
-            <FileText className="size-4" />
-            Exportar Relatório Oficial (PDF)
-          </button>
+            <FileText aria-hidden="true" />
+            Relatório oficial (PDF)
+          </Button>
         </div>
       </header>
 
       <ReportFiltersBar
-        filters={filters}
-        options={filterOptions}
-        onFilterChange={setFilters}
-        onSearch={handleSearch}
-        onReset={handleReset}
+        filters={draft}
+        options={options}
+        onFilterChange={setDraft}
+        onSearch={() => apply(draft)}
+        onReset={reset}
         isLoading={isLoading}
       />
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+        <p
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+        >
           {error}
-        </div>
+        </p>
       )}
 
       <ReportSummaryCards summary={summary} isLoading={isLoading} />
@@ -214,21 +238,20 @@ export default function AdminReportsPage() {
       <CategoryAndPointSection
         categories={categories}
         points={points}
-        onExport={handleExport}
+        onExport={(scope, format) => void handleExport(scope, format)}
         isExporting={isExporting}
         isLoading={isLoading}
       />
 
       <ManifestsTable
         data={manifests}
-        search={filters.search ?? ''}
-        onSearchChange={(value) =>
-          setFilters({ ...filters, search: value || undefined })
-        }
-        onRefresh={handleSearch}
-        onPageChange={handlePageChange}
-        onExportManifests={() => handleExport('manifests', 'csv')}
-        isLoading={isLoading}
+        search={draft.search ?? ''}
+        onSearchChange={(value) => setDraft({ ...draft, search: value })}
+        onSearchSubmit={() => apply(draft)}
+        onPageChange={changeManifestPage}
+        onExport={() => void handleExport('manifests', 'csv')}
+        isExporting={isExporting}
+        isLoading={isLoadingManifests}
       />
     </div>
   );

@@ -1,5 +1,4 @@
 import {
-  CheckCircle2,
   Compass,
   Download,
   FileSpreadsheet,
@@ -62,7 +61,7 @@ export function CategoryAndPointSection({
               onClick={() => onExport('category', 'csv')}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
             >
-              <FileSpreadsheet className="size-3.5" />
+              <FileSpreadsheet aria-hidden="true" className="size-3.5" />
               Exportar Tabela
             </button>
           </div>
@@ -78,7 +77,7 @@ export function CategoryAndPointSection({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-light text-brand-dark">
-                        <Layers className="size-4" />
+                        <Layers aria-hidden="true" className="size-4" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-slate-900">
@@ -86,7 +85,7 @@ export function CategoryAndPointSection({
                         </p>
                         <p className="text-xs text-slate-500">
                           {cat.disposals} descartes • Destinador:{' '}
-                          {cat.destinador || 'Não vinculado'}
+                          {cat.destinador || 'Não informado'}
                         </p>
                       </div>
                     </div>
@@ -126,10 +125,6 @@ export function CategoryAndPointSection({
               kg
             </strong>
           </span>
-          <span className="inline-flex items-center gap-1 text-brand-dark">
-            <CheckCircle2 className="size-3.5" />
-            Auditado conforme NBR 16156:2013
-          </span>
         </div>
       </div>
 
@@ -151,7 +146,7 @@ export function CategoryAndPointSection({
               onClick={() => onExport('geospatial', 'geojson')}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
             >
-              <MapPin className="size-3.5" />
+              <MapPin aria-hidden="true" className="size-3.5" />
               GeoJSON
             </button>
           </div>
@@ -220,9 +215,9 @@ export function CategoryAndPointSection({
           onClick={() => onExport('geospatial', 'kml')}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
         >
-          <Compass className="size-4 text-brand-dark" />
+          <Compass aria-hidden="true" className="size-4 text-brand-dark" />
           Baixar Trilha Geoespacial (KML)
-          <Download className="size-3.5" />
+          <Download aria-hidden="true" className="size-3.5" />
         </button>
       </div>
     </div>

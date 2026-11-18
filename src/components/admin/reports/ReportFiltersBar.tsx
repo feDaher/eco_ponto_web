@@ -141,7 +141,7 @@ export function ReportFiltersBar({
             disabled={isLoading || !filters.from || !filters.to}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-solid px-4 py-2 text-sm font-semibold text-brand-foreground transition hover:bg-brand-solid-hover disabled:opacity-50"
           >
-            <Filter className="size-4" />
+            <Filter aria-hidden="true" className="size-4" />
             {isLoading ? 'Filtrando...' : 'Filtrar'}
           </button>
 
@@ -153,7 +153,7 @@ export function ReportFiltersBar({
             aria-label="Limpar filtros"
             className="inline-flex size-9.5 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
           >
-            <RotateCcw className="size-4" />
+            <RotateCcw aria-hidden="true" className="size-4" />
           </button>
         </div>
       </div>

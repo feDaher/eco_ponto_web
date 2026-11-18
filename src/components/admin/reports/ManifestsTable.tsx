@@ -1,20 +1,15 @@
-import {
-  CheckCircle2,
-  Clock,
-  Download,
-  RefreshCw,
-  Search,
-  XCircle,
-} from 'lucide-react';
-import { DisposalStatus, ManifestRow, Paged } from '@/types/reports';
+import { CheckCircle2, Clock, Download, Search, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import type { DisposalStatus, ManifestRow, Paged } from '@/types/reports';
 
 interface ManifestsTableProps {
   data: Paged<ManifestRow> | null;
   search: string;
   onSearchChange: (value: string) => void;
-  onRefresh: () => void;
+  onSearchSubmit: () => void;
   onPageChange: (newPage: number) => void;
-  onExportManifests: () => void;
+  onExport: () => void;
+  isExporting?: boolean;
   isLoading?: boolean;
 }
 
@@ -44,9 +39,10 @@ export function ManifestsTable({
   data,
   search,
   onSearchChange,
-  onRefresh,
+  onSearchSubmit,
   onPageChange,
-  onExportManifests,
+  onExport,
+  isExporting = false,
   isLoading = false,
 }: ManifestsTableProps) {
   const startItem =
@@ -67,31 +63,33 @@ export function ManifestsTable({
 
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:w-64">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+            />
             <input
-              type="text"
+              type="search"
+              aria-label="Buscar protocolo ou destinador"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') onRefresh();
+                if (e.key === 'Enter') onSearchSubmit();
               }}
               placeholder="Buscar protocolo ou destinador..."
               className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand focus:outline-none"
             />
           </div>
 
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isLoading}
-            title="Atualizar registros"
-            aria-label="Atualizar registros"
-            className="inline-flex size-9.5 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+          <Button
+            variant="outline"
+            size="lg"
+            className="cursor-pointer"
+            onClick={onExport}
+            disabled={isExporting || isLoading || !data || data.total === 0}
           >
-            <RefreshCw
-              className={`size-4 ${isLoading ? 'animate-spin' : ''}`}
-            />
-          </button>
+            <Download aria-hidden="true" />
+            Exportar CSV
+          </Button>
         </div>
       </div>
 
@@ -113,7 +111,6 @@ export function ManifestsTable({
                   <th className="px-5 py-3.5">Categoria & Peso</th>
                   <th className="px-5 py-3.5">Destinador Homologado</th>
                   <th className="px-5 py-3.5">Status</th>
-                  <th className="px-5 py-3.5 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
@@ -157,26 +154,15 @@ export function ManifestsTable({
                         </p>
                       </td>
                       <td className="px-5 py-3.5 text-slate-600">
-                        {row.destinador || 'Cooperativa Local'}
+                        {row.destinador || 'Não informado'}
                       </td>
                       <td className="px-5 py-3.5">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${statusInfo.className}`}
                         >
-                          <StatusIcon className="size-3" />
+                          <StatusIcon aria-hidden="true" className="size-3" />
                           {statusInfo.label}
                         </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={onExportManifests}
-                          title="Exportar manifestos"
-                          aria-label="Exportar manifestos"
-                          className="inline-flex size-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                        >
-                          <Download className="size-4" />
-                        </button>
                       </td>
                     </tr>
                   );
