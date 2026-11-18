@@ -1,7 +1,8 @@
 'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
-import { UserPlus, MapPin, UserCheck, ShieldCheck } from 'lucide-react';
+import { MapPin, ShieldCheck, Truck, UserCheck, UserPlus } from 'lucide-react';
 import { HOME_BY_ROLE, HOME_SECTIONS, ROUTES } from '@/lib/routes';
 import { useAuth } from '@/context/AuthContext';
 
@@ -41,7 +42,7 @@ export const CtaSection = () => {
           'Você está conectado como Coletor. Acesse seu painel para acompanhar coletas agendadas, validar entregas e gerenciar suas rotas.',
         primaryHref: HOME_BY_ROLE.COLLECTOR,
         primaryLabel: 'Painel do Coletor',
-        PrimaryIcon: ShieldCheck,
+        PrimaryIcon: Truck,
       };
     }
 
