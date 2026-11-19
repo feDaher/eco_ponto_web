@@ -32,6 +32,33 @@ export const PASSWORD_RULES = [
   },
 ];
 
+export const nameField = z
+  .string()
+  .trim()
+  .min(1, 'Informe seu nome.')
+  .max(191, 'O nome pode ter no máximo 191 caracteres.')
+  .regex(LETTERS, 'Use apenas letras no nome, sem números ou símbolos.')
+  .refine(
+    (value) => value.split(/\s+/).filter(Boolean).length >= 2,
+    'Digite nome e sobrenome, como "João Silva".'
+  );
+
+export const phoneField = z
+  .string()
+  .min(1, 'Informe seu telefone com DDD.')
+  .refine(
+    (value) => [10, 11].includes(onlyDigits(value).length),
+    'Digite o telefone completo com DDD, como (33) 99999-9999.'
+  );
+
+export const cityField = z
+  .string()
+  .trim()
+  .min(1, 'Informe sua cidade.')
+  .min(2, 'Digite o nome completo da cidade.')
+  .max(191, 'O nome da cidade pode ter no máximo 191 caracteres.')
+  .regex(LETTERS, 'Use apenas letras no nome da cidade.');
+
 const email = z
   .string()
   .trim()
@@ -47,31 +74,10 @@ export const loginSchema = z.object({
 export const registerSchema = z
   .object({
     role: z.enum(['CITIZEN', 'COLLECTOR']),
-    name: z
-      .string()
-      .trim()
-      .min(1, 'Informe seu nome.')
-      .max(191, 'O nome pode ter no máximo 191 caracteres.')
-      .regex(LETTERS, 'Use apenas letras no nome, sem números ou símbolos.')
-      .refine(
-        (value) => value.split(/\s+/).filter(Boolean).length >= 2,
-        'Digite nome e sobrenome, como "João Silva".'
-      ),
+    name: nameField,
     email,
-    phone: z
-      .string()
-      .min(1, 'Informe seu telefone com DDD.')
-      .refine(
-        (value) => [10, 11].includes(onlyDigits(value).length),
-        'Digite o telefone completo com DDD, como (33) 99999-9999.'
-      ),
-    city: z
-      .string()
-      .trim()
-      .min(1, 'Informe sua cidade.')
-      .min(2, 'Digite o nome completo da cidade.')
-      .max(191, 'O nome da cidade pode ter no máximo 191 caracteres.')
-      .regex(LETTERS, 'Use apenas letras no nome da cidade.'),
+    phone: phoneField,
+    city: cityField,
     password: z
       .string()
       .min(1, 'Crie uma senha.')

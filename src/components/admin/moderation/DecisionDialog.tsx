@@ -10,7 +10,7 @@ import {
   REMOVAL_REASONS,
 } from '@/lib/moderation';
 import { cn } from '@/lib/utils';
-import { Modal } from './Modal';
+import { Modal } from '@/components/ui/Modal';
 
 export type DecisionAction = 'reject' | 'remove';
 
