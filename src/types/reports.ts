@@ -31,6 +31,13 @@ export interface ReportSummary {
   activePoints: {
     total: number;
   };
+  users: ReportUsers;
+}
+
+export interface ReportUsers {
+  scope: 'platform' | 'collector';
+  total: number;
+  newInPeriod: number;
 }
 
 export interface CategoryRow {
