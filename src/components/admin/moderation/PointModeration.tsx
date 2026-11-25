@@ -11,6 +11,7 @@ import {
   MapPin,
   RefreshCw,
   ShieldCheck,
+  Tags,
 } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { useAuth } from '@/context/AuthContext';
@@ -29,6 +30,7 @@ import type {
 } from '@/types/api';
 import { AttachmentPreview } from './AttachmentPreview';
 import { AuditHistory } from './AuditHistory';
+import { CategoryRequests } from './CategoryRequests';
 import {
   DecisionDialog,
   type DecisionAction,
@@ -36,8 +38,9 @@ import {
 } from './DecisionDialog';
 import { ModerationTabs, panelId, tabId, type TabItem } from './ModerationTabs';
 import { PointRequestCard } from './PointRequestCard';
+import { usePendingCategories } from './usePendingCategories';
 
-type Tab = 'pending' | 'history' | 'approved';
+type Tab = 'pending' | 'categories' | 'history' | 'approved';
 
 type AuditFilter = 'all' | ModerationDecision;
 
@@ -75,6 +78,7 @@ export function PointModeration({ initialData }: PointModerationProps) {
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const noticeTimer = useRef<number | undefined>(undefined);
+  const pendingCategories = usePendingCategories();
 
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
@@ -96,6 +100,14 @@ export function PointModeration({ initialData }: PointModerationProps) {
       label: 'Aguardando moderação',
       icon: Clock3,
       count: pending.length,
+    },
+    {
+      id: 'categories',
+      label: 'Categorias solicitadas',
+      icon: Tags,
+      count: pendingCategories.loading
+        ? undefined
+        : pendingCategories.requests.length,
     },
     {
       id: 'history',
@@ -212,21 +224,23 @@ export function PointModeration({ initialData }: PointModerationProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <label className={SELECT_CLASS}>
-            <MapPin aria-hidden="true" className="size-4 text-brand" />
-            <span className="sr-only">Polo regional</span>
-            <select
-              value={region}
-              onChange={(event) => changeRegion(event.target.value)}
-              className="cursor-pointer bg-transparent font-medium outline-none"
-            >
-              {initialData.regions.map((option) => (
-                <option key={option} value={option}>
-                  Polo {option}
-                </option>
-              ))}
-            </select>
-          </label>
+          {tab !== 'categories' && (
+            <label className={SELECT_CLASS}>
+              <MapPin aria-hidden="true" className="size-4 text-brand" />
+              <span className="sr-only">Polo regional</span>
+              <select
+                value={region}
+                onChange={(event) => changeRegion(event.target.value)}
+                className="cursor-pointer bg-transparent font-medium outline-none"
+              >
+                {initialData.regions.map((option) => (
+                  <option key={option} value={option}>
+                    Polo {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           {tab === 'pending' && (
             <button
@@ -295,7 +309,9 @@ export function PointModeration({ initialData }: PointModerationProps) {
       <ModerationTabs tabs={tabs} active={tab} onChange={setTab} />
 
       <div role="tabpanel" id={panelId(tab)} aria-labelledby={tabId(tab)}>
-        {tab === 'history' ? (
+        {tab === 'categories' ? (
+          <CategoryRequests state={pendingCategories} onNotice={showNotice} />
+        ) : tab === 'history' ? (
           <AuditHistory entries={visibleAudit} />
         ) : list.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-card px-6 py-14 text-center">

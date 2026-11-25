@@ -104,6 +104,15 @@ async function getJson<T>(
   return body as T;
 }
 
+function isReportUsers(value: unknown) {
+  return (
+    isRecord(value) &&
+    (value.scope === 'platform' || value.scope === 'collector') &&
+    typeof value.total === 'number' &&
+    typeof value.newInPeriod === 'number'
+  );
+}
+
 function hasRows(value: unknown) {
   return isRecord(value) && Array.isArray(value.rows);
 }
@@ -141,7 +150,8 @@ export function getSummary(token: string, filters: ReportFiltersState) {
       isRecord(value.totals) &&
       isRecord(value.comparison) &&
       isRecord(value.co2) &&
-      isRecord(value.activePoints)
+      isRecord(value.activePoints) &&
+      isReportUsers(value.users)
   );
 }
 
