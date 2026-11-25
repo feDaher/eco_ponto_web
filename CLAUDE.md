@@ -18,7 +18,7 @@ Next.js 16.3 (App Router, Turbopack) · React 19 · TS strict · Tailwind 4 · l
 - `npm run typecheck` (`next typegen && tsc --noEmit`)
 - `npx eslint .` / `npx prettier --write <arquivos>`
 
-Ambiente: Windows (Git Bash / PowerShell). **Python não está instalado**: use node ou perl em scripts. O GitHub CLI (`gh`) também não está instalado.
+Ambiente: Windows (Git Bash / PowerShell). **Python não está instalado**: use node ou perl em scripts. O GitHub CLI (`gh`) está instalado e autenticado: use-o para PRs (`gh pr create`, `gh pr view`).
 
 ## Convenções
 
