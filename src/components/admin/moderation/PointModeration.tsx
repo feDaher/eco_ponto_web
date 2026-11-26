@@ -2,100 +2,130 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  AlertTriangle,
   Check,
   CheckCircle2,
   ClipboardList,
   Clock3,
-  Filter,
   MapPin,
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react';
-import { StatCard } from '@/components/ui/StatCard';
+
 import { useAuth } from '@/context/AuthContext';
+import { formatTime } from '@/lib/moderation';
+import { toPointRequest } from '@/lib/moderationAdapter';
 import {
-  approvalRate,
-  formatChange,
-  formatPercent,
-  formatTime,
-} from '@/lib/moderation';
-import type {
-  Attachment,
-  AuditEntry,
-  ModerationData,
-  ModerationDecision,
-  PointRequest,
-} from '@/types/api';
+  getPendingPoints,
+  approvePoint,
+  rejectPoint,
+  ModerationError,
+} from '@/services/moderation';
+
+import type { Attachment, PointRequest } from '@/types/api';
+
 import { AttachmentPreview } from './AttachmentPreview';
-import { AuditHistory } from './AuditHistory';
-import {
-  DecisionDialog,
-  type DecisionAction,
-  type DecisionResult,
-} from './DecisionDialog';
+
+import { DecisionDialog, type DecisionResult } from './DecisionDialog';
+
 import { ModerationTabs, panelId, tabId, type TabItem } from './ModerationTabs';
+
 import { PointRequestCard } from './PointRequestCard';
 
 type Tab = 'pending' | 'history' | 'approved';
-
-type AuditFilter = 'all' | ModerationDecision;
-
-const AUDIT_FILTERS: { value: AuditFilter; label: string }[] = [
-  { value: 'all', label: 'Todas as decisões' },
-  { value: 'approved', label: 'Aprovados' },
-  { value: 'rejected', label: 'Reprovados' },
-  { value: 'removed', label: 'Removidos' },
-];
 
 const NOTICE_MS = 3500;
 
 const SELECT_CLASS =
   'flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-card px-3 text-sm text-slate-700 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-brand';
 
-type PointModerationProps = {
-  initialData: ModerationData;
-};
+export function PointModeration() {
+  const { token, logout, status } = useAuth();
 
-export function PointModeration({ initialData }: PointModerationProps) {
-  const { user } = useAuth();
-  const [region, setRegion] = useState(initialData.regions[0]);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [decisionError, setDecisionError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [region, setRegion] = useState('all');
   const [tab, setTab] = useState<Tab>('pending');
-  const [requests, setRequests] = useState(initialData.requests);
-  const [audit, setAudit] = useState(initialData.audit);
-  const [metrics, setMetrics] = useState(initialData.metrics);
+  const [requests, setRequests] = useState<PointRequest[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
-  const [auditFilter, setAuditFilter] = useState<AuditFilter>('all');
+
   const [dialog, setDialog] = useState<{
-    action: DecisionAction;
     request: PointRequest;
   } | null>(null);
+
   const [preview, setPreview] = useState<Attachment | null>(null);
   const [notice, setNotice] = useState('');
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+
   const noticeTimer = useRef<number | undefined>(undefined);
+  const decisionLock = useRef(false);
 
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
-  const regionRequests = requests.filter((r) => r.city === region);
-  const pending = regionRequests.filter((r) => r.status === 'pending');
-  const approved = regionRequests.filter((r) => r.status === 'approved');
-  const visibleAudit = audit.filter(
-    (entry) =>
-      entry.city === region &&
-      (auditFilter === 'all' || entry.decision === auditFilter)
+  useEffect(() => {
+    if (!token) return;
+
+    let cancelled = false;
+
+    async function loadPendingPoints(authToken: string) {
+      setLoading(true);
+      setError('');
+
+      try {
+        const data = await getPendingPoints(authToken);
+
+        if (cancelled) return;
+
+        setRequests(data.map(toPointRequest));
+        setRefreshedAt(new Date().toISOString());
+        setNow(Date.now());
+      } catch (err) {
+        if (cancelled) return;
+
+        if (err instanceof ModerationError && err.status === 401) {
+          logout();
+          return;
+        }
+
+        setError(
+          err instanceof ModerationError
+            ? err.message
+            : 'Não foi possível carregar as solicitações.'
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadPendingPoints(token);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, logout, reloadKey]);
+
+  const regions = [...new Set(requests.map((request) => request.city))].sort();
+
+  const selectedRegion = regions.includes(region) ? region : 'all';
+
+  const pending = requests.filter(
+    (request) =>
+      request.status === 'pending' &&
+      (selectedRegion === 'all' || request.city === selectedRegion)
   );
-  const regionMetrics = metrics[region];
-  const rate = approvalRate(regionMetrics);
-  const analyst = user?.name ?? 'Administrador';
 
   const tabs: TabItem<Tab>[] = [
     {
       id: 'pending',
       label: 'Aguardando moderação',
       icon: Clock3,
-      count: pending.length,
+      count: loading || error ? undefined : pending.length,
     },
     {
       id: 'history',
@@ -106,13 +136,14 @@ export function PointModeration({ initialData }: PointModerationProps) {
       id: 'approved',
       label: 'Pontos já homologados',
       icon: MapPin,
-      count: approved.length,
     },
   ];
 
   function showNotice(message: string) {
     window.clearTimeout(noticeTimer.current);
+
     setNotice(message);
+
     noticeTimer.current = window.setTimeout(() => setNotice(''), NOTICE_MS);
   }
 
@@ -125,74 +156,93 @@ export function PointModeration({ initialData }: PointModerationProps) {
   }
 
   function refreshQueue() {
-    const current = new Date();
-    setNow(current.getTime());
-    setRefreshedAt(current.toISOString());
-    showNotice('Fila atualizada.');
-  }
+    if (loading || submitting) return;
 
-  function recordDecision(
-    request: PointRequest,
-    decision: ModerationDecision,
-    reason?: string
-  ) {
-    const entry: AuditEntry = {
-      id: crypto.randomUUID(),
-      protocol: request.protocol,
-      establishment: request.name,
-      city: request.city,
-      decision,
-      analyst,
-      decidedAt: new Date().toISOString(),
-      reason,
-    };
-
-    setRequests((current) =>
-      current.map((item) =>
-        item.id === request.id ? { ...item, status: decision } : item
-      )
-    );
-    setAudit((current) => [entry, ...current]);
-    setExpanded((current) => current.filter((id) => id !== request.id));
-
-    if (decision !== 'removed') {
-      setMetrics((current) => ({
-        ...current,
-        [request.city]: {
-          ...current[request.city],
-          [decision]: current[request.city][decision] + 1,
-        },
-      }));
-    }
-  }
-
-  function approve(request: PointRequest) {
-    recordDecision(request, 'approved');
-    showNotice(`${request.name} foi aprovado e publicado no mapa.`);
-  }
-
-  function confirmDecision({ reason, notify }: DecisionResult) {
-    if (!dialog) return;
-    const { action, request } = dialog;
-    const rejected = action === 'reject';
-
-    recordDecision(request, rejected ? 'rejected' : 'removed', reason);
-    setDialog(null);
-    showNotice(
-      `${request.name} foi ${rejected ? 'reprovado' : 'removido'}.` +
-        (notify
-          ? ' O envio do e-mail depende da integração com o serviço.'
-          : ' Nenhuma notificação será enviada.')
-    );
+    setLoading(true);
+    setDecisionError('');
+    setReloadKey((current) => current + 1);
   }
 
   function changeRegion(next: string) {
     setRegion(next);
     setExpanded([]);
-    setAuditFilter('all');
   }
 
-  const list = tab === 'pending' ? pending : approved;
+  function handleDecisionError(err: unknown, fallback: string) {
+    if (err instanceof ModerationError && err.status === 401) {
+      logout();
+      return;
+    }
+
+    setDecisionError(err instanceof ModerationError ? err.message : fallback);
+  }
+
+  function finishDecision(id: string) {
+    setRequests((current) => current.filter((request) => request.id !== id));
+
+    setExpanded((current) => current.filter((item) => item !== id));
+
+    setLoading(true);
+    setReloadKey((current) => current + 1);
+  }
+
+  async function approve(request: PointRequest) {
+    if (!token || loading || decisionLock.current) return;
+
+    decisionLock.current = true;
+    setSubmitting(true);
+    setDecisionError('');
+
+    try {
+      await approvePoint(request.id, token);
+
+      finishDecision(request.id);
+
+      showNotice(`${request.name} foi aprovado com sucesso.`);
+    } catch (err) {
+      handleDecisionError(err, 'Não foi possível aprovar o ponto.');
+    } finally {
+      decisionLock.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  async function confirmDecision({ reason }: DecisionResult) {
+    if (!dialog || !token || decisionLock.current) return;
+
+    if (!reason.trim()) {
+      setDecisionError('Informe o motivo da reprovação.');
+      return;
+    }
+
+    const request = dialog.request;
+
+    decisionLock.current = true;
+    setSubmitting(true);
+    setDecisionError('');
+
+    try {
+      await rejectPoint(request.id, token, reason);
+
+      finishDecision(request.id);
+      setDialog(null);
+
+      showNotice(`${request.name} foi reprovado com sucesso.`);
+    } catch (err) {
+      handleDecisionError(err, 'Não foi possível reprovar o ponto.');
+    } finally {
+      decisionLock.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  if (status === 'loading') {
+    return <p role="status">Carregando sessão...</p>;
+  }
+
+  if (!token) {
+    return <p role="alert">Entre na sua conta para acessar a moderação.</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -202,126 +252,155 @@ export function PointModeration({ initialData }: PointModerationProps) {
             <ShieldCheck aria-hidden="true" className="size-3.5" />
             Painel de moderação cadastral
           </p>
+
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             Aprovação e moderação de pontos
           </h1>
+
           <p className="max-w-2xl text-sm text-slate-600">
-            Analise solicitações, acompanhe os pontos homologados e consulte o
-            histórico de decisões do polo.
+            Analise as solicitações de pontos de coleta.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <label className={SELECT_CLASS}>
-            <MapPin aria-hidden="true" className="size-4 text-brand" />
-            <span className="sr-only">Polo regional</span>
-            <select
-              value={region}
-              onChange={(event) => changeRegion(event.target.value)}
-              className="cursor-pointer bg-transparent font-medium outline-none"
-            >
-              {initialData.regions.map((option) => (
-                <option key={option} value={option}>
-                  Polo {option}
-                </option>
-              ))}
-            </select>
-          </label>
-
           {tab === 'pending' && (
-            <button
-              type="button"
-              onClick={refreshQueue}
-              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-brand-solid px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-solid-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-              <RefreshCw aria-hidden="true" className="size-4" />
-              Atualizar fila
-            </button>
-          )}
+            <>
+              <label className={SELECT_CLASS}>
+                <MapPin aria-hidden="true" className="size-4 text-brand" />
 
-          {tab === 'history' && (
-            <label className={SELECT_CLASS}>
-              <Filter aria-hidden="true" className="size-4 text-slate-500" />
-              <span className="sr-only">Filtrar histórico por decisão</span>
-              <select
-                value={auditFilter}
-                onChange={(event) =>
-                  setAuditFilter(event.target.value as AuditFilter)
-                }
-                className="cursor-pointer bg-transparent outline-none"
+                <span className="sr-only">Polo regional</span>
+
+                <select
+                  value={selectedRegion}
+                  onChange={(event) => changeRegion(event.target.value)}
+                  className="cursor-pointer bg-transparent font-medium outline-none"
+                >
+                  <option value="all">Todas as regiões</option>
+
+                  {regions.map((option) => (
+                    <option key={option} value={option}>
+                      Polo {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                type="button"
+                onClick={refreshQueue}
+                disabled={loading || submitting}
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-brand-solid px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {AUDIT_FILTERS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <RefreshCw
+                  aria-hidden="true"
+                  className={`size-4 ${loading ? 'animate-spin' : ''}`}
+                />
+                Atualizar fila
+              </button>
+            </>
           )}
         </div>
       </header>
 
       {tab === 'pending' && refreshedAt && (
-        <p className="-mt-3 text-xs text-slate-500">
+        <p className="text-xs text-slate-500">
           Fila atualizada às {formatTime(refreshedAt)}.
         </p>
       )}
 
-      <section
-        aria-label="Indicadores mensais"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-      >
-        <StatCard label="Homologações no mês" icon={CheckCircle2}>
-          <MetricValue
-            value={String(regionMetrics.approved)}
-            note="Pontos aprovados neste mês"
-          />
-        </StatCard>
-        <StatCard label="Reprovados no mês" icon={AlertTriangle}>
-          <MetricValue
-            value={String(regionMetrics.rejected)}
-            note="Solicitações reprovadas neste mês"
-          />
-        </StatCard>
-        <StatCard label="Qualidade cadastral" icon={ShieldCheck}>
-          <MetricValue
-            value={formatPercent(rate)}
-            note="Taxa de aprovação no mês"
-            comparison={`Mês passado: ${formatPercent(regionMetrics.previousApprovalRate)} (${formatChange(rate - regionMetrics.previousApprovalRate)} p.p.)`}
-          />
-        </StatCard>
-      </section>
+      {decisionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+        >
+          {decisionError}
+        </div>
+      )}
+
+      {submitting && (
+        <p role="status" className="text-sm text-slate-500">
+          Registrando decisão...
+        </p>
+      )}
 
       <ModerationTabs tabs={tabs} active={tab} onChange={setTab} />
 
       <div role="tabpanel" id={panelId(tab)} aria-labelledby={tabId(tab)}>
         {tab === 'history' ? (
-          <AuditHistory entries={visibleAudit} />
-        ) : list.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-card p-6">
+            <h2 className="font-semibold text-slate-800">
+              Histórico de decisões
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              O histórico completo depende da integração com a API de auditoria.
+            </p>
+          </div>
+        ) : tab === 'approved' ? (
+          <div className="rounded-2xl border border-slate-200 bg-card p-6">
+            <h2 className="font-semibold text-slate-800">Pontos homologados</h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              A consulta de pontos homologados ainda precisa ser integrada.
+            </p>
+          </div>
+        ) : loading ? (
+          <div
+            role="status"
+            className="rounded-xl border border-slate-200 bg-card p-6 text-sm"
+          >
+            Carregando solicitações...
+          </div>
+        ) : error ? (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            {error}
+
+            <button
+              type="button"
+              onClick={refreshQueue}
+              className="ml-3 font-semibold underline"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : pending.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-card px-6 py-14 text-center">
             <CheckCircle2
               aria-hidden="true"
               className="mx-auto size-9 text-brand"
             />
+
             <h2 className="mt-3 font-semibold text-slate-800">Tudo em dia</h2>
+
             <p className="mt-1 text-sm text-slate-500">
-              Não há pontos{' '}
-              {tab === 'pending' ? 'aguardando moderação' : 'homologados'} neste
-              polo.
+              Não há pontos aguardando moderação nesta região.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {list.map((request) => (
+          <div
+            className={`space-y-4 ${
+              submitting ? 'pointer-events-none opacity-60' : ''
+            }`}
+            inert={submitting}
+          >
+            {pending.map((request) => (
               <PointRequestCard
                 key={request.id}
                 request={request}
                 now={now}
                 expanded={expanded.includes(request.id)}
                 onToggleDetails={() => toggleDetails(request.id)}
-                onApprove={() => approve(request)}
-                onReject={() => setDialog({ action: 'reject', request })}
-                onRemove={() => setDialog({ action: 'remove', request })}
+                onApprove={() => void approve(request)}
+                onReject={() => {
+                  setDecisionError('');
+                  setDialog({ request });
+                }}
+                onRemove={() =>
+                  showNotice('A remoção ainda não está disponível.')
+                }
                 onPreview={setPreview}
               />
             ))}
@@ -337,6 +416,7 @@ export function PointModeration({ initialData }: PointModerationProps) {
         {notice && (
           <p className="flex items-center gap-2 rounded-xl bg-brand-deep px-4 py-3 text-sm font-medium text-white shadow-xl">
             <Check aria-hidden="true" className="size-4 shrink-0" />
+
             {notice}
           </p>
         )}
@@ -344,37 +424,22 @@ export function PointModeration({ initialData }: PointModerationProps) {
 
       {dialog && (
         <DecisionDialog
-          action={dialog.action}
+          action="reject"
           pointName={dialog.request.name}
-          onClose={() => setDialog(null)}
+          onClose={() => {
+            if (!decisionLock.current) {
+              setDialog(null);
+            }
+          }}
           onConfirm={confirmDecision}
         />
       )}
+
       {preview && (
         <AttachmentPreview
           attachment={preview}
           onClose={() => setPreview(null)}
         />
-      )}
-    </div>
-  );
-}
-
-type MetricValueProps = {
-  value: string;
-  note: string;
-  comparison?: string;
-};
-
-function MetricValue({ value, note, comparison }: MetricValueProps) {
-  return (
-    <div>
-      <p className="text-3xl font-extrabold tracking-tight text-slate-800">
-        {value}
-      </p>
-      <p className="mt-1 text-xs text-slate-500">{note}</p>
-      {comparison && (
-        <p className="mt-0.5 text-[11px] text-slate-500">{comparison}</p>
       )}
     </div>
   );

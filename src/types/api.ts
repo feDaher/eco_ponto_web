@@ -161,14 +161,14 @@ export type Attachment = {
 
 export type PointRequest = CollectionPoint & {
   protocol: string;
-  category: RequestCategory;
+  category?: RequestCategory;
   requester: string;
-  cnpj: string;
+  cnpj?: string;
   contact: string;
-  structure: string;
-  capacity: string;
+  structure?: string;
+  capacity?: string;
   submittedAt: string;
-  photoCaption: string;
+  photoCaption?: string;
   attachments: Attachment[];
 };
 
@@ -191,9 +191,23 @@ export type RegionMetrics = {
   previousApprovalRate: number;
 };
 
-export type ModerationData = {
-  regions: string[];
-  requests: PointRequest[];
-  audit: AuditEntry[];
-  metrics: Record<string, RegionMetrics>;
+export type PendingPointDTO = {
+  id: string;
+  collectorId: string;
+  name: string;
+  description: string;
+  city: string;
+  address: string;
+  latitude: string;
+  longitude: string;
+  wasteCategories: string[];
+  status: 'PENDING';
+  whatsappContact: string | null;
+  createdAt: string;
+  updatedAt: string;
+  collector: {
+    id: string;
+    name: string;
+    email: string;
+  };
 };
