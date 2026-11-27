@@ -16,7 +16,7 @@ import {
   subscribeSession,
 } from '@/lib/session';
 import { AuthError, loginRequest, registerRequest } from '@/services/auth';
-import type { RegisterInput, User } from '@/types/user';
+import type { RegisterInput, Session, User } from '@/types/user';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -28,6 +28,7 @@ type AuthContextValue = {
   register: (input: RegisterInput) => Promise<User>;
   logout: () => void;
   updateUser: (user: User) => void;
+  replaceSession: (session: Session) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout: clearSession,
       updateUser,
+      replaceSession: saveSession,
     }),
     [session, login, register, updateUser]
   );

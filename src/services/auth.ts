@@ -1,8 +1,16 @@
-import type { RegisterInput, Session, User, UserRole } from '@/types/user';
+import type {
+  RegisterInput,
+  Session,
+  User,
+  UserPreferences,
+  UserRole,
+} from '@/types/user';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
 const TIMEOUT_MS = 10000;
 const ROLES: UserRole[] = ['CITIZEN', 'COLLECTOR', 'ADMIN'];
+
+export const PASSWORD_CHANGED_REASON = 'password-changed';
 
 export class AuthError extends Error {
   readonly status?: number;
@@ -27,6 +35,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function toPreferences(value: unknown): UserPreferences | undefined {
+  if (
+    !isRecord(value) ||
+    typeof value.collectionAlerts !== 'boolean' ||
+    typeof value.monthlyReports !== 'boolean' ||
+    typeof value.cooperativeContact !== 'boolean'
+  ) {
+    return undefined;
+  }
+
+  return {
+    collectionAlerts: value.collectionAlerts,
+    monthlyReports: value.monthlyReports,
+    cooperativeContact: value.cooperativeContact,
+  };
+}
+
 export function toUser(value: unknown): User | null {
   if (
     !isRecord(value) ||
@@ -45,6 +70,28 @@ export function toUser(value: unknown): User | null {
     phone: typeof value.phone === 'string' ? value.phone : '',
     city: typeof value.city === 'string' ? value.city : '',
     role: value.role as UserRole,
+    nickname: typeof value.nickname === 'string' ? value.nickname : null,
+    preferences: toPreferences(value.preferences),
+  };
+}
+
+export function toSession(data: unknown): Session | null {
+  const user = isRecord(data) ? toUser(data.user) : null;
+  const expiresIn = isRecord(data) ? Number(data.expiresIn) : NaN;
+
+  if (
+    !isRecord(data) ||
+    typeof data.idToken !== 'string' ||
+    !user ||
+    !Number.isFinite(expiresIn)
+  ) {
+    return null;
+  }
+
+  return {
+    token: data.idToken,
+    expiresAt: Date.now() + expiresIn * 1000,
+    user,
   };
 }
 
@@ -85,24 +132,9 @@ export async function loginRequest(
   email: string,
   password: string
 ): Promise<Session> {
-  const data = await post('/auth/login', { email, password });
-  const user = isRecord(data) ? toUser(data.user) : null;
-  const expiresIn = isRecord(data) ? Number(data.expiresIn) : NaN;
-
-  if (
-    !isRecord(data) ||
-    typeof data.idToken !== 'string' ||
-    !user ||
-    !Number.isFinite(expiresIn)
-  ) {
-    throw new AuthError('Resposta inesperada do servidor.');
-  }
-
-  return {
-    token: data.idToken,
-    expiresAt: Date.now() + expiresIn * 1000,
-    user,
-  };
+  const session = toSession(await post('/auth/login', { email, password }));
+  if (!session) throw new AuthError('Resposta inesperada do servidor.');
+  return session;
 }
 
 export async function registerRequest(input: RegisterInput): Promise<void> {
