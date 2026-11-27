@@ -5,10 +5,9 @@ import { usePathname } from 'next/navigation';
 import {
   Boxes,
   ClipboardPlus,
-  Clock,
+  Cog,
   History,
   LayoutDashboard,
-  MapPin,
   type LucideIcon,
 } from 'lucide-react';
 import { collectorProfile } from '@/data/mockCollector';
@@ -46,39 +45,41 @@ const sidebarItems: SidebarItem[] = [
     icon: History,
   },
   {
-    label: 'Meu ponto de coleta',
-    href: section(COLLECTOR_SECTIONS.point),
-    page: '',
-    icon: MapPin,
-  },
-  {
-    label: 'Horários de funcionamento',
-    href: section(COLLECTOR_SECTIONS.hours),
-    page: '',
-    icon: Clock,
-  },
-  {
     label: 'Materiais e capacidade',
     href: ROUTES.collectorMaterials,
     page: ROUTES.collectorMaterials,
     icon: Boxes,
   },
+  {
+    label: 'Configurações',
+    href: ROUTES.collectorSettings,
+    page: ROUTES.collectorSettings,
+    icon: Cog,
+  },
 ];
 
-export function CollectorSidebar() {
+export function CollectorSidebar({
+  showProfile = true,
+}: {
+  showProfile?: boolean;
+}) {
   const pathname = usePathname();
 
   return (
     <aside className="lg:sticky lg:top-24 lg:w-64 lg:shrink-0 lg:self-start">
-      <div className="hidden rounded-2xl border border-slate-200/70 bg-surface-alt p-4 lg:block">
-        <p className="text-[10px] font-bold tracking-wider text-brand-muted uppercase">
-          Parceiro coletor
-        </p>
-        <p className="mt-1 text-sm font-semibold text-slate-800">
-          {collectorProfile.shortName}
-        </p>
-        <p className="text-xs text-slate-500">CNPJ: {collectorProfile.cnpj}</p>
-      </div>
+      {showProfile && (
+        <div className="hidden rounded-2xl border border-slate-200/70 bg-surface-alt p-4 lg:block">
+          <p className="text-[10px] font-bold tracking-wider text-brand-muted uppercase">
+            Parceiro coletor
+          </p>
+          <p className="mt-1 text-sm font-semibold text-slate-800">
+            {collectorProfile.shortName}
+          </p>
+          <p className="text-xs text-slate-500">
+            CNPJ: {collectorProfile.cnpj}
+          </p>
+        </div>
+      )}
 
       <nav aria-label="Painel do coletor" className="lg:mt-4">
         <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0">

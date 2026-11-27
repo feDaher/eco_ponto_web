@@ -118,20 +118,6 @@ export const collectorSchedule: CollectorSchedule[] = [
   { id: 'sunday', label: 'Domingo', hours: '08:00 às 12:00', open: false },
 ];
 
-export const authorizedCategories = [
-  'TI e computadores',
-  'Cabos e fontes',
-  'Smartphones e tablets',
-  'Pequenos eletros',
-];
-
-export const categoryUnderReview = {
-  label: 'Baterias e células de lítio',
-  phase: 'Fase 2 de 3',
-  description:
-    'Aguardando vistoria técnica do Corpo de Bombeiros e laudo com responsabilidade técnica (ART).',
-};
-
 export type CollectorMaterial = {
   id: string;
   name: string;

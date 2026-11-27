@@ -5,14 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertCircle, AlertTriangle, Check, Mail } from 'lucide-react';
 import {
+  CATEGORY_REJECTION_REASONS,
   CUSTOM_REASON,
   REJECTION_REASONS,
   REMOVAL_REASONS,
 } from '@/lib/moderation';
 import { cn } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
+import { REJECTION_REASON_MAX } from '@/services/pointCategories';
 
-export type DecisionAction = 'reject' | 'remove';
+export type DecisionAction = 'reject' | 'remove' | 'rejectCategory';
 
 export type DecisionResult = {
   reason: string;
@@ -34,25 +36,49 @@ const decisionSchema = z
         'Descreva o motivo com pelo menos 10 caracteres. Ele ficará registrado na auditoria.',
       path: ['details'],
     }
+  )
+  .refine(
+    (data) =>
+      data.reason !== CUSTOM_REASON ||
+      data.details.trim().length <= REJECTION_REASON_MAX,
+    {
+      error: `O motivo pode ter no máximo ${REJECTION_REASON_MAX} caracteres.`,
+      path: ['details'],
+    }
   );
 
 type DecisionValues = z.infer<typeof decisionSchema>;
 
 const COPY: Record<
   DecisionAction,
-  { title: string; legend: string; confirm: string; reasons: string[] }
+  {
+    title: string;
+    legend: string;
+    confirm: string;
+    reasons: string[];
+    notify: boolean;
+  }
 > = {
   reject: {
     title: 'Reprovar ponto de coleta',
     legend: 'Motivo técnico da inconformidade',
     confirm: 'Confirmar reprovação',
     reasons: REJECTION_REASONS,
+    notify: true,
   },
   remove: {
     title: 'Remover ponto homologado',
     legend: 'Justificativa da remoção',
     confirm: 'Confirmar remoção',
     reasons: REMOVAL_REASONS,
+    notify: true,
+  },
+  rejectCategory: {
+    title: 'Rejeitar categoria',
+    legend: 'Motivo da rejeição (o coletor verá no histórico)',
+    confirm: 'Confirmar rejeição',
+    reasons: CATEGORY_REJECTION_REASONS,
+    notify: false,
   },
 };
 
@@ -62,6 +88,8 @@ const LEGEND_CLASS =
 type DecisionDialogProps = {
   action: DecisionAction;
   pointName: string;
+  busy?: boolean;
+  error?: string | null;
   onClose: () => void;
   onConfirm: (result: DecisionResult) => void;
 };
@@ -69,6 +97,8 @@ type DecisionDialogProps = {
 export function DecisionDialog({
   action,
   pointName,
+  busy = false,
+  error,
   onClose,
   onConfirm,
 }: DecisionDialogProps) {
@@ -81,7 +111,7 @@ export function DecisionDialog({
   } = useForm<DecisionValues>({
     resolver: zodResolver(decisionSchema),
     mode: 'onTouched',
-    defaultValues: { reason: '', details: '', notify: true },
+    defaultValues: { reason: '', details: '', notify: copy.notify },
   });
   const reason = useWatch({ control, name: 'reason' });
 
@@ -142,6 +172,7 @@ export function DecisionDialog({
             <textarea
               id="decision-details"
               rows={4}
+              maxLength={REJECTION_REASON_MAX}
               autoFocus
               placeholder="Descreva o motivo que ficará registrado na auditoria..."
               aria-invalid={errors.details ? true : undefined}
@@ -163,26 +194,37 @@ export function DecisionDialog({
           </div>
         )}
 
-        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-surface-alt p-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 size-4 accent-brand-solid"
-            {...register('notify')}
-          />
-          <Mail
-            aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-brand"
-          />
-          <span>
-            <span className="block font-medium text-slate-800">
-              Enviar notificação por e-mail ao solicitante
+        {copy.notify && (
+          <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-surface-alt p-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 accent-brand-solid"
+              {...register('notify')}
+            />
+            <Mail
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 text-brand"
+            />
+            <span>
+              <span className="block font-medium text-slate-800">
+                Enviar notificação por e-mail ao solicitante
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                A escolha fica registrada; o envio depende da integração com o
+                serviço de e-mail.
+              </span>
             </span>
-            <span className="mt-1 block text-xs leading-5 text-slate-500">
-              A escolha fica registrada; o envio depende da integração com o
-              serviço de e-mail.
-            </span>
-          </span>
-        </label>
+          </label>
+        )}
+
+        {error && (
+          <p
+            role="alert"
+            className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+          >
+            {error}
+          </p>
+        )}
 
         <div className="mt-6 flex flex-col-reverse justify-end gap-2 sm:flex-row">
           <button
@@ -194,7 +236,8 @@ export function DecisionDialog({
           </button>
           <button
             type="submit"
-            className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 dark:bg-red-700 dark:hover:bg-red-600"
+            disabled={busy}
+            className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600"
           >
             <Check aria-hidden="true" className="size-4" />
             {copy.confirm}
