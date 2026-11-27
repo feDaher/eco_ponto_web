@@ -118,16 +118,54 @@ export const collectorSchedule: CollectorSchedule[] = [
   { id: 'sunday', label: 'Domingo', hours: '08:00 às 12:00', open: false },
 ];
 
-export const authorizedCategories = [
-  'TI e computadores',
-  'Cabos e fontes',
-  'Smartphones e tablets',
-  'Pequenos eletros',
-];
-
-export const categoryUnderReview = {
-  label: 'Baterias e células de lítio',
-  phase: 'Fase 2 de 3',
-  description:
-    'Aguardando vistoria técnica do Corpo de Bombeiros e laudo com responsabilidade técnica (ART).',
+export type CollectorMaterial = {
+  id: string;
+  name: string;
+  description: string;
+  storedKg: number;
+  capacityKg: number;
+  accepting: boolean;
 };
+
+export const collectorMaterials: CollectorMaterial[] = [
+  {
+    id: 'informatica',
+    name: 'Informática & Placas-Mãe',
+    description: 'Classe IIA • Desmanche mecânico manual',
+    storedKg: 650,
+    capacityKg: 1000,
+    accepting: true,
+  },
+  {
+    id: 'smartphones',
+    name: 'Smartphones, Celulares & Cabos',
+    description: 'Componentes nobres, cobre e terras raras',
+    storedKg: 220,
+    capacityKg: 500,
+    accepting: true,
+  },
+  {
+    id: 'pequenos',
+    name: 'Pequenos Eletrodomésticos',
+    description: 'Liquidificadores, batedeiras, secadores, cafeteiras',
+    storedKg: 430,
+    capacityKg: 800,
+    accepting: true,
+  },
+  {
+    id: 'grandes',
+    name: 'Grandes Eletros / Linha Branca',
+    description: 'Refrigeradores, fogões e lavadoras',
+    storedKg: 700,
+    capacityKg: 700,
+    accepting: false,
+  },
+  {
+    id: 'monitores',
+    name: 'Monitores, Telas LCD & Tubos CRT',
+    description: 'Vidro plumbífero e fósforo • Manuseio de alta cautela',
+    storedKg: 880,
+    capacityKg: 1000,
+    accepting: true,
+  },
+];

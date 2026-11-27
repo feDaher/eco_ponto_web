@@ -9,6 +9,7 @@ import {
   MapPin,
   RefreshCw,
   ShieldCheck,
+  Tags,
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -24,14 +25,16 @@ import {
 import type { Attachment, PointRequest } from '@/types/api';
 
 import { AttachmentPreview } from './AttachmentPreview';
+import { CategoryRequests } from './CategoryRequests';
 
 import { DecisionDialog, type DecisionResult } from './DecisionDialog';
 
 import { ModerationTabs, panelId, tabId, type TabItem } from './ModerationTabs';
 
 import { PointRequestCard } from './PointRequestCard';
+import { usePendingCategories } from './usePendingCategories';
 
-type Tab = 'pending' | 'history' | 'approved';
+type Tab = 'pending' | 'categories' | 'history' | 'approved';
 
 const NOTICE_MS = 3500;
 
@@ -63,6 +66,7 @@ export function PointModeration() {
 
   const noticeTimer = useRef<number | undefined>(undefined);
   const decisionLock = useRef(false);
+  const pendingCategories = usePendingCategories();
 
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
@@ -126,6 +130,14 @@ export function PointModeration() {
       label: 'Aguardando moderação',
       icon: Clock3,
       count: loading || error ? undefined : pending.length,
+    },
+    {
+      id: 'categories',
+      label: 'Categorias solicitadas',
+      icon: Tags,
+      count: pendingCategories.loading
+        ? undefined
+        : pendingCategories.requests.length,
     },
     {
       id: 'history',
@@ -308,7 +320,7 @@ export function PointModeration() {
         </p>
       )}
 
-      {decisionError && (
+      {decisionError && !dialog && (
         <div
           role="alert"
           className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
@@ -326,7 +338,9 @@ export function PointModeration() {
       <ModerationTabs tabs={tabs} active={tab} onChange={setTab} />
 
       <div role="tabpanel" id={panelId(tab)} aria-labelledby={tabId(tab)}>
-        {tab === 'history' ? (
+        {tab === 'categories' ? (
+          <CategoryRequests state={pendingCategories} onNotice={showNotice} />
+        ) : tab === 'history' ? (
           <div className="rounded-2xl border border-slate-200 bg-card p-6">
             <h2 className="font-semibold text-slate-800">
               Histórico de decisões
@@ -426,6 +440,8 @@ export function PointModeration() {
         <DecisionDialog
           action="reject"
           pointName={dialog.request.name}
+          busy={submitting}
+          error={decisionError}
           onClose={() => {
             if (!decisionLock.current) {
               setDialog(null);
