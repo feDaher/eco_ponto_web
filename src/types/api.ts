@@ -207,7 +207,7 @@ export type PendingPointDTO = {
   id: string;
   collectorId: string;
   name: string;
-  description: string;
+  description: string | null;
   city: string;
   address: string;
   latitude: string;
@@ -215,6 +215,12 @@ export type PendingPointDTO = {
   wasteCategories: string[];
   status: 'PENDING';
   whatsappContact: string | null;
+  hours?: {
+    weekday: string;
+    openTime: string;
+    closeTime: string;
+    isActive: boolean;
+  }[];
   createdAt: string;
   updatedAt: string;
   collector: {

@@ -59,7 +59,15 @@ export function PointRequestCard({
   const CategoryIcon = category?.icon ?? Building2;
   const detailsId = `request-details-${request.id}`;
   const materials = request.materials.map((m) => MATERIALS[m].label);
-  const fullAddress = `${request.address} - ${request.neighborhood}, ${request.city}, CEP ${request.cep}`;
+  const shortAddress = [
+    [request.address, request.neighborhood].filter(Boolean).join(' - '),
+    request.city,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const fullAddress = request.cep
+    ? `${shortAddress}, CEP ${request.cep}`
+    : shortAddress;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-xs">
@@ -109,7 +117,7 @@ export function PointRequestCard({
                 aria-hidden="true"
                 className="size-4 shrink-0 text-brand"
               />
-              {request.address} - {request.neighborhood}, {request.city}
+              {shortAddress}
             </p>
 
             <dl className="mt-4 grid gap-3 rounded-xl bg-surface-alt p-4 sm:grid-cols-2">
@@ -126,7 +134,9 @@ export function PointRequestCard({
                   Itens aceitos
                 </dt>
                 <dd className="mt-1 text-sm text-slate-700">
-                  {materials.join(' · ')}
+                  {materials.length > 0
+                    ? materials.join(' · ')
+                    : 'Não informados'}
                 </dd>
               </div>
             </dl>
@@ -202,7 +212,7 @@ export function PointRequestCard({
                 <DetailItem
                   icon={Clock3}
                   label="Horário de coleta"
-                  value={request.hours}
+                  value={request.hours || 'Não informado'}
                 />
                 <DetailItem
                   icon={Package}

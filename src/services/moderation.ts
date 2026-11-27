@@ -6,7 +6,7 @@ const pendingPointSchema = z.object({
   id: z.string(),
   collectorId: z.string(),
   name: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   city: z.string(),
   address: z.string(),
   latitude: z.string(),
@@ -14,6 +14,16 @@ const pendingPointSchema = z.object({
   wasteCategories: z.array(z.string()),
   status: z.literal('PENDING'),
   whatsappContact: z.string().nullable(),
+  hours: z
+    .array(
+      z.object({
+        weekday: z.string(),
+        openTime: z.string(),
+        closeTime: z.string(),
+        isActive: z.boolean(),
+      })
+    )
+    .optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   collector: z.object({
@@ -37,7 +47,7 @@ export class ModerationError extends Error {
 
 const MESSAGES: Record<number, string> = {
   400: 'Confira os dados informados.',
-  401: 'Sessão expirada. Falça login novamente.',
+  401: 'Sessão expirada. Faça login novamente.',
   403: 'Você não possui permissão para moderar pontos de coleta.',
   404: 'Ponto de coleta não encontrado.',
   409: 'Não foi possível realizar esta decisão. Atualize a fila.',
