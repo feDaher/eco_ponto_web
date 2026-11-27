@@ -149,9 +149,15 @@ Detalhes:
 - `/collector/materials` (WEB-18): capacidade por material, alerta de lotação (≥ 85%), pausar recepção e alterar o limite (validado: inteiro e não menor que o estoque). Mock em `src/data/mockCollector.ts`, porque a API não tem rota de capacidade.
 - `CollectorSidebar` usa `usePathname()` para marcar a página ativa.
 
+## Minha conta (`/account`)
+
+- `AccountProfile` (`src/components/account/`): resumo do usuário, dados pessoais, notificações, segurança, LGPD e exclusão de conta.
+- Nome, telefone e cidade vêm da sessão: o `GET /auth/me` só devolve `id`, `email` e `role`. O resumo de descartes (`GET /disposals/me/summary`, `src/services/account.ts`) é só para `CITIZEN`; admin e coletor veem um atalho para o painel. O nível é calculado no front a partir de `totalPoints` (`getLevel`, 1000 pontos por nível).
+- "Salvar alterações" chama `PATCH /users/me` (`{ name, phone, city }`, telefone só com dígitos; resposta = usuário, ou 204) e atualiza a sessão com `updateUser` do `AuthContext`. "Excluir conta" chama `DELETE /users/me` (204; a API anonimiza o usuário e apaga o login no Firebase) e vai para o login. Erros: 400/404/409/502 mostram a mensagem pt-BR da API (sem o prefixo "Validation error:"); 403 = conta bloqueada; 409 = último administrador; 502 = Firebase falhou e nada foi alterado (a sessão continua). As rotas já estão na `main` da API. Apelido, preferências, troca de senha e 2FA não têm coluna/rota no back e seguem como demonstração. "Baixar meus dados" gera um JSON com os dados da sessão, e a permissão de localização é lida do navegador.
+- Regras dos campos reaproveitadas do cadastro (`nameField`, `phoneField`, `cityField` em `authSchemas.ts`). `Modal` e `Switch` ficam em `src/components/ui/`.
+
 ## Pendências
 
-- Página ainda em `ComingSoon`: `/account`.
 - Integrar com a API o que ainda é mock:
   - pontos: `GET /collection-points` (com isso, a ficha passa a usar `GET /collection-points/:id/reviews`)
   - moderação de pontos: `GET /collection-points/admin/pending` e `PATCH /collection-points/:id/review`

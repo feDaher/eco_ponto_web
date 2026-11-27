@@ -11,8 +11,8 @@ import {
   REMOVAL_REASONS,
 } from '@/lib/moderation';
 import { cn } from '@/lib/utils';
+import { Modal } from '@/components/ui/Modal';
 import { REJECTION_REASON_MAX } from '@/services/pointCategories';
-import { Modal } from './Modal';
 
 export type DecisionAction = 'reject' | 'remove' | 'rejectCategory';
 

@@ -27,6 +27,7 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<User>;
   register: (input: RegisterInput) => Promise<User>;
   logout: () => void;
+  updateUser: (user: User) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -52,6 +53,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveSession(next);
     return next.user;
   }, []);
+
+  const updateUser = useCallback(
+    (user: User) => {
+      if (session) saveSession({ ...session, user });
+    },
+    [session]
+  );
 
   const register = useCallback(
     async (input: RegisterInput) => {
@@ -80,8 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       register,
       logout: clearSession,
+      updateUser,
     }),
-    [session, login, register]
+    [session, login, register, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

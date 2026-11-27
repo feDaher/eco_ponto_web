@@ -2,7 +2,7 @@
 
 import { FileText, ImageIcon } from 'lucide-react';
 import type { Attachment } from '@/types/api';
-import { Modal } from './Modal';
+import { Modal } from '@/components/ui/Modal';
 
 export const ATTACHMENT_KINDS = {
   document: { label: 'Documento', icon: FileText },

@@ -27,7 +27,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function toUser(value: unknown): User | null {
+export function toUser(value: unknown): User | null {
   if (
     !isRecord(value) ||
     typeof value.id !== 'string' ||
