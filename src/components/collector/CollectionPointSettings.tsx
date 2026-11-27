@@ -16,17 +16,17 @@ import { CollectionPointScheduleEditor } from '@/components/collector/Collection
 import { useAuth } from '@/context/AuthContext';
 import {
   CollectionPointSettingsError,
-  GetCollectionPointCategories,
-  GetMyCollectionPoints,
-  SaveCollectionPoint,
-} from '@/services/CollectionPointSettings';
+  getCollectionPointCategories,
+  getMyCollectionPoints,
+  saveCollectionPoint,
+} from '@/services/collectionPointSettings';
 import type {
   CollectionPointCategory,
   CollectionPointConfiguration,
   CollectionPointSettingsInput,
   CollectionPointWeekday,
   CooperativeDetails,
-} from '@/types/CollectionPointSettings';
+} from '@/types/collectionPointSettings';
 
 type Direction = 'N' | 'S' | 'E' | 'W';
 type CoordinateDraft = {
@@ -270,7 +270,7 @@ function DaysSince(date: string) {
 }
 
 function CollectionPointSettings() {
-  const { token, user } = useAuth();
+  const { token, user, logout } = useAuth();
   const [points, setPoints] = useState<CollectionPointConfiguration[]>([]);
   const [categories, setCategories] = useState<CollectionPointCategory[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -281,6 +281,7 @@ function CollectionPointSettings() {
   const [loadError, setLoadError] = useState('');
   const [formError, setFormError] = useState('');
   const [notice, setNotice] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   const selectedPoint = points.find((point) => point.id === selectedId) ?? null;
   const latitude = useMemo(
@@ -297,8 +298,8 @@ function CollectionPointSettings() {
     let active = true;
 
     Promise.all([
-      GetMyCollectionPoints(token),
-      GetCollectionPointCategories(token),
+      getMyCollectionPoints(token),
+      getCollectionPointCategories(token),
     ])
       .then(([loadedPoints, loadedCategories]) => {
         if (!active) return;
@@ -316,6 +317,13 @@ function CollectionPointSettings() {
       })
       .catch((error: unknown) => {
         if (!active) return;
+        if (
+          error instanceof CollectionPointSettingsError &&
+          error.status === 401
+        ) {
+          logout();
+          return;
+        }
         setLoadError(
           error instanceof CollectionPointSettingsError
             ? error.message
@@ -329,7 +337,7 @@ function CollectionPointSettings() {
     return () => {
       active = false;
     };
-  }, [token, user]);
+  }, [token, user, logout, reloadKey]);
 
   function UpdateDraft<Key extends keyof FormDraft>(
     key: Key,
@@ -453,7 +461,7 @@ function CollectionPointSettings() {
     setFormError('');
     setNotice('');
     try {
-      const saved = await SaveCollectionPoint(
+      const saved = await saveCollectionPoint(
         token,
         input,
         selectedId ?? undefined
@@ -482,6 +490,13 @@ function CollectionPointSettings() {
           : 'Solicitação enviada. O ponto será exibido após aprovação da administração.'
       );
     } catch (error) {
+      if (
+        error instanceof CollectionPointSettingsError &&
+        error.status === 401
+      ) {
+        logout();
+        return;
+      }
       setFormError(
         error instanceof CollectionPointSettingsError
           ? error.message
@@ -506,11 +521,15 @@ function CollectionPointSettings() {
 
   if (loadError) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
         <p role="alert">{loadError}</p>
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            setLoadError('');
+            setIsLoading(true);
+            setReloadKey((key) => key + 1);
+          }}
           className="mt-3 font-semibold underline"
         >
           Tentar novamente
@@ -567,14 +586,14 @@ function CollectionPointSettings() {
                   selectedPoint.status === 'APPROVED'
                     ? 'bg-green-100 text-green-800'
                     : selectedPoint.status === 'REJECTED'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-amber-100 text-amber-900'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300'
+                      : 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200'
                 }`}
               >
                 {FormatStatus(selectedPoint.status)}
               </span>
               {selectedPoint.rejectionReason && (
-                <span className="text-red-700">
+                <span className="text-red-700 dark:text-red-300">
                   {selectedPoint.rejectionReason}
                 </span>
               )}
@@ -606,7 +625,7 @@ function CollectionPointSettings() {
           {formError && (
             <p
               role="alert"
-              className="mt-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+              className="mt-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
             >
               <ShieldAlert
                 aria-hidden="true"
@@ -899,7 +918,7 @@ function CollectionPointSettings() {
                   ))}
                 </div>
                 {categories.length === 0 && (
-                  <p className="text-sm text-amber-800">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
                     Não há materiais ativos para selecionar. Peça à
                     administração para cadastrar categorias.
                   </p>

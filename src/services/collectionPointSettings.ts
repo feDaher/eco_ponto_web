@@ -2,7 +2,7 @@ import type {
   CollectionPointCategory,
   CollectionPointConfiguration,
   CollectionPointSettingsInput,
-} from '@/types/CollectionPointSettings';
+} from '@/types/collectionPointSettings';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
 const TIMEOUT_MS = 15000;
@@ -21,7 +21,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-async function Request(
+async function request(
   token: string,
   path: string,
   method = 'GET',
@@ -70,7 +70,7 @@ async function Request(
   return response.json();
 }
 
-function IsCollectionPoint(
+function isCollectionPoint(
   value: unknown
 ): value is CollectionPointConfiguration {
   return (
@@ -83,7 +83,7 @@ function IsCollectionPoint(
   );
 }
 
-function IsCategoryList(value: unknown): value is CollectionPointCategory[] {
+function isCategoryList(value: unknown): value is CollectionPointCategory[] {
   return (
     Array.isArray(value) &&
     value.every(
@@ -96,11 +96,11 @@ function IsCategoryList(value: unknown): value is CollectionPointCategory[] {
   );
 }
 
-export async function GetMyCollectionPoints(
+export async function getMyCollectionPoints(
   token: string
 ): Promise<CollectionPointConfiguration[]> {
-  const value = await Request(token, '/collection-points/mine');
-  if (!Array.isArray(value) || !value.every(IsCollectionPoint)) {
+  const value = await request(token, '/collection-points/mine');
+  if (!Array.isArray(value) || !value.every(isCollectionPoint)) {
     throw new CollectionPointSettingsError(
       'O servidor retornou uma lista de pontos inválida.'
     );
@@ -108,11 +108,11 @@ export async function GetMyCollectionPoints(
   return value;
 }
 
-export async function GetCollectionPointCategories(
+export async function getCollectionPointCategories(
   token: string
 ): Promise<CollectionPointCategory[]> {
-  const value = await Request(token, '/waste-categories');
-  if (!IsCategoryList(value)) {
+  const value = await request(token, '/waste-categories');
+  if (!isCategoryList(value)) {
     throw new CollectionPointSettingsError(
       'O servidor retornou uma lista de materiais inválida.'
     );
@@ -120,12 +120,12 @@ export async function GetCollectionPointCategories(
   return value.filter(({ active }) => active);
 }
 
-export async function SaveCollectionPoint(
+export async function saveCollectionPoint(
   token: string,
   input: CollectionPointSettingsInput,
   pointId?: string
 ): Promise<CollectionPointConfiguration> {
-  const value = await Request(
+  const value = await request(
     token,
     pointId
       ? `/collection-points/${encodeURIComponent(pointId)}`
@@ -133,7 +133,7 @@ export async function SaveCollectionPoint(
     pointId ? 'PUT' : 'POST',
     input
   );
-  if (!IsCollectionPoint(value)) {
+  if (!isCollectionPoint(value)) {
     throw new CollectionPointSettingsError(
       'O servidor retornou um ponto de coleta inválido.'
     );

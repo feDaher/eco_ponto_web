@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react';
-import type { CollectionPointWeekday } from '@/types/CollectionPointSettings';
+import type { CollectionPointWeekday } from '@/types/collectionPointSettings';
 
 type ScheduleEntry = {
   weekday: CollectionPointWeekday;
