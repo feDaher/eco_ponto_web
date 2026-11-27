@@ -1,5 +1,11 @@
 export type UserRole = 'CITIZEN' | 'COLLECTOR' | 'ADMIN';
 
+export type UserPreferences = {
+  collectionAlerts: boolean;
+  monthlyReports: boolean;
+  cooperativeContact: boolean;
+};
+
 export type User = {
   id: string;
   name: string;
@@ -7,6 +13,8 @@ export type User = {
   phone: string;
   city: string;
   role: UserRole;
+  nickname?: string | null;
+  preferences?: UserPreferences;
 };
 
 export type Session = {

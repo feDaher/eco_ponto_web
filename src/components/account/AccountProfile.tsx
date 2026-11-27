@@ -9,13 +9,12 @@ import { AlertCircle, Check, Loader2, Save, Undo2 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import {
-  DEMO_NOTICE,
   accountDefaults,
   accountSchema,
   buildDataExport,
   type AccountValues,
 } from '@/lib/account';
-import { formatPhone, onlyDigits } from '@/lib/authSchemas';
+import { onlyDigits } from '@/lib/authSchemas';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import {
@@ -24,8 +23,10 @@ import {
   getDisposalSummary,
   updateProfile,
 } from '@/services/account';
+import { PASSWORD_CHANGED_REASON } from '@/services/auth';
 import type { User } from '@/types/user';
 import { AppInfo } from './AppInfo';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { DangerZone } from './DangerZone';
 import { NotificationSection } from './NotificationSection';
 import { PersonalDataSection } from './PersonalDataSection';
@@ -35,13 +36,6 @@ import { SecuritySection } from './SecuritySection';
 
 const FORM_ID = 'account-form';
 const NOTICE_MS = 6000;
-
-const LOCAL_ONLY_FIELDS = [
-  'nickname',
-  'cooperativeContact',
-  'collectionAlerts',
-  'monthlyReports',
-] as const;
 
 type Notice = { message: string; tone: 'success' | 'error' };
 
@@ -75,7 +69,7 @@ function AccountProfileContent({
     handleSubmit,
     reset,
     getValues,
-    formState: { isDirty, isSubmitting, dirtyFields },
+    formState: { isDirty, isSubmitting },
   } = form;
 
   const [summary, setSummary] = useState<SummaryState | null>(
@@ -83,6 +77,7 @@ function AccountProfileContent({
   );
   const [reloadKey, setReloadKey] = useState(0);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const noticeTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
@@ -132,10 +127,6 @@ function AccountProfileContent({
     );
   }
 
-  function showDemo(message: string) {
-    showNotice(`${message} ${DEMO_NOTICE}`);
-  }
-
   function retrySummary() {
     setSummary({ status: 'loading' });
     setReloadKey((key) => key + 1);
@@ -143,26 +134,22 @@ function AccountProfileContent({
 
   async function save(values: AccountValues) {
     if (!token) return;
-    const localOnly = LOCAL_ONLY_FIELDS.some((field) => dirtyFields[field]);
 
     try {
       const saved = await updateProfile(token, user, {
         name: values.name.trim(),
+        nickname: values.nickname.trim() || null,
         phone: onlyDigits(values.phone),
         city: values.city.trim(),
+        preferences: {
+          collectionAlerts: values.collectionAlerts,
+          monthlyReports: values.monthlyReports,
+          cooperativeContact: values.cooperativeContact,
+        },
       });
       updateUser(saved);
-      reset({
-        ...values,
-        name: saved.name,
-        phone: formatPhone(saved.phone),
-        city: saved.city,
-      });
-      showNotice(
-        localOnly
-          ? `Dados pessoais salvos. Apelido e preferências ainda não são salvos no servidor. ${DEMO_NOTICE}`
-          : 'Dados pessoais salvos.'
-      );
+      reset(accountDefaults(saved));
+      showNotice('Alterações salvas.');
     } catch (error) {
       showError(error, 'Não foi possível salvar seus dados.');
     }
@@ -178,6 +165,20 @@ function AccountProfileContent({
     } catch (error) {
       showError(error, 'Não foi possível excluir a conta.');
     }
+  }
+
+  function passwordChanged() {
+    setPasswordOpen(false);
+    showNotice('Senha atualizada. Use a nova senha no próximo acesso.');
+  }
+
+  function passwordSignedOut() {
+    const params = new URLSearchParams({
+      reason: PASSWORD_CHANGED_REASON,
+      next: ROUTES.account,
+    });
+    router.replace(`${ROUTES.login}?${params}`);
+    logout();
   }
 
   function discard() {
@@ -269,10 +270,18 @@ function AccountProfileContent({
           >
             <PersonalDataSection form={form} email={user.email} />
             <NotificationSection form={form} />
-            <SecuritySection onDemo={showDemo} />
+            <SecuritySection onChangePassword={() => setPasswordOpen(true)} />
           </form>
         </div>
       </div>
+
+      {passwordOpen && (
+        <ChangePasswordDialog
+          onClose={() => setPasswordOpen(false)}
+          onChanged={passwordChanged}
+          onSignedOut={passwordSignedOut}
+        />
+      )}
 
       <div
         role="status"

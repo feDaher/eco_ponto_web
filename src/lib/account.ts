@@ -1,22 +1,32 @@
 import { z } from 'zod';
 import {
+  LETTERS,
   cityField,
   formatPhone,
   nameField,
+  newPasswordField,
   phoneField,
 } from '@/lib/authSchemas';
-import type { User } from '@/types/user';
+import type { User, UserPreferences } from '@/types/user';
 
 export const POINTS_PER_LEVEL = 1000;
 
-export const DEMO_NOTICE = 'Demonstração: nada foi salvo.';
+export const DEFAULT_PREFERENCES: UserPreferences = {
+  collectionAlerts: true,
+  monthlyReports: true,
+  cooperativeContact: false,
+};
 
 export const accountSchema = z.object({
   name: nameField,
   nickname: z
     .string()
     .trim()
-    .max(60, 'O apelido pode ter no máximo 60 caracteres.'),
+    .max(60, 'O apelido pode ter no máximo 60 caracteres.')
+    .refine(
+      (value) => value === '' || LETTERS.test(value),
+      "Use apenas letras, espaços e os caracteres ' . - no apelido."
+    ),
   phone: phoneField,
   city: cityField,
   cooperativeContact: z.boolean(),
@@ -29,14 +39,34 @@ export type AccountValues = z.infer<typeof accountSchema>;
 export function accountDefaults(user: User): AccountValues {
   return {
     name: user.name,
-    nickname: '',
+    nickname: user.nickname ?? '',
     phone: formatPhone(user.phone),
     city: user.city,
-    cooperativeContact: false,
-    collectionAlerts: true,
-    monthlyReports: true,
+    ...DEFAULT_PREFERENCES,
+    ...user.preferences,
   };
 }
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Informe sua senha atual.'),
+    newPassword: newPasswordField,
+    confirmPassword: z.string().min(1, 'Repita a nova senha para confirmar.'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    error: 'As senhas não coincidem. Digite a mesma senha nos dois campos.',
+    path: ['confirmPassword'],
+  })
+  .refine(
+    (data) =>
+      !data.currentPassword || data.newPassword !== data.currentPassword,
+    {
+      error: 'A nova senha deve ser diferente da senha atual.',
+      path: ['newPassword'],
+    }
+  );
+
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 
 export function getLevel(points: number) {
   const safe = Math.max(0, Math.floor(points));
@@ -81,6 +111,7 @@ export function buildDataExport(user: User, values: AccountValues) {
         phone: user.phone,
         city: user.city,
         role: user.role,
+        nickname: values.nickname.trim() || null,
       },
       preferences: {
         cooperativeContact: values.cooperativeContact,

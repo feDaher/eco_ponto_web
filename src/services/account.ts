@@ -1,21 +1,26 @@
-import { toUser } from '@/services/auth';
+import { toSession, toUser } from '@/services/auth';
 import type { DisposalCategoryTotal, DisposalSummary } from '@/types/account';
-import type { User } from '@/types/user';
+import type { Session, User, UserPreferences } from '@/types/user';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
 const TIMEOUT_MS = 10000;
 
 export class AccountApiError extends Error {
   readonly status?: number;
+  readonly signedOut: boolean;
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, signedOut = false) {
     super(message);
     this.name = 'AccountApiError';
     this.status = status;
+    this.signedOut = signedOut;
   }
 }
 
-export type ProfileUpdate = Pick<User, 'name' | 'phone' | 'city'>;
+export type ProfileUpdate = Pick<User, 'name' | 'phone' | 'city'> & {
+  nickname: string | null;
+  preferences: UserPreferences;
+};
 
 const MESSAGES: Record<number, string> = {
   400: 'Confira os dados informados e tente novamente.',
@@ -32,7 +37,7 @@ function toNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-const API_MESSAGE_STATUSES = new Set([400, 404, 409, 502]);
+const API_MESSAGE_STATUSES = new Set([400, 404, 409, 422, 502, 503]);
 
 async function readApiMessage(response: Response) {
   if (!API_MESSAGE_STATUSES.has(response.status)) return null;
@@ -44,7 +49,7 @@ async function readApiMessage(response: Response) {
 
 async function request(
   token: string,
-  method: 'GET' | 'PATCH' | 'DELETE',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   messages: Record<number, string>,
   body?: unknown
@@ -163,4 +168,48 @@ export async function deleteAccount(token: string): Promise<void> {
   await request(token, 'DELETE', '/users/me', {
     404: 'A API ainda não tem a rota DELETE /users/me para excluir a conta.',
   });
+}
+
+const PASSWORD_CHANGED = /^Senha alterada/i;
+
+export async function changePassword(
+  token: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<Session> {
+  let response: Response;
+  try {
+    response = await request(
+      token,
+      'POST',
+      '/auth/change-password',
+      {
+        403: 'Sua conta está bloqueada. A senha não foi alterada.',
+        422: 'A senha atual está incorreta.',
+        429: 'Muitas tentativas em pouco tempo. Tente novamente em alguns minutos.',
+        502: 'Não foi possível trocar a senha agora. Nenhuma alteração foi feita.',
+        503: 'Serviço de autenticação indisponível. Nenhuma alteração foi feita.',
+      },
+      { currentPassword, newPassword }
+    );
+  } catch (error) {
+    if (
+      error instanceof AccountApiError &&
+      error.status === 502 &&
+      PASSWORD_CHANGED.test(error.message)
+    ) {
+      throw new AccountApiError(error.message, 502, true);
+    }
+    throw error;
+  }
+
+  const session = toSession(await response.json().catch(() => null));
+  if (!session) {
+    throw new AccountApiError(
+      'Senha alterada. Entre novamente com a nova senha.',
+      response.status,
+      true
+    );
+  }
+  return session;
 }

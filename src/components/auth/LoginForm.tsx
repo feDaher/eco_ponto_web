@@ -5,17 +5,20 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { loginSchema, type LoginValues } from '@/lib/authSchemas';
 import { HOME_BY_ROLE, ROUTES, safeRedirect } from '@/lib/routes';
-import { AuthError } from '@/services/auth';
+import { AuthError, PASSWORD_CHANGED_REASON } from '@/services/auth';
 import { AuthField, FormError, PasswordField, SUBMIT_CLASS } from './AuthField';
 
 export function LoginForm() {
   const { status, user, login } = useAuth();
   const router = useRouter();
-  const next = safeRedirect(useSearchParams().get('next'));
+  const searchParams = useSearchParams();
+  const next = safeRedirect(searchParams.get('next'));
+  const passwordChanged =
+    searchParams.get('reason') === PASSWORD_CHANGED_REASON;
   const {
     register,
     handleSubmit,
@@ -60,6 +63,16 @@ export function LoginForm() {
       <p className="mt-1.5 text-sm text-slate-500">
         Insira seus dados para acessar seu painel.
       </p>
+
+      {passwordChanged && (
+        <p
+          role="status"
+          className="mt-5 flex items-start gap-2 rounded-xl border border-brand/30 bg-brand-light px-4 py-3 text-sm text-brand-dark"
+        >
+          <CheckCircle2 aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          Senha alterada. Entre novamente com a nova senha.
+        </p>
+      )}
 
       <form
         onSubmit={handleSubmit(onSubmit)}

@@ -62,10 +62,10 @@ function useGeolocationPermission() {
 }
 
 type SecuritySectionProps = {
-  onDemo: (message: string) => void;
+  onChangePassword: () => void;
 };
 
-export function SecuritySection({ onDemo }: SecuritySectionProps) {
+export function SecuritySection({ onChangePassword }: SecuritySectionProps) {
   const geo = GEO_STATUS[useGeolocationPermission()];
 
   return (
@@ -84,9 +84,7 @@ export function SecuritySection({ onDemo }: SecuritySectionProps) {
           action={
             <button
               type="button"
-              onClick={() =>
-                onDemo('A troca de senha ainda não está integrada à API.')
-              }
+              onClick={onChangePassword}
               className={cn(
                 buttonVariants({ variant: 'outline' }),
                 'select-none'

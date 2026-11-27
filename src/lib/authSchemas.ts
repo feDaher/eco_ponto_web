@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const LETTERS = /^[\p{L}\s'.-]+$/u;
+export const LETTERS = /^[\p{L}\s'.-]+$/u;
 
 export function onlyDigits(value: string) {
   return value.replace(/\D/g, '');
@@ -31,6 +31,15 @@ export const PASSWORD_RULES = [
     test: (value: string) => /\d/.test(value),
   },
 ];
+
+export const newPasswordField = z
+  .string()
+  .min(1, 'Crie uma senha.')
+  .max(128, 'A senha pode ter no máximo 128 caracteres.')
+  .refine(
+    (value) => PASSWORD_RULES.every((rule) => rule.test(value)),
+    'A senha precisa ter pelo menos 8 caracteres, com letras e números.'
+  );
 
 export const nameField = z
   .string()
@@ -78,14 +87,7 @@ export const registerSchema = z
     email,
     phone: phoneField,
     city: cityField,
-    password: z
-      .string()
-      .min(1, 'Crie uma senha.')
-      .max(128, 'A senha pode ter no máximo 128 caracteres.')
-      .refine(
-        (value) => PASSWORD_RULES.every((rule) => rule.test(value)),
-        'A senha precisa ter pelo menos 8 caracteres, com letras e números.'
-      ),
+    password: newPasswordField,
     confirmPassword: z.string().min(1, 'Repita a senha para confirmar.'),
     terms: z.boolean().refine(Boolean, {
       error:
