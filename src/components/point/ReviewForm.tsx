@@ -1,25 +1,132 @@
 'use client';
 
 import { useState, type SubmitEvent } from 'react';
-import { MessageSquareText, PenLine, Star } from 'lucide-react';
+import { Loader2, MessageSquareText, PenLine, Star } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { ReviewApiError, createPointReview } from '@/services/reviews';
+import type { Review } from '@/types/api';
 import { FIELD_CLASS, LABEL_CLASS } from './fieldStyles';
+import { LoginModalReviews } from './LoginModalReviews';
 
-const STARS = [1, 2, 3, 4, 5];
+const STARS: Review['rating'][] = [1, 2, 3, 4, 5];
 
 type ReviewFormProps = {
+  pointId: string;
   pointName: string;
+  onAddReview: (review: Review) => void;
 };
 
-export function ReviewForm({ pointName }: ReviewFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [rating, setRating] = useState(5);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+export function ReviewForm({
+  pointId,
+  pointName,
+  onAddReview,
+}: ReviewFormProps) {
+  const { status, user, token, logout } = useAuth();
 
-  function submitReview(event: SubmitEvent<HTMLFormElement>) {
+  if (status === 'loading') {
+    return null;
+  }
+
+  if (status === 'authenticated' && user && token && user.role === 'CITIZEN') {
+    return (
+      <CitizenReviewForm
+        key={user.id}
+        token={token}
+        firstName={user.name.split(' ')[0]}
+        pointId={pointId}
+        pointName={pointName}
+        onAddReview={onAddReview}
+        onUnauthorized={logout}
+      />
+    );
+  }
+
+  if (status === 'authenticated') {
+    return null;
+  }
+
+  return <GuestReviewPrompt />;
+}
+
+function GuestReviewPrompt() {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  return (
+    <div className="mt-6 border-t border-slate-100 pt-5">
+      <Button type="button" size="lg" onClick={() => setIsLoginModalOpen(true)}>
+        Cadastre-se como usuário para comentar
+      </Button>
+
+      <LoginModalReviews
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
+    </div>
+  );
+}
+
+type CitizenReviewFormProps = {
+  token: string;
+  firstName: string;
+  pointId: string;
+  pointName: string;
+  onAddReview: (review: Review) => void;
+  onUnauthorized: () => void;
+};
+
+function CitizenReviewForm({
+  token,
+  firstName,
+  pointId,
+  pointName,
+  onAddReview,
+  onUnauthorized,
+}: CitizenReviewFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [rating, setRating] = useState<Review['rating']>(5);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  async function submitReview(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    setIsSubmitted(true);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const comment = String(formData.get('comentario') ?? '').trim();
+
+    if (comment.length > 0 && comment.length < 5) {
+      setErrorMessage(
+        'Se escrever um comentário, use pelo menos 5 caracteres.'
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const created = await createPointReview(token, pointId, {
+        rating,
+        comment,
+      });
+      onAddReview(created);
+      form.reset();
+      setRating(5);
+      setIsOpen(false);
+    } catch (error) {
+      if (error instanceof ReviewApiError && error.status === 401) {
+        onUnauthorized();
+        return;
+      }
+      setErrorMessage(
+        error instanceof ReviewApiError
+          ? error.message
+          : 'Não foi possível enviar sua avaliação. Tente novamente.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -28,7 +135,10 @@ export function ReviewForm({ pointName }: ReviewFormProps) {
         type="button"
         size="lg"
         variant={isOpen ? 'outline' : 'default'}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => {
+          setIsOpen((open) => !open);
+          setErrorMessage(null);
+        }}
         aria-expanded={isOpen}
         aria-controls="review-form"
       >
@@ -39,20 +149,19 @@ export function ReviewForm({ pointName }: ReviewFormProps) {
       {isOpen && (
         <form
           id="review-form"
-          onSubmit={submitReview}
-          onChange={() => setIsSubmitted(false)}
+          onSubmit={(e) => void submitReview(e)}
           className="mt-5 grid gap-4 rounded-2xl bg-surface-alt p-4 sm:p-5"
         >
           <div>
             <h3 className="font-semibold text-slate-900">
-              Conte sua experiência
+              Conte sua experiência, {firstName}
             </h3>
             <p className="mt-1 text-sm text-slate-600">
-              Avaliação demonstrativa para {pointName}.
+              Sua avaliação nos ajuda a melhorar o {pointName}.
             </p>
           </div>
 
-          <fieldset>
+          <fieldset disabled={submitting}>
             <legend className="text-sm font-medium text-slate-800">
               Sua nota
             </legend>
@@ -86,43 +195,36 @@ export function ReviewForm({ pointName }: ReviewFormProps) {
           </fieldset>
 
           <label className={LABEL_CLASS}>
-            Seu nome
-            <input
-              name="nome"
-              required
-              maxLength={80}
-              autoComplete="name"
-              className={FIELD_CLASS}
-            />
-          </label>
-
-          <label className={LABEL_CLASS}>
-            Comentário
+            Comentário (opcional)
             <textarea
               name="comentario"
-              required
-              minLength={5}
-              maxLength={1000}
+              maxLength={80}
               rows={4}
+              disabled={submitting}
+              placeholder="Conte como foi sua experiência neste ponto..."
               className={cn(FIELD_CLASS, 'resize-y')}
             />
           </label>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" size="lg">
-              <MessageSquareText aria-hidden="true" />
-              Enviar avaliação de demonstração
-            </Button>
-            <p className="text-xs text-slate-500">
-              Não será salva nem enviada a um servidor.
-            </p>
-          </div>
-
-          {isSubmitted && (
-            <p role="status" className="text-sm font-medium text-brand">
-              Demonstração concluída. A avaliação não foi salva.
+          {errorMessage && (
+            <p
+              role="alert"
+              className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300"
+            >
+              {errorMessage}
             </p>
           )}
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" size="lg" disabled={submitting}>
+              {submitting ? (
+                <Loader2 aria-hidden="true" className="animate-spin" />
+              ) : (
+                <MessageSquareText aria-hidden="true" />
+              )}
+              {submitting ? 'Enviando...' : 'Enviar avaliação'}
+            </Button>
+          </div>
         </form>
       )}
     </div>

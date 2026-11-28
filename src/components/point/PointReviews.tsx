@@ -1,19 +1,58 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
 import { MapPin, MessageSquareQuote } from 'lucide-react';
 import { averageRating, formatDate, pluralize } from '@/lib/points';
+import { listPointReviews } from '@/services/reviews';
 import type { Review } from '@/types/api';
 import { ReviewForm } from './ReviewForm';
 import { SectionCard } from './SectionCard';
 import { StarRating } from './StarRating';
 
 type PointReviewsProps = {
+  pointId: string;
   reviews: Review[];
   pointName: string;
 };
 
-export function PointReviews({ reviews, pointName }: PointReviewsProps) {
+export function PointReviews({
+  pointId,
+  reviews: initialReviews,
+  pointName,
+}: PointReviewsProps) {
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+
+  const syncReviews = useCallback(async () => {
+    const freshReviews = await listPointReviews(pointId);
+    setReviews(freshReviews);
+  }, [pointId]);
+
+  useEffect(() => {
+    let active = true;
+
+    listPointReviews(pointId).then((freshReviews) => {
+      if (active) setReviews(freshReviews);
+    });
+
+    function handleFocus() {
+      void syncReviews();
+    }
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [pointId, syncReviews]);
+
   const average = averageRating(reviews);
   const averageLabel = average.toFixed(1).replace('.', ',');
   const countLabel = pluralize(reviews.length, 'avaliação', 'avaliações');
+
+  function handleAddReview(newReview: Review) {
+    setReviews((prev) => [newReview, ...prev]);
+    void syncReviews();
+  }
 
   return (
     <SectionCard
@@ -56,9 +95,15 @@ export function PointReviews({ reviews, pointName }: PointReviewsProps) {
                 </time>
               </div>
 
-              <p className="mt-3 text-sm leading-relaxed text-slate-700">
-                “{review.comment}”
-              </p>
+              {review.comment ? (
+                <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                  “{review.comment}”
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500 italic">
+                  Avaliação sem comentário.
+                </p>
+              )}
 
               <div className="mt-4 flex items-center gap-2 border-t border-slate-200/60 pt-3">
                 <span
@@ -94,7 +139,11 @@ export function PointReviews({ reviews, pointName }: PointReviewsProps) {
         </div>
       )}
 
-      <ReviewForm pointName={pointName} />
+      <ReviewForm
+        pointId={pointId}
+        pointName={pointName}
+        onAddReview={handleAddReview}
+      />
     </SectionCard>
   );
 }

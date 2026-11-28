@@ -137,6 +137,7 @@ export default async function PointPage({ params }: PointPageProps) {
         />
         <PointDestination destination={point.destination} />
         <PointReviews
+          pointId={point.id}
           reviews={publicReviews(point.reviews)}
           pointName={point.name}
         />

@@ -1,4 +1,4 @@
-import type { ModerationReview } from '@/types/api';
+import type { ModerationReview, Review } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
 const TIMEOUT_MS = 10000;
@@ -161,4 +161,135 @@ export async function setReviewHidden(
 
 export async function deleteReview(token: string, id: string): Promise<void> {
   await request(token, `/admin/reviews/${encodeURIComponent(id)}`, 'DELETE');
+}
+
+function toSaoPauloDateString(isoDate: string): string | null {
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(parsed);
+
+  const year = parts.find((p) => p.type === 'year')?.value;
+  const month = parts.find((p) => p.type === 'month')?.value;
+  const day = parts.find((p) => p.type === 'day')?.value;
+
+  return year && month && day ? `${year}-${month}-${day}` : null;
+}
+
+function toPublicReview(value: unknown): Review | null {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    typeof value.rating !== 'number' ||
+    !Number.isInteger(value.rating) ||
+    value.rating < 1 ||
+    value.rating > 5 ||
+    (value.comment !== null && typeof value.comment !== 'string') ||
+    typeof value.authorName !== 'string' ||
+    typeof value.createdAt !== 'string'
+  ) {
+    return null;
+  }
+
+  const localDate = toSaoPauloDateString(value.createdAt);
+  if (!localDate) return null;
+
+  return {
+    id: value.id,
+    author: value.authorName,
+    rating: value.rating as Review['rating'],
+    comment: value.comment ?? '',
+    date: localDate,
+  };
+}
+
+export async function listPointReviews(pointId: string): Promise<Review[]> {
+  if (!API_URL) return [];
+
+  try {
+    const response = await fetch(
+      `${API_URL}/collection-points/${encodeURIComponent(pointId)}/reviews`,
+      {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      }
+    );
+
+    if (!response.ok) return [];
+
+    const body: unknown = await response.json().catch(() => null);
+    const items = Array.isArray(body)
+      ? body
+      : isRecord(body) && Array.isArray(body.items)
+        ? body.items
+        : [];
+
+    return items.flatMap((item) => {
+      const review = toPublicReview(item);
+      return review ? [review] : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
+const CREATE_REVIEW_MESSAGES: Record<number, string> = {
+  400: 'Dados inválidos. Verifique a nota e o comentário informados.',
+  401: 'Sua sessão expirou. Entre novamente para avaliar.',
+  409: 'Você já avaliou este ponto de coleta.',
+};
+
+export async function createPointReview(
+  token: string,
+  pointId: string,
+  data: { rating: Review['rating']; comment: string }
+): Promise<Review> {
+  if (!API_URL) {
+    throw new ReviewApiError('API não configurada (NEXT_PUBLIC_API_URL).');
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(
+      `${API_URL}/collection-points/${encodeURIComponent(pointId)}/reviews`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating: data.rating,
+          comment: data.comment.trim() || null,
+        }),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      }
+    );
+  } catch {
+    throw new ReviewApiError(
+      'Não foi possível conectar ao servidor. Tente novamente.'
+    );
+  }
+
+  if (!response.ok) {
+    throw new ReviewApiError(
+      CREATE_REVIEW_MESSAGES[response.status] ??
+        'Não foi possível enviar sua avaliação. Tente novamente.',
+      response.status
+    );
+  }
+
+  const review = toPublicReview(await response.json().catch(() => null));
+  if (!review) {
+    throw new ReviewApiError('Resposta inesperada do servidor.');
+  }
+
+  return review;
 }

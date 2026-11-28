@@ -12,7 +12,11 @@ import { HOME_BY_ROLE, ROUTES, safeRedirect } from '@/lib/routes';
 import { AuthError, PASSWORD_CHANGED_REASON } from '@/services/auth';
 import { AuthField, FormError, PasswordField, SUBMIT_CLASS } from './AuthField';
 
-export function LoginForm() {
+type LoginFormProps = {
+  onSuccess?: () => void;
+};
+
+export function LoginForm({ onSuccess }: LoginFormProps) {
   const { status, user, login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -32,9 +36,13 @@ export function LoginForm() {
 
   useEffect(() => {
     if (status === 'authenticated' && user) {
+      if (onSuccess) {
+        onSuccess();
+        return;
+      }
       router.replace(next ?? HOME_BY_ROLE[user.role]);
     }
-  }, [status, user, next, router]);
+  }, [status, user, next, router, onSuccess]);
 
   const onSubmit = async ({ email, password }: LoginValues) => {
     try {
