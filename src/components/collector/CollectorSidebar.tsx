@@ -11,7 +11,7 @@ import {
   MapPin,
   type LucideIcon,
 } from 'lucide-react';
-import { collectorProfile } from '@/data/mockCollector';
+
 import { COLLECTOR_SECTIONS, ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +20,12 @@ type SidebarItem = {
   href: string;
   page: string;
   icon: LucideIcon;
+};
+
+type CollectorSidebarProps = {
+  shortName: string;
+  cnpj?: string | null;
+  subtitle?: string | null;
 };
 
 function section(id: string) {
@@ -65,7 +71,11 @@ const sidebarItems: SidebarItem[] = [
   },
 ];
 
-export function CollectorSidebar() {
+export function CollectorSidebar({
+  shortName,
+  cnpj,
+  subtitle,
+}: CollectorSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -74,10 +84,12 @@ export function CollectorSidebar() {
         <p className="text-[10px] font-bold tracking-wider text-brand-muted uppercase">
           Parceiro coletor
         </p>
-        <p className="mt-1 text-sm font-semibold text-slate-800">
-          {collectorProfile.shortName}
-        </p>
-        <p className="text-xs text-slate-500">CNPJ: {collectorProfile.cnpj}</p>
+        <p className="mt-1 text-sm font-semibold text-slate-800">{shortName}</p>
+        {cnpj ? (
+          <p className="text-xs text-slate-500">CNPJ: {cnpj}</p>
+        ) : (
+          subtitle && <p className="text-xs text-slate-500">{subtitle}</p>
+        )}
       </div>
 
       <nav aria-label="Painel do coletor" className="lg:mt-4">

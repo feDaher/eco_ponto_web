@@ -4,19 +4,23 @@ import { useId, useState, type SubmitEvent } from 'react';
 import { Check, SlidersHorizontal, X } from 'lucide-react';
 import { FIELD_CLASS } from '@/components/point/fieldStyles';
 import { Button } from '@/components/ui/Button';
-import type { CollectorMaterial } from '@/data/mockCollector';
 import { cn } from '@/lib/utils';
+import type { CollectorMaterial } from '@/types/collector';
 
 type MaterialItemProps = {
   material: CollectorMaterial;
   criticalPercent: number;
+  disabled?: boolean;
   onToggle: (material: CollectorMaterial) => void;
   onLimitChange: (material: CollectorMaterial, capacityKg: number) => void;
 };
 
 const kg = (value: number) => value.toLocaleString('pt-BR');
 
-export function fillPercent({ storedKg, capacityKg }: CollectorMaterial) {
+export function fillPercent({
+  storedKg,
+  capacityKg,
+}: Pick<CollectorMaterial, 'storedKg' | 'capacityKg'>) {
   return capacityKg > 0 ? Math.round((storedKg / capacityKg) * 100) : 100;
 }
 
@@ -36,6 +40,7 @@ function validateLimit(value: string, storedKg: number) {
 export function MaterialItem({
   material: m,
   criticalPercent,
+  disabled = false,
   onToggle,
   onLimitChange,
 }: MaterialItemProps) {
@@ -78,7 +83,9 @@ export function MaterialItem({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold text-slate-800">{m.name}</h3>
-          <p className="mt-0.5 text-xs text-slate-500">{m.description}</p>
+          {m.description && (
+            <p className="mt-0.5 text-xs text-slate-500">{m.description}</p>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -103,9 +110,10 @@ export function MaterialItem({
             role="switch"
             aria-checked={m.accepting}
             aria-label={`Receber ${m.name}`}
+            disabled={disabled}
             onClick={() => onToggle(m)}
             className={cn(
-              'relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
+              'relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60',
               m.accepting ? 'bg-brand-solid' : 'bg-slate-300'
             )}
           >
@@ -174,6 +182,7 @@ export function MaterialItem({
                 inputMode="numeric"
                 min={m.storedKg}
                 step={1}
+                disabled={disabled}
                 value={draft}
                 onChange={(event) => {
                   setDraft(event.target.value);
@@ -199,13 +208,19 @@ export function MaterialItem({
             type="button"
             variant="ghost"
             size="sm"
+            disabled={disabled}
             className="cursor-pointer"
             onClick={() => setEditing(false)}
           >
             <X aria-hidden="true" />
             Cancelar
           </Button>
-          <Button type="submit" size="sm" className="cursor-pointer">
+          <Button
+            type="submit"
+            size="sm"
+            disabled={disabled}
+            className="cursor-pointer"
+          >
             <Check aria-hidden="true" />
             Salvar
           </Button>
@@ -215,6 +230,7 @@ export function MaterialItem({
           <Button
             variant="outline"
             size="sm"
+            disabled={disabled}
             className="cursor-pointer"
             onClick={startEditing}
           >

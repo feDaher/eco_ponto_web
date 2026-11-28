@@ -1,13 +1,89 @@
-import { Gauge, MapPinCheck, Scale, TrendingUp } from 'lucide-react';
+import {
+  Gauge,
+  MapPinCheck,
+  Scale,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
-import { collectorStats } from '@/data/mockCollector';
+import type { CollectorPoint } from '@/types/collector';
+import type { PointStatus } from '@/types/api';
+
+type CollectorStatsProps = {
+  point?: CollectorPoint | null;
+};
 
 const kg = new Intl.NumberFormat('pt-BR');
 
-export function CollectorStats() {
-  const { monthlyKg, monthlyGrowth, storedKg, capacityKg, lastCheckIn } =
-    collectorStats;
-  const usage = Math.round((storedKg / capacityKg) * 100);
+const MAP_STATUS_CONFIG: Record<
+  PointStatus,
+  {
+    label: string;
+    badgeClass: string;
+    dotClass: string;
+    fallbackSubtext: string;
+  }
+> = {
+  approved: {
+    label: 'Ativo e verificado',
+    badgeClass: 'bg-brand-light text-brand-dark',
+    dotClass: 'bg-brand',
+    fallbackSubtext: 'Visível para cidadãos na busca do mapa',
+  },
+  pending: {
+    label: 'Em análise',
+    badgeClass: 'bg-amber-50 text-amber-800',
+    dotClass: 'bg-amber-500',
+    fallbackSubtext: 'Oculto no mapa até a aprovação',
+  },
+  rejected: {
+    label: 'Cadastro recusado',
+    badgeClass: 'bg-red-50 text-red-800',
+    dotClass: 'bg-red-500',
+    fallbackSubtext: 'Revise os dados do ponto para nova análise',
+  },
+  removed: {
+    label: 'Inativo no mapa',
+    badgeClass: 'bg-slate-100 text-slate-700',
+    dotClass: 'bg-slate-400',
+    fallbackSubtext: 'Ponto temporariamente indisponível',
+  },
+};
+
+function formatLastUpdate(isoDate: string): string | null {
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(parsed);
+}
+
+export function CollectorStats({ point = null }: CollectorStatsProps) {
+  const monthlyKg = point?.stats?.monthlyKg ?? 0;
+  const monthlyGrowth = point?.stats?.monthlyGrowth ?? null;
+  const storedKg = point?.stats?.storedKg ?? 0;
+  const capacityKg = point?.stats?.capacityKg ?? 0;
+
+  const rawUsage =
+    capacityKg > 0 ? Math.round((storedKg / capacityKg) * 100) : 0;
+  const usage = Math.min(100, Math.max(0, rawUsage));
+
+  const statusMeta = point ? MAP_STATUS_CONFIG[point.status] : null;
+  const formattedUpdate = point?.updatedAt
+    ? formatLastUpdate(point.updatedAt)
+    : null;
+
+  const mapSubtext = !point
+    ? 'Cadastre um ponto para aparecer no mapa'
+    : point.stats?.lastCheckIn
+      ? `Presença confirmada às ${point.stats.lastCheckIn}`
+      : formattedUpdate
+        ? `Atualizado em ${formattedUpdate}`
+        : statusMeta?.fallbackSubtext;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -17,10 +93,28 @@ export function CollectorStats() {
             {kg.format(monthlyKg)}{' '}
             <span className="text-base font-semibold text-brand-muted">kg</span>
           </p>
-          <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-brand">
-            <TrendingUp aria-hidden="true" className="size-3" />+{monthlyGrowth}
-            % vs. mês anterior
-          </p>
+
+          {monthlyGrowth !== null ? (
+            <p
+              className={`mt-0.5 flex items-center gap-1 text-xs font-semibold ${
+                monthlyGrowth >= 0 ? 'text-brand' : 'text-red-600'
+              }`}
+            >
+              {monthlyGrowth >= 0 ? (
+                <TrendingUp aria-hidden="true" className="size-3" />
+              ) : (
+                <TrendingDown aria-hidden="true" className="size-3" />
+              )}
+              {monthlyGrowth > 0 ? `+${monthlyGrowth}` : monthlyGrowth}% vs. mês
+              anterior
+            </p>
+          ) : (
+            <p className="mt-0.5 text-xs text-brand-muted">
+              {point
+                ? 'Sem comparativo com o mês anterior'
+                : 'Nenhum ponto vinculado'}
+            </p>
+          )}
         </div>
       </StatCard>
 
@@ -43,7 +137,7 @@ export function CollectorStats() {
             className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100"
           >
             <div
-              className="h-2 rounded-full bg-brand"
+              className="h-2 rounded-full bg-brand transition-all"
               style={{ width: `${usage}%` }}
             />
           </div>
@@ -52,16 +146,26 @@ export function CollectorStats() {
 
       <StatCard label="Status no mapa" icon={MapPinCheck}>
         <div className="space-y-1">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-light px-2.5 py-0.5 text-xs font-semibold text-brand-dark">
+          {statusMeta ? (
             <span
-              aria-hidden="true"
-              className="size-1.5 rounded-full bg-brand"
-            />
-            Ativo e verificado
-          </span>
-          <p className="text-xs text-brand-muted">
-            Presença confirmada hoje às {lastCheckIn}
-          </p>
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusMeta.badgeClass}`}
+            >
+              <span
+                aria-hidden="true"
+                className={`size-1.5 rounded-full ${statusMeta.dotClass}`}
+              />
+              {statusMeta.label}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+              <span
+                aria-hidden="true"
+                className="size-1.5 rounded-full bg-slate-400"
+              />
+              Sem ponto vinculado
+            </span>
+          )}
+          <p className="text-xs text-brand-muted">{mapSubtext}</p>
         </div>
       </StatCard>
     </div>
