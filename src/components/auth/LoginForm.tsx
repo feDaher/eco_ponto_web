@@ -12,13 +12,18 @@ import { HOME_BY_ROLE, ROUTES, safeRedirect } from '@/lib/routes';
 import { AuthError, PASSWORD_CHANGED_REASON } from '@/services/auth';
 import { AuthField, FormError, PasswordField, SUBMIT_CLASS } from './AuthField';
 
-export function LoginForm() {
+type LoginFormProps = {
+  onSuccess?: () => void;
+};
+
+export function LoginForm({ onSuccess }: LoginFormProps) {
   const { status, user, login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeRedirect(searchParams.get('next'));
+  const embedded = onSuccess !== undefined;
   const passwordChanged =
-    searchParams.get('reason') === PASSWORD_CHANGED_REASON;
+    !embedded && searchParams.get('reason') === PASSWORD_CHANGED_REASON;
   const {
     register,
     handleSubmit,
@@ -32,9 +37,13 @@ export function LoginForm() {
 
   useEffect(() => {
     if (status === 'authenticated' && user) {
+      if (onSuccess) {
+        onSuccess();
+        return;
+      }
       router.replace(next ?? HOME_BY_ROLE[user.role]);
     }
-  }, [status, user, next, router]);
+  }, [status, user, next, router, onSuccess]);
 
   const onSubmit = async ({ email, password }: LoginValues) => {
     try {
@@ -57,12 +66,16 @@ export function LoginForm() {
 
   return (
     <div className="mx-auto w-full max-w-sm">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-        Bem-vindo de volta
-      </h1>
-      <p className="mt-1.5 text-sm text-slate-500">
-        Insira seus dados para acessar seu painel.
-      </p>
+      {!embedded && (
+        <>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            Bem-vindo de volta
+          </h1>
+          <p className="mt-1.5 text-sm text-slate-500">
+            Insira seus dados para acessar seu painel.
+          </p>
+        </>
+      )}
 
       {passwordChanged && (
         <p
@@ -106,7 +119,11 @@ export function LoginForm() {
           {isSubmitting && (
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />
           )}
-          {isSubmitting ? 'Entrando...' : 'Entrar no painel'}
+          {isSubmitting
+            ? 'Entrando...'
+            : embedded
+              ? 'Entrar'
+              : 'Entrar no painel'}
         </button>
       </form>
 

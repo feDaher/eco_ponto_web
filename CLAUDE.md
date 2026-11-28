@@ -62,7 +62,7 @@ A chave da web serve **só para desenhar o mapa** (Maps JavaScript API). A busca
 Arquivos:
 
 - `src/types/api.ts`: `CollectionPoint`, `Material`, `LatLng`, `MapBounds`, `PointFilters`, `PointDetails` (ficha), `Review`, `ModerationReview`
-- `src/services/api.ts`: `getPoints({ bounds, materials, query })` sobre `src/data/mockPoints.ts`. A API já tem `GET /collection-points`, mas a integração ainda não foi feita (ver Pendências). `getPointBySlug(slug)` junta `mockPoints` + `src/data/mockPointDetails.ts` + `src/data/mockReviewReports.ts` (só `approved`).
+- `src/services/api.ts`: `getPoints({ bounds, materials, query })` sobre `src/data/mockPoints.ts`. A API já tem `GET /collection-points`, mas a integração ainda não foi feita (ver Pendências). `getPointBySlug(slug)` junta `mockPoints` + `src/data/mockPointDetails.ts` (só `approved`).
 - `src/services/places.ts`: `suggestPlaces` e `getPlace` chamam o back, com timeout, validação da resposta e conversão de `latitude`/`longitude` para `LatLng`/`MapBounds`. O session token é um `crypto.randomUUID()`: o back só aceita até 36 caracteres `[A-Za-z0-9_-]`.
 - `src/lib/geo.ts` (distância, bounds, link de rota) e `src/lib/materials.ts` (nome e ícone)
 - `src/components/map/`:
@@ -92,7 +92,8 @@ Custos: cota grátis de 10.000/mês por SKU (Dynamic Maps, Autocomplete Requests
 - Regras em `src/lib/points.ts`: horários estruturados (`OpeningHours` com `weekdays` 0–6) e `isOpenNow` no fuso `America/Sao_Paulo`; aviso quando `updatedAt` passa de 60 dias (`OUTDATED_AFTER_DAYS`); WhatsApp só se `whatsapp.authorized`.
 - Avaliações: `Review.hidden` marca as ocultadas pela moderação. `publicReviews()` filtra antes de chegar à lista, ao cabeçalho (nota média) e ao JSON-LD. As ocultas nem vão para o navegador. Datas sempre em ISO.
 - **Sem `loading.tsx`** na rota: com streaming, `notFound()` responde 200 em vez de 404.
-- Formulários de avaliação e sugestão são só demonstração (não persistem).
+- Avaliações (INT-12): a página carrega no servidor `GET /collection-points/:id/reviews` (todas as páginas, limite 100, total no `X-Total-Count`) quando o id do ponto é UUID (`isApiPointId`); nos pontos de demonstração usa as do mock e o formulário avisa que ainda não aceita avaliações. Só `CITIZEN` avalia (`POST`, comentário opcional de até 500 caracteres): avaliar de novo **atualiza** a anterior (200; 201 quando cria). O visitante entra pelo `Modal` com o `LoginForm` em modo embutido (`onSuccess`, sem o `h1`). Depois do envio a lista é recarregada.
+- O formulário de sugestão é só demonstração (não persiste).
 
 ## Home
 

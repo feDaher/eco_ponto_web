@@ -13,7 +13,12 @@ import { SuggestionForm } from '@/components/point/SuggestionForm';
 import { VerificationNotice } from '@/components/point/VerificationNotice';
 import { averageRating, publicReviews } from '@/lib/points';
 import { getPointBySlug } from '@/services/api';
-import type { PointDetails, Weekday } from '@/types/api';
+import {
+  ReviewApiError,
+  isApiPointId,
+  listPointReviews,
+} from '@/services/reviews';
+import type { PointDetails, Review, Weekday } from '@/types/api';
 
 const getPoint = cache(getPointBySlug);
 
@@ -35,9 +40,36 @@ function getDescription(point: PointDetails) {
   return `${point.description} Endereço: ${point.address} - ${point.neighborhood}, ${point.city}.`;
 }
 
-function buildJsonLd(point: PointDetails) {
-  const reviews = publicReviews(point.reviews);
+type LoadedReviews = {
+  reviews: Review[];
+  error: string | null;
+  live: boolean;
+};
 
+async function loadReviews(point: PointDetails): Promise<LoadedReviews> {
+  if (!isApiPointId(point.id)) {
+    return { reviews: publicReviews(point.reviews), error: null, live: false };
+  }
+
+  try {
+    return {
+      reviews: await listPointReviews(point.id),
+      error: null,
+      live: true,
+    };
+  } catch (error) {
+    return {
+      reviews: [],
+      error:
+        error instanceof ReviewApiError
+          ? error.message
+          : 'Não foi possível carregar as avaliações.',
+      live: true,
+    };
+  }
+}
+
+function buildJsonLd(point: PointDetails, reviews: Review[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'RecyclingCenter',
@@ -107,13 +139,17 @@ export default async function PointPage({ params }: PointPageProps) {
   const point = await getPoint(slug);
 
   if (!point) notFound();
+  const { reviews, error, live } = await loadReviews(point);
 
   return (
     <div className="bg-surface">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildJsonLd(point)).replace(/</g, '\\u003c'),
+          __html: JSON.stringify(buildJsonLd(point, reviews)).replace(
+            /</g,
+            '\\u003c'
+          ),
         }}
       />
 
@@ -137,8 +173,11 @@ export default async function PointPage({ params }: PointPageProps) {
         />
         <PointDestination destination={point.destination} />
         <PointReviews
-          reviews={publicReviews(point.reviews)}
+          pointId={point.id}
           pointName={point.name}
+          initialReviews={reviews}
+          initialError={error}
+          live={live}
         />
         <SuggestionForm pointName={point.name} />
       </div>
