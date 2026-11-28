@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { MaterialCapacityManager } from '@/components/collector/MaterialCapacityManager';
+import { CollectorHeader } from '@/components/collector/CollectorHeader';
 
 export const metadata: Metadata = {
   title: 'Materiais e Capacidade | EcoPonto Digital',
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function CollectorMaterialsPage() {
   return (
     <>
+      <CollectorHeader />
       <header className="space-y-1">
         <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
           Materiais aceitos e gestão de capacidade

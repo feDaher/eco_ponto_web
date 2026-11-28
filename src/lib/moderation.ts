@@ -14,6 +14,13 @@ export const REJECTION_REASONS = [
   CUSTOM_REASON,
 ];
 
+export const CATEGORY_REJECTION_REASONS = [
+  'O ponto não tem estrutura adequada para este material',
+  'Falta licença ou autorização para este tipo de resíduo',
+  'Material fora do escopo do programa municipal',
+  CUSTOM_REASON,
+];
+
 export const REMOVAL_REASONS = [
   'Estabelecimento encerrou as atividades',
   'Licença ou documentação irregular',

@@ -1,5 +1,13 @@
 import type { Metadata } from 'next';
-import { CollectorDashboardClient } from '@/components/collector/CollectorDashboardClient';
+import { CollectorHeader } from '@/components/collector/CollectorHeader';
+import { CollectorStats } from '@/components/collector/CollectorStats';
+import { OpeningHoursEditor } from '@/components/collector/OpeningHoursEditor';
+import { PendingRequestNotice } from '@/components/collector/PendingRequestNotice';
+import { PointCategories } from '@/components/collector/PointCategories';
+import { PointInfoCard } from '@/components/collector/PointInfoCard';
+import { ReceiptForm } from '@/components/collector/ReceiptForm';
+import { RecentReceipts } from '@/components/collector/RecentReceipts';
+import { COLLECTOR_SECTIONS } from '@/lib/routes';
 
 export const metadata: Metadata = {
   title: 'Painel do Coletor | EcoPonto Digital',
@@ -9,5 +17,23 @@ export const metadata: Metadata = {
 };
 
 export default function CollectorPage() {
-  return <CollectorDashboardClient />;
+  return (
+    <div id={COLLECTOR_SECTIONS.overview} className="scroll-mt-24 space-y-6">
+      <CollectorHeader />
+      <PendingRequestNotice />
+      <CollectorStats />
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="space-y-6 xl:col-span-2">
+          <ReceiptForm />
+          <RecentReceipts />
+        </div>
+        <div className="space-y-6">
+          <PointInfoCard />
+          <OpeningHoursEditor />
+          <PointCategories />
+        </div>
+      </div>
+    </div>
+  );
 }

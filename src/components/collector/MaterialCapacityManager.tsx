@@ -4,18 +4,18 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Search, Settings2 } from 'lucide-react';
 import { CapacitySummary } from '@/components/collector/CapacitySummary';
-import { useCollector } from '@/components/collector/collectorContext';
 import { MaterialItem, fillPercent } from '@/components/collector/MaterialItem';
 import { SectionCard } from '@/components/point/SectionCard';
 import { buttonVariants } from '@/components/ui/Button';
+import {
+  collectorMaterials,
+  type CollectorMaterial,
+} from '@/data/mockCollector';
 import { COLLECTOR_SECTIONS, ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-import { formatMaterialLabel } from '@/services/collector';
-import type { CollectorMaterial, CollectorPoint } from '@/types/collector';
 
 const CRITICAL_FILL_PERCENT = 85;
-const LOCAL_ADJUST_NOTICE =
-  'Ajuste aplicado nesta sessão. A persistência de estoque e limites depende de endpoint próprio no backend.';
+const DEMO_NOTICE = 'Demonstração: nada foi salvo.';
 
 function normalize(value: string) {
   return value
@@ -24,36 +24,9 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
-function buildInitialMaterials(
-  point: CollectorPoint | null
-): CollectorMaterial[] {
-  const rawMaterials = point?.materials ?? [];
-
-  return rawMaterials.map((code, index) => {
-    const label = formatMaterialLabel(code);
-    return {
-      id: `${point?.id ?? 'point'}-${code}-${index}`,
-      code,
-      name: label,
-      description: `Categoria habilitada: ${label}`,
-      accepting: point?.status === 'approved',
-      storedKg: 0,
-      capacityKg: 0,
-    };
-  });
-}
-
-type MaterialCapacityListProps = {
-  pointKey: string;
-  initialMaterials: CollectorMaterial[];
-};
-
-function MaterialCapacityList({
-  pointKey,
-  initialMaterials,
-}: MaterialCapacityListProps) {
+export function MaterialCapacityManager() {
   const [materials, setMaterials] =
-    useState<CollectorMaterial[]>(initialMaterials);
+    useState<CollectorMaterial[]>(collectorMaterials);
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
@@ -67,14 +40,14 @@ function MaterialCapacityList({
     const accepting = !material.accepting;
     update(material.id, { accepting });
     setMessage(
-      `${material.name}: recepção ${accepting ? 'reaberta' : 'pausada'} no app público. ${LOCAL_ADJUST_NOTICE}`
+      `${material.name}: recepção ${accepting ? 'reaberta' : 'pausada'} no app público. ${DEMO_NOTICE}`
     );
   }
 
   function changeLimit(material: CollectorMaterial, capacityKg: number) {
     update(material.id, { capacityKg });
     setMessage(
-      `${material.name}: limite alterado para ${capacityKg.toLocaleString('pt-BR')} kg. ${LOCAL_ADJUST_NOTICE}`
+      `${material.name}: limite alterado para ${capacityKg.toLocaleString('pt-BR')} kg. ${DEMO_NOTICE}`
     );
   }
 
@@ -89,19 +62,15 @@ function MaterialCapacityList({
       stored,
       capacity,
       critical,
-      percent: capacity > 0 ? Math.round((stored / capacity) * 100) : 0,
+      percent: capacity ? Math.round((stored / capacity) * 100) : 0,
     };
   }, [materials]);
 
   const term = normalize(query.trim());
-  const visible = materials.filter(
-    (m) =>
-      normalize(m.name).includes(term) ||
-      (m.code ? normalize(m.code).includes(term) : false)
-  );
+  const visible = materials.filter((m) => normalize(m.name).includes(term));
 
   return (
-    <div key={pointKey} className="space-y-6">
+    <div className="space-y-6">
       <CapacitySummary
         percent={totals.percent}
         storedKg={totals.stored}
@@ -155,9 +124,7 @@ function MaterialCapacityList({
 
                 {visible.length === 0 && (
                   <li className="py-6 text-center text-sm text-slate-500">
-                    {materials.length === 0
-                      ? 'Nenhum material habilitado neste ponto de coleta.'
-                      : 'Nenhum resíduo encontrado.'}
+                    Nenhum resíduo encontrado.
                   </li>
                 )}
               </ul>
@@ -188,26 +155,5 @@ function MaterialCapacityList({
         </aside>
       </div>
     </div>
-  );
-}
-
-export function MaterialCapacityManager() {
-  const { selectedPoint } = useCollector();
-  const pointKey = selectedPoint
-    ? `${selectedPoint.id}:${selectedPoint.materials.join(',')}`
-    : 'no-point';
-
-  const initialMaterials = useMemo(
-    () => buildInitialMaterials(selectedPoint),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pointKey]
-  );
-
-  return (
-    <MaterialCapacityList
-      key={pointKey}
-      pointKey={pointKey}
-      initialMaterials={initialMaterials}
-    />
   );
 }

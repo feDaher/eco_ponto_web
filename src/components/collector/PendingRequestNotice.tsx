@@ -1,30 +1,24 @@
+'use client';
+
 import { FileClock, Info } from 'lucide-react';
-import type { CategoryUnderReview, CollectorPoint } from '@/types/collector';
+import { useCollector } from './collectorContext';
 
-type PendingRequestNoticeProps = {
-  point: CollectorPoint | null;
-  categoryUnderReview?: CategoryUnderReview | null;
-};
+export function PendingRequestNotice() {
+  const { selectedPoint: point } = useCollector();
+  if (!point) return null;
 
-export function PendingRequestNotice({
-  point,
-  categoryUnderReview,
-}: PendingRequestNoticeProps) {
-  const isPointPending = point?.status === 'pending';
-  const activeCategoryReview =
-    categoryUnderReview ?? point?.categoryUnderReview ?? null;
+  const isPointPending = point.status === 'pending';
+  const pendingLabels = point.categories
+    .filter((category) => category.approvalStatus === 'PENDING')
+    .map((category) => category.label);
 
-  if (!isPointPending && !activeCategoryReview) {
-    return null;
-  }
+  if (!isPointPending && pendingLabels.length === 0) return null;
 
-  const protocolLabel = point?.protocol
-    ? `Em análise pelo fiscal (${point.protocol})`
-    : 'Em análise pelo fiscal';
-
-  const title = isPointPending
-    ? 'Cadastro do ponto em análise'
-    : 'Alterações críticas em análise';
+  const categories = new Intl.ListFormat('pt-BR', {
+    style: 'long',
+    type: 'conjunction',
+  }).format(pendingLabels);
+  const plural = pendingLabels.length > 1;
 
   return (
     <section
@@ -41,33 +35,28 @@ export function PendingRequestNotice({
             id="pending-request-heading"
             className="text-base font-bold text-slate-800"
           >
-            {title}
+            {isPointPending
+              ? 'Cadastro do ponto em análise'
+              : 'Alterações em análise'}
           </h2>
           <span className="rounded bg-card/70 px-2 py-0.5 text-[11px] font-semibold text-brand">
-            {protocolLabel}
+            Em análise pela moderação
           </span>
         </div>
 
         <p>
-          {isPointPending && activeCategoryReview ? (
+          {isPointPending ? (
             <>
-              O cadastro do ponto <strong>{point.name}</strong> e a inclusão da
-              categoria <strong>{activeCategoryReview.label}</strong> estão
-              aguardando aprovação da moderação municipal.
-            </>
-          ) : isPointPending ? (
-            <>
-              O cadastro do ponto <strong>{point.name}</strong> foi enviado e
-              está pendente de aprovação pela moderação municipal. Assim que for
-              homologado, ele ficará visível no mapa público de coleta.
+              O cadastro do ponto <strong>{point.name}</strong> está aguardando
+              a aprovação da moderação municipal. Assim que for homologado, ele
+              aparece no mapa público.
             </>
           ) : (
             <>
-              Sua solicitação de inclusão da categoria{' '}
-              <strong>{activeCategoryReview?.label}</strong> foi enviada e está
-              pendente de aprovação pela moderação municipal. Durante a
-              avaliação, os dados públicos cadastrados permanecem ativos no mapa
-              de coleta.
+              {plural ? 'As categorias' : 'A categoria'}{' '}
+              <strong>{categories}</strong> {plural ? 'aguardam' : 'aguarda'} a
+              aprovação da moderação municipal. Enquanto isso, os dados públicos
+              já aprovados continuam ativos no mapa.
             </>
           )}
         </p>

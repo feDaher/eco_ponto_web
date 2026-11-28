@@ -1,65 +1,42 @@
 import type { OpeningHours, PointStatus } from '@/types/api';
-import type { User } from '@/types/user';
+import type { CollectionPointWeekday } from '@/types/collectionPointSettings';
 
-export type CategoryUnderReview = {
-  id?: string;
-  label: string;
-  phase?: string;
-  description?: string;
+export type CollectorHour = {
+  id: string;
+  weekday: CollectionPointWeekday;
+  openTime: string;
+  closeTime: string;
 };
 
-export type CollectorPointStats = {
-  monthlyKg: number;
-  monthlyGrowth: number | null;
-  storedKg: number;
-  capacityKg: number;
-  lastCheckIn?: string | null;
+export type CollectorCategory = {
+  categoryId: string;
+  code: string;
+  label: string;
+  approvalStatus: 'PENDING' | 'APPROVED';
+  isAccepting: boolean;
 };
 
 export type CollectorPoint = {
   id: string;
-  slug: string;
   name: string;
   address: string;
-  neighborhood: string;
   city: string;
-  cep: string;
   status: PointStatus;
-  materials: string[];
+  hours: CollectorHour[];
   schedule: OpeningHours[];
-  collectorName?: string | null;
-  cnpj?: string | null;
-  unit?: string | null;
-  protocol?: string | null;
-  updatedAt?: string | null;
-  stats?: CollectorPointStats | null;
-  categoryUnderReview?: CategoryUnderReview | null;
+  categories: CollectorCategory[];
+  isOutdated: boolean;
+  hoursConfirmedAt: string | null;
+  cooperative: {
+    name: string;
+    cnpj: string;
+    neighborhood: string;
+    postalCode: string;
+  } | null;
 };
 
-export type CollectorMaterial = {
-  id: string;
-  code?: string;
-  name: string;
-  description?: string;
-  accepting: boolean;
-  storedKg: number;
-  capacityKg: number;
-};
-
-export type CollectorOverviewData = {
-  user: User;
-  points: CollectorPoint[];
-};
-
-export type ReceiptStatus = 'sorted' | 'awaiting';
-
-export type CollectorReceipt = {
-  id: string;
-  pointId?: string;
-  time: string;
-  donor: string;
-  donorType: string;
-  description: string;
-  weightKg: number;
-  status: ReceiptStatus;
+export type WeeklyHour = {
+  weekday: CollectionPointWeekday;
+  openTime: string;
+  closeTime: string;
 };

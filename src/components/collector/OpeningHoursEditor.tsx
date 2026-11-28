@@ -1,175 +1,135 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Clock } from 'lucide-react';
-import { useCollector } from '@/components/collector/collectorContext';
 import { SectionCard } from '@/components/point/SectionCard';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 import { COLLECTOR_SECTIONS } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-import {
-  CollectorApiError,
-  updateCollectorPointSchedule,
-} from '@/services/collector';
-import type { OpeningHours, Weekday } from '@/types/api';
+import { CollectorApiError, saveWeeklyHours } from '@/services/collector';
+import type { CollectionPointWeekday } from '@/types/collectionPointSettings';
+import type { CollectorPoint } from '@/types/collector';
+import { useCollector } from './collectorContext';
 
-type DayScheduleItem = {
-  weekday: Weekday;
+const DAYS: {
+  weekday: CollectionPointWeekday;
   label: string;
   opens: string;
   closes: string;
-  open: boolean;
-};
-
-const WEEKDAY_LABELS: Array<{
-  weekday: Weekday;
-  label: string;
-  defaultOpens: string;
-  defaultCloses: string;
-}> = [
+}[] = [
   {
-    weekday: 1,
+    weekday: 'MONDAY',
     label: 'Segunda-feira',
-    defaultOpens: '08:00',
-    defaultCloses: '18:00',
+    opens: '08:00',
+    closes: '18:00',
   },
+  { weekday: 'TUESDAY', label: 'Terça-feira', opens: '08:00', closes: '18:00' },
   {
-    weekday: 2,
-    label: 'Terça-feira',
-    defaultOpens: '08:00',
-    defaultCloses: '18:00',
-  },
-  {
-    weekday: 3,
+    weekday: 'WEDNESDAY',
     label: 'Quarta-feira',
-    defaultOpens: '08:00',
-    defaultCloses: '18:00',
+    opens: '08:00',
+    closes: '18:00',
   },
   {
-    weekday: 4,
+    weekday: 'THURSDAY',
     label: 'Quinta-feira',
-    defaultOpens: '08:00',
-    defaultCloses: '18:00',
+    opens: '08:00',
+    closes: '18:00',
   },
-  {
-    weekday: 5,
-    label: 'Sexta-feira',
-    defaultOpens: '08:00',
-    defaultCloses: '18:00',
-  },
-  {
-    weekday: 6,
-    label: 'Sábado',
-    defaultOpens: '08:00',
-    defaultCloses: '12:00',
-  },
-  {
-    weekday: 0,
-    label: 'Domingo',
-    defaultOpens: '08:00',
-    defaultCloses: '12:00',
-  },
+  { weekday: 'FRIDAY', label: 'Sexta-feira', opens: '08:00', closes: '18:00' },
+  { weekday: 'SATURDAY', label: 'Sábado', opens: '08:00', closes: '12:00' },
+  { weekday: 'SUNDAY', label: 'Domingo', opens: '08:00', closes: '12:00' },
 ];
 
-function buildDaysFromSchedule(
-  schedule: OpeningHours[] | undefined
-): DayScheduleItem[] {
-  const entries = schedule ?? [];
+type Day = (typeof DAYS)[number] & { open: boolean };
 
-  return WEEKDAY_LABELS.map(
-    ({ weekday, label, defaultOpens, defaultCloses }) => {
-      const matched = entries.find((item) => item.weekdays.includes(weekday));
+type Feedback = { tone: 'success' | 'error'; text: string };
 
-      if (!matched) {
-        return {
-          weekday,
-          label,
-          opens: defaultOpens,
-          closes: defaultCloses,
-          open: false,
-        };
-      }
-
-      return {
-        weekday,
-        label,
-        opens: matched.opens || defaultOpens,
-        closes: matched.closes || defaultCloses,
-        open: true,
-      };
-    }
-  );
+function toDays(point: CollectorPoint): Day[] {
+  return DAYS.map((day) => {
+    const hour = point.hours.find((item) => item.weekday === day.weekday);
+    return hour
+      ? { ...day, opens: hour.openTime, closes: hour.closeTime, open: true }
+      : { ...day, open: false };
+  });
 }
 
-function toOpeningHoursPayload(days: DayScheduleItem[]): OpeningHours[] {
-  return days
-    .filter((day) => day.open)
-    .map((day) => ({
-      weekdays: [day.weekday],
-      opens: day.opens,
-      closes: day.closes,
-    }));
+export function OpeningHoursEditor() {
+  const { loading, selectedPoint } = useCollector();
+
+  if (loading) return null;
+
+  if (!selectedPoint) {
+    return (
+      <SectionCard
+        id={COLLECTOR_SECTIONS.hours}
+        title="Horários de operação"
+        icon={Clock}
+      >
+        <p className="text-sm text-slate-500">
+          Cadastre um ponto de coleta para gerenciar os horários.
+        </p>
+      </SectionCard>
+    );
+  }
+
+  return <HoursForm key={selectedPoint.id} point={selectedPoint} />;
 }
 
-type ScheduleEditorInnerProps = {
-  pointId: string;
-  initialDays: DayScheduleItem[];
-  onSaved?: () => Promise<void> | void;
-};
-
-function ScheduleEditorInner({
-  pointId,
-  initialDays,
-  onSaved,
-}: ScheduleEditorInnerProps) {
-  const [days, setDays] = useState<DayScheduleItem[]>(initialDays);
+function HoursForm({ point }: { point: CollectorPoint }) {
+  const { token, logout } = useAuth();
+  const { reload } = useCollector();
+  const [days, setDays] = useState(() => toDays(point));
   const [saving, setSaving] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const hasOpenDay = days.some((day) => day.open);
 
-  function toggleDay(weekday: Weekday) {
+  function toggleDay(weekday: CollectionPointWeekday) {
     setDays((current) =>
       current.map((day) =>
         day.weekday === weekday ? { ...day, open: !day.open } : day
       )
     );
-    setStatusMessage(null);
-    setErrorMessage(null);
+    setFeedback(null);
   }
 
-  async function handleSave() {
-    const token =
-      typeof window !== 'undefined'
-        ? (window.localStorage.getItem('token') ??
-          window.localStorage.getItem('accessToken') ??
-          '')
-        : '';
-
-    if (!token) {
-      setErrorMessage('Sessão não encontrada. Faça login novamente.');
-      return;
-    }
-
+  async function save() {
+    if (!token) return;
     setSaving(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
+    setFeedback(null);
 
     try {
-      await updateCollectorPointSchedule(
+      await saveWeeklyHours(
         token,
-        pointId,
-        toOpeningHoursPayload(days)
+        point,
+        days
+          .filter((day) => day.open)
+          .map(({ weekday, opens, closes }) => ({
+            weekday,
+            openTime: opens,
+            closeTime: closes,
+          }))
       );
-      await onSaved?.();
-      setStatusMessage('Horários de operação atualizados com sucesso.');
-    } catch (error) {
-      setErrorMessage(
-        error instanceof CollectorApiError
-          ? error.message
-          : 'Não foi possível salvar os horários de operação.'
-      );
+      setFeedback({
+        tone: 'success',
+        text: 'Horários salvos. O app do cidadão já mostra os novos horários.',
+      });
+    } catch (cause) {
+      if (cause instanceof CollectorApiError && cause.status === 401) {
+        logout();
+        return;
+      }
+      setFeedback({
+        tone: 'error',
+        text:
+          cause instanceof CollectorApiError
+            ? cause.message
+            : 'Não foi possível salvar os horários.',
+      });
     } finally {
       setSaving(false);
+      reload();
     }
   }
 
@@ -203,7 +163,7 @@ function ScheduleEditorInner({
                 onClick={() => toggleDay(day.weekday)}
                 className={cn(
                   'relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60',
-                  day.open ? 'bg-brand' : 'bg-slate-300'
+                  day.open ? 'bg-brand-solid' : 'bg-slate-300'
                 )}
               >
                 <span
@@ -220,67 +180,41 @@ function ScheduleEditorInner({
       </ul>
 
       <p className="mt-3 text-xs text-slate-500">
-        Alterações de horário são publicadas no app do cidadão assim que salvas.
+        Para mudar os horários de abertura e fechamento, use as configurações do
+        ponto.
       </p>
 
       <Button
         type="button"
         size="lg"
         variant="secondary"
-        disabled={saving}
-        onClick={handleSave}
+        disabled={saving || !hasOpenDay}
+        aria-busy={saving}
+        onClick={save}
         className="mt-3 w-full"
       >
         {saving ? 'Salvando horários...' : 'Salvar novos horários'}
       </Button>
 
-      {errorMessage && (
-        <p role="alert" className="mt-2 text-sm font-medium text-red-700">
-          {errorMessage}
+      {!hasOpenDay && (
+        <p className="mt-2 text-xs text-slate-500">
+          Deixe pelo menos um dia aberto.
         </p>
       )}
 
-      {statusMessage && (
-        <p role="status" className="mt-2 text-sm font-medium text-brand">
-          {statusMessage}
+      {feedback && (
+        <p
+          role={feedback.tone === 'error' ? 'alert' : 'status'}
+          className={cn(
+            'mt-2 text-sm font-medium',
+            feedback.tone === 'error'
+              ? 'text-red-700 dark:text-red-300'
+              : 'text-brand'
+          )}
+        >
+          {feedback.text}
         </p>
       )}
     </SectionCard>
-  );
-}
-
-export function OpeningHoursEditor() {
-  const { selectedPoint, reload } = useCollector();
-
-  const pointKey = selectedPoint
-    ? `${selectedPoint.id}:${JSON.stringify(selectedPoint.schedule)}`
-    : 'no-point';
-
-  const initialDays = useMemo(
-    () => buildDaysFromSchedule(selectedPoint?.schedule),
-    [pointKey]
-  );
-
-  if (!selectedPoint) {
-    return (
-      <SectionCard
-        id={COLLECTOR_SECTIONS.hours}
-        title="Horários de operação"
-        icon={Clock}
-      >
-        <p className="text-sm text-slate-500">
-          Selecione ou cadastre um ponto de coleta para gerenciar os horários.
-        </p>
-      </SectionCard>
-    );
-  }
-
-  return (
-    <ScheduleEditorInner
-      key={pointKey}
-      pointId={selectedPoint.id}
-      initialDays={initialDays}
-      onSaved={reload}
-    />
   );
 }

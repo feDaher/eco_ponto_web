@@ -18,7 +18,7 @@ Next.js 16.3 (App Router, Turbopack) · React 19 · TS strict · Tailwind 4 · l
 - `npm run typecheck` (`next typegen && tsc --noEmit`)
 - `npx eslint .` / `npx prettier --write <arquivos>`
 
-Ambiente: Windows (Git Bash / PowerShell). **Python não está instalado**: use node ou perl em scripts. O GitHub CLI (`gh`) também não está instalado.
+Ambiente: Windows (Git Bash / PowerShell). **Python não está instalado**: use node ou perl em scripts. O GitHub CLI (`gh`) está instalado e autenticado: use-o para PRs (`gh pr create`, `gh pr view`).
 
 ## Convenções
 
@@ -38,7 +38,7 @@ Ambiente: Windows (Git Bash / PowerShell). **Python não está instalado**: use 
 
 ## Serviços que falam com a API
 
-Padrão (`auth.ts`, `places.ts`, `reviews.ts`, `reports.ts`):
+Padrão (`auth.ts`, `places.ts`, `reviews.ts`, `reports.ts`, `pointCategories.ts`):
 
 - Base em `NEXT_PUBLIC_API_URL` (sem barra final), `AbortSignal.timeout` em todo `fetch`.
 - Valida o formato da resposta antes de usar (nada de `res.json() as T` sem checar).
@@ -128,7 +128,7 @@ Custos: cota grátis de 10.000/mês por SKU (Dynamic Maps, Autocomplete Requests
 | Rota                | Tela                                                           | Dados                                                                                                                          |
 | ------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `/admin`            | Visão geral (KPIs, categorias, impacto, lotação)               | mock (`dashboard.ts`)                                                                                                          |
-| `/admin/points`     | Moderação de pontos (WEB-08): solicitações, decisão, histórico | mock (`moderation.ts`)                                                                                                         |
+| `/admin/points`     | Moderação de pontos (WEB-08): solicitações, decisão, histórico | mock (`moderation.ts`); aba "Categorias solicitadas" na **API** (`pointCategories.ts`)                                         |
 | `/admin/categories` | Categorias e horários desatualizados (WEB-09)                  | mock (`categories.ts`)                                                                                                         |
 | `/admin/reviews`    | Moderação de avaliações (WEB-10)                               | **API**: `GET /admin/reviews`, `PATCH /admin/reviews/:id/hide`, `PATCH /admin/reviews/:id/unhide`, `DELETE /admin/reviews/:id` |
 | `/admin/reports`    | Relatórios e exportação (WEB-11)                               | **API**: `/reports/summary`, `by-category`, `by-point`, `manifests`, `filter-options`, `export`                                |
@@ -138,18 +138,28 @@ Custos: cota grátis de 10.000/mês por SKU (Dynamic Maps, Autocomplete Requests
 Detalhes:
 
 - Avaliações: `/admin/reviews` busca todas as páginas (limite 100) e filtra, ordena e pagina no cliente. Excluir pede confirmação e não pode ser desfeito; prefira ocultar.
-- Relatórios: `GET /reports/by-category` e `/by-point` respondem `{ rows, totalWeightKg }`. A tela separa o filtro em edição (`draft`) do aplicado (`applied`), e paginação e exportação usam sempre o aplicado. A API aceita período de no máximo 366 dias e recusa busca vazia (400). Formatos por escopo: `general` csv/pdf, `category` csv, `manifests` csv, `geospatial` geojson/kml. O nome do arquivo é montado no front, porque o CORS não expõe o `Content-Disposition`.
+- Relatórios: `GET /reports/by-category` e `/by-point` respondem `{ rows, totalWeightKg }`. A tela separa o filtro em edição (`draft`) do aplicado (`applied`), e paginação e exportação usam sempre o aplicado. A API aceita período de no máximo 366 dias e recusa busca vazia (400). Formatos por escopo: `general` csv/pdf, `category` csv, `manifests` csv, `geospatial` geojson/kml. O nome do arquivo é montado no front, porque o CORS não expõe o `Content-Disposition`. O `summary` traz `users: { scope, total, newInPeriod }`: `platform` (ADMIN, usuários cadastrados) ou `collector` (cidadãos com descarte confirmado nos pontos dele). Para COLLECTOR, todos os `/reports/*` já vêm só com os pontos dele.
+- Categorias solicitadas (BE-21): `GET /collection-points/admin/pending-categories` e `PATCH /collection-points/:id/categories/:categoryId/review` (`APPROVED`, ou `REJECTED` + `rejectionReason` de até 500 caracteres). Rejeitar apaga o vínculo, então revisar de novo responde 404; 409 quando outra pessoa já decidiu. Nos dois casos a tela recarrega a lista. O histórico por ponto (`GET /collection-points/:id/categories/reviews`) mostra quem decidiu só para o admin. A rejeição usa o `DecisionDialog` com `action="rejectCategory"`.
 - Usuários: perfis seguem o `UserRole` da API, e o cargo descritivo fica em `title`. A exportação gera HTML com os valores escapados.
 
 ## Painel do coletor (`/collector`)
 
 - `/collector`: painel com recebimento, histórico/MTRs, ponto, horários e categorias (âncoras em `COLLECTOR_SECTIONS`).
+- `app/collector/layout.tsx`: `RequireRole` + `CollectorProvider` (`collectorContext.tsx`) + `CollectorShell` (sidebar e alerta de erro). O contexto carrega `GET /collection-points/mine` (`src/services/collector.ts`, nomes das categorias pelo `label` de `/waste-categories`), guarda o ponto selecionado e recarrega a cada troca de página. Cada página desenha o próprio `CollectorHeader` (que tem o `h1`); `/collector/settings` usa o próprio `h1`.
+- Cartões ligados à API: cabeçalho, status no mapa, aviso de análise (ponto `PENDING` ou categorias pendentes), dados do ponto e horários. O `OpeningHoursEditor` liga/desliga dias e salva pelas rotas de horário (`POST /collection-points/:id/operating-hours`, `PUT`/`DELETE /operating-hours/:id`), sem mexer no resto do ponto. Totais em kg, capacidade e recebimentos seguem no mock (`mockCollector.ts`).
+- `PointCategories` usa a **API**: `GET /collection-points/mine` (`categoryApprovals` com `approvalStatus`/`isAccepting`), `PUT /collection-points/:id/categories` (as adicionadas ficam `PENDING`; desmarcar remove na hora; o ponto precisa manter uma aprovada, senão 422) e o histórico de decisões. Nomes vêm do `label` de `GET /waste-categories`. Coletor com vários pontos escolhe num `select`.
 - `/collector/materials` (WEB-18): capacidade por material, alerta de lotação (≥ 85%), pausar recepção e alterar o limite (validado: inteiro e não menor que o estoque). Mock em `src/data/mockCollector.ts`, porque a API não tem rota de capacidade.
 - `CollectorSidebar` usa `usePathname()` para marcar a página ativa.
 
+## Minha conta (`/account`)
+
+- `AccountProfile` (`src/components/account/`): resumo do usuário, dados pessoais, notificações, segurança, LGPD e exclusão de conta.
+- Nome, apelido, telefone, cidade e `preferences` (`collectionAlerts`, `monthlyReports`, `cooperativeContact`) vêm da sessão: o usuário da API (login, PATCH, troca de senha) traz esses campos e `toUser` os lê. O resumo de descartes (`GET /disposals/me/summary`, `src/services/account.ts`) é só para `CITIZEN`; admin e coletor veem um atalho para o painel. O nível é calculado no front a partir de `totalPoints` (`getLevel`, 1000 pontos por nível).
+- "Salvar alterações" chama `PATCH /users/me` (`{ name, phone, city, nickname, preferences }`, telefone só com dígitos, apelido vazio vai como `null`; resposta = usuário, ou 204) e atualiza a sessão com `updateUser` do `AuthContext`. "Excluir conta" chama `DELETE /users/me` (204; a API anonimiza o usuário e apaga o login no Firebase) e vai para o login. Erros: 400/404/409/502 mostram a mensagem pt-BR da API (sem o prefixo "Validation error:"); 403 = conta bloqueada; 409 = último administrador; 502 = Firebase falhou e nada foi alterado (a sessão continua). As rotas já estão na `main` da API. "Atualizar senha" abre o `ChangePasswordDialog` (fora do `<form>` da conta) e chama `POST /auth/change-password`: a resposta é uma sessão nova (os tokens antigos são revogados) aplicada com `replaceSession`; 422 marca a senha atual; 502 "Senha alterada…" (`AccountApiError.signedOut`) faz logout e abre `/login?reason=password-changed`. 2FA não tem rota e segue "Em breve". "Baixar meus dados" gera um JSON com os dados da sessão, e a permissão de localização é lida do navegador.
+- Regras dos campos reaproveitadas do cadastro (`nameField`, `phoneField`, `cityField` em `authSchemas.ts`). `Modal` e `Switch` ficam em `src/components/ui/`.
+
 ## Pendências
 
-- Página ainda em `ComingSoon`: `/account`.
 - Integrar com a API o que ainda é mock:
   - pontos: `GET /collection-points` (com isso, a ficha passa a usar `GET /collection-points/:id/reviews`)
   - moderação de pontos: `GET /collection-points/admin/pending` e `PATCH /collection-points/:id/review`

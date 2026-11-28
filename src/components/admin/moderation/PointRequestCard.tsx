@@ -55,11 +55,19 @@ export function PointRequestCard({
   onPreview,
 }: PointRequestCardProps) {
   const approved = request.status === 'approved';
-  const category = CATEGORIES[request.category];
-  const CategoryIcon = category.icon;
+  const category = request.category ? CATEGORIES[request.category] : undefined;
+  const CategoryIcon = category?.icon ?? Building2;
   const detailsId = `request-details-${request.id}`;
   const materials = request.materials.map((m) => MATERIALS[m].label);
-  const fullAddress = `${request.address} - ${request.neighborhood}, ${request.city}, CEP ${request.cep}`;
+  const shortAddress = [
+    [request.address, request.neighborhood].filter(Boolean).join(' - '),
+    request.city,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const fullAddress = request.cep
+    ? `${shortAddress}, CEP ${request.cep}`
+    : shortAddress;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-xs">
@@ -84,7 +92,7 @@ export function PointRequestCard({
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-strong px-2.5 py-1 text-[11px] font-medium text-slate-700">
                 <CategoryIcon aria-hidden="true" className="size-3.5" />
-                {category.label}
+                {category?.label ?? 'Categoria não informada'}
               </span>
               <span className="text-xs text-slate-500">
                 Protocolo{' '}
@@ -109,7 +117,7 @@ export function PointRequestCard({
                 aria-hidden="true"
                 className="size-4 shrink-0 text-brand"
               />
-              {request.address} - {request.neighborhood}, {request.city}
+              {shortAddress}
             </p>
 
             <dl className="mt-4 grid gap-3 rounded-xl bg-surface-alt p-4 sm:grid-cols-2">
@@ -126,7 +134,9 @@ export function PointRequestCard({
                   Itens aceitos
                 </dt>
                 <dd className="mt-1 text-sm text-slate-700">
-                  {materials.join(' · ')}
+                  {materials.length > 0
+                    ? materials.join(' · ')
+                    : 'Não informados'}
                 </dd>
               </div>
             </dl>
@@ -202,17 +212,17 @@ export function PointRequestCard({
                 <DetailItem
                   icon={Clock3}
                   label="Horário de coleta"
-                  value={request.hours}
+                  value={request.hours || 'Não informado'}
                 />
                 <DetailItem
                   icon={Package}
                   label="Estrutura de coleta"
-                  value={request.structure}
+                  value={request.structure ?? 'Não informado'}
                 />
                 <DetailItem
                   icon={Leaf}
                   label="Capacidade"
-                  value={request.capacity}
+                  value={request.capacity ?? 'Não informada'}
                 />
                 <DetailItem
                   icon={Phone}
@@ -227,7 +237,7 @@ export function PointRequestCard({
                 <DetailItem
                   icon={Building2}
                   label="CNPJ"
-                  value={request.cnpj}
+                  value={request.cnpj ?? 'Não informado'}
                 />
                 <DetailItem
                   icon={MapPin}
@@ -259,22 +269,30 @@ export function PointRequestCard({
                 <ImageIcon aria-hidden="true" className="size-4 text-brand" />
                 Registro fotográfico e documentos
               </h3>
-              <button
-                type="button"
-                onClick={() =>
-                  onPreview({
-                    name: 'Registro_fotografico.jpg',
-                    description: request.photoCaption,
-                    kind: 'photo',
-                  })
-                }
-                className="flex min-h-28 w-full cursor-pointer items-end rounded-xl border border-slate-200 bg-linear-to-br from-brand-light to-surface-strong p-4 text-left transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-brand"
-              >
-                <span className="inline-flex items-center gap-2 rounded-lg bg-card/90 px-3 py-2 text-xs font-semibold text-slate-800">
-                  <ImageIcon aria-hidden="true" className="size-4" />
-                  {request.photoCaption}
-                </span>
-              </button>
+
+              {request.photoCaption ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onPreview({
+                      name: 'Registro_fotografico.jpg',
+                      description: request.photoCaption ?? '',
+                      kind: 'photo',
+                    })
+                  }
+                  className="flex min-h-28 w-full cursor-pointer items-end rounded-xl border border-slate-200 bg-linear-to-br from-brand-light to-surface-strong p-4 text-left transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-brand"
+                >
+                  <span className="inline-flex items-center gap-2 rounded-lg bg-card/90 px-3 py-2 text-xs font-semibold text-slate-800">
+                    <ImageIcon aria-hidden="true" className="size-4" />
+                    {request.photoCaption}
+                  </span>
+                </button>
+              ) : (
+                <p className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500">
+                  Registro fotográfico não disponibilizado pela API.
+                </p>
+              )}
+
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                 {request.attachments.map((attachment) => {
                   const kind = ATTACHMENT_KINDS[attachment.kind];

@@ -1,20 +1,20 @@
-import type { OpeningHours, PointStatus, Weekday } from '@/types/api';
+import {
+  categoryLabels,
+  listWasteCategories,
+} from '@/services/pointCategories';
+import type { PointStatus, Weekday } from '@/types/api';
+import type { CollectionPointWeekday } from '@/types/collectionPointSettings';
 import type {
-  CategoryUnderReview,
-  CollectorOverviewData,
+  CollectorCategory,
+  CollectorHour,
   CollectorPoint,
-  CollectorPointStats,
-  CollectorReceipt,
-  ReceiptStatus,
+  WeeklyHour,
 } from '@/types/collector';
-import type { User, UserRole } from '@/types/user';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
 const TIMEOUT_MS = 10000;
 
-const ROLES: UserRole[] = ['CITIZEN', 'COLLECTOR', 'ADMIN'];
-
-const WEEKDAY_MAP: Record<string, Weekday> = {
+export const WEEKDAYS: Record<CollectionPointWeekday, Weekday> = {
   SUNDAY: 0,
   MONDAY: 1,
   TUESDAY: 2,
@@ -24,14 +24,18 @@ const WEEKDAY_MAP: Record<string, Weekday> = {
   SATURDAY: 6,
 };
 
-const MATERIAL_LABELS: Record<string, string> = {
-  pilhas: 'Pilhas e baterias',
-  eletronicos: 'Eletrônicos',
-  plastico: 'Plástico',
-  papel: 'Papel e papelão',
-  vidro: 'Vidro',
-  metal: 'Metal',
-  oleo: 'Óleo de cozinha',
+const STATUSES: Record<string, PointStatus> = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  INACTIVE: 'removed',
+};
+
+const MESSAGES: Record<number, string> = {
+  401: 'Sua sessão expirou. Entre novamente para continuar.',
+  403: 'Seu perfil não tem permissão para acessar o painel do coletor.',
+  404: 'Ponto de coleta ou horário não encontrado. Atualize a página.',
+  429: 'Muitas requisições em pouco tempo. Aguarde e tente novamente.',
 };
 
 export class CollectorApiError extends Error {
@@ -44,269 +48,20 @@ export class CollectorApiError extends Error {
   }
 }
 
-const MESSAGES: Record<number, string> = {
-  401: 'Sua sessão expirou. Entre novamente para continuar.',
-  403: 'Seu perfil não tem permissão para acessar o painel do coletor.',
-  404: 'Dados do coletor não encontrados.',
-  429: 'Muitas requisições em pouco tempo. Aguarde e tente novamente.',
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function pickValidText(
-  ...values: Array<string | null | undefined>
-): string | null {
-  for (const value of values) {
-    if (typeof value !== 'string') continue;
-    const trimmed = value.trim();
-    if (!trimmed) continue;
-    const lower = trimmed.toLowerCase();
-    if (lower === 'undefined' || lower === 'null') continue;
-    return trimmed;
-  }
-  return null;
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
 }
 
-function toUser(value: unknown): User | null {
-  const raw = isRecord(value) && isRecord(value.user) ? value.user : value;
-
-  if (
-    !isRecord(raw) ||
-    typeof raw.id !== 'string' ||
-    typeof raw.email !== 'string' ||
-    !ROLES.includes(raw.role as UserRole)
-  ) {
-    return null;
-  }
-
-  return {
-    id: raw.id,
-    name: pickValidText(typeof raw.name === 'string' ? raw.name : null) ?? '',
-    email: raw.email,
-    phone: typeof raw.phone === 'string' ? raw.phone : '',
-    city: typeof raw.city === 'string' ? raw.city : '',
-    role: raw.role as UserRole,
-  };
-}
-
-function toOpeningHours(value: unknown): OpeningHours[] {
-  if (!Array.isArray(value)) return [];
-
-  return value.flatMap((entry) => {
-    if (!isRecord(entry)) return [];
-
-    if (
-      typeof entry.weekday === 'string' &&
-      typeof entry.openTime === 'string' &&
-      typeof entry.closeTime === 'string'
-    ) {
-      if (entry.isActive === false) return [];
-
-      const weekday = WEEKDAY_MAP[entry.weekday.toUpperCase()];
-      if (weekday === undefined) return [];
-
-      return [
-        {
-          weekdays: [weekday],
-          opens: entry.openTime,
-          closes: entry.closeTime,
-        },
-      ];
-    }
-
-    if (
-      Array.isArray(entry.weekdays) &&
-      typeof entry.opens === 'string' &&
-      typeof entry.closes === 'string'
-    ) {
-      const weekdays = entry.weekdays.filter(
-        (day): day is Weekday =>
-          typeof day === 'number' &&
-          Number.isInteger(day) &&
-          day >= 0 &&
-          day <= 6
-      );
-      if (weekdays.length === 0) return [];
-      return [{ weekdays, opens: entry.opens, closes: entry.closes }];
-    }
-
-    return [];
-  });
-}
-
-function toCategoryUnderReview(value: unknown): CategoryUnderReview | null {
-  if (!isRecord(value)) return null;
-
-  const label =
-    typeof value.label === 'string'
-      ? value.label
-      : typeof value.name === 'string'
-        ? value.name
-        : null;
-
-  if (!label) return null;
-
-  return {
-    id: typeof value.id === 'string' ? value.id : undefined,
-    label,
-    phase: typeof value.phase === 'string' ? value.phase : undefined,
-    description:
-      typeof value.description === 'string' ? value.description : undefined,
-  };
-}
-
-function toPointStatus(value: unknown): PointStatus {
-  if (typeof value !== 'string') return 'pending';
-
-  switch (value.toUpperCase()) {
-    case 'APPROVED':
-      return 'approved';
-    case 'REJECTED':
-      return 'rejected';
-    case 'INACTIVE':
-    case 'REMOVED':
-      return 'removed';
-    case 'PENDING':
-    default:
-      return 'pending';
-  }
-}
-
-function toFiniteNumber(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
-
-function toPointStats(
-  value: Record<string, unknown>
-): CollectorPointStats | null {
-  const source = isRecord(value.stats) ? value.stats : value;
-
-  const monthlyKg = toFiniteNumber(
-    source.monthlyKg ?? source.receivedMonthlyKg ?? source.totalReceivedKg
-  );
-  const monthlyGrowth = toFiniteNumber(
-    source.monthlyGrowth ?? source.growthPercentage
-  );
-  const storedKg = toFiniteNumber(
-    source.storedKg ?? source.currentLoadKg ?? source.occupiedKg
-  );
-  const capacityKg = toFiniteNumber(
-    source.capacityKg ?? source.maxCapacityKg ?? source.totalCapacityKg
-  );
-  const lastCheckIn =
-    typeof source.lastCheckIn === 'string' ? source.lastCheckIn : null;
-
-  if (
-    monthlyKg === null &&
-    storedKg === null &&
-    capacityKg === null &&
-    !lastCheckIn
-  ) {
-    return null;
-  }
-
-  return {
-    monthlyKg: monthlyKg ?? 0,
-    monthlyGrowth,
-    storedKg: storedKg ?? 0,
-    capacityKg: capacityKg ?? 0,
-    lastCheckIn,
-  };
-}
-
-function toCollectorPoint(value: unknown): CollectorPoint | null {
-  if (
-    !isRecord(value) ||
-    typeof value.id !== 'string' ||
-    typeof value.name !== 'string'
-  ) {
-    return null;
-  }
-
-  const rawCategories = Array.isArray(value.wasteCategories)
-    ? value.wasteCategories
-    : Array.isArray(value.materials)
-      ? value.materials
-      : [];
-
-  const materials = rawCategories.flatMap((item) => {
-    if (typeof item === 'string') return [item];
-    if (isRecord(item) && typeof item.name === 'string') return [item.name];
-    return [];
-  });
-
-  const rawHours = Array.isArray(value.hours) ? value.hours : value.schedule;
-
-  return {
-    id: value.id,
-    slug: typeof value.slug === 'string' ? value.slug : value.id,
-    name: value.name,
-    address: typeof value.address === 'string' ? value.address : '',
-    neighborhood:
-      typeof value.neighborhood === 'string' ? value.neighborhood : '',
-    city: typeof value.city === 'string' ? value.city : '',
-    cep: typeof value.cep === 'string' ? value.cep : '',
-    status: toPointStatus(value.status),
-    materials,
-    schedule: toOpeningHours(rawHours),
-    cnpj: typeof value.cnpj === 'string' ? value.cnpj : null,
-    unit: typeof value.unit === 'string' ? value.unit : null,
-    protocol: typeof value.protocol === 'string' ? value.protocol : null,
-    updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null,
-    stats: toPointStats(value),
-    categoryUnderReview: toCategoryUnderReview(value.categoryUnderReview),
-  };
-}
-
-function extractPointsArray(body: unknown): unknown[] | null {
-  if (Array.isArray(body)) return body;
-  if (!isRecord(body)) return null;
-  if (Array.isArray(body.points)) return body.points;
-  if (Array.isArray(body.collectionPoints)) return body.collectionPoints;
-  if (Array.isArray(body.items)) return body.items;
-  if (Array.isArray(body.results)) return body.results;
-  if (Array.isArray(body.data)) return body.data;
-  if (isRecord(body.data)) {
-    if (Array.isArray(body.data.points)) return body.data.points;
-    if (Array.isArray(body.data.collectionPoints)) {
-      return body.data.collectionPoints;
-    }
-    if (Array.isArray(body.data.items)) return body.data.items;
-  }
-  if (typeof body.id === 'string' && typeof body.name === 'string') {
-    return [body];
-  }
-  if (
-    isRecord(body.data) &&
-    typeof body.data.id === 'string' &&
-    typeof body.data.name === 'string'
-  ) {
-    return [body.data];
-  }
-  return null;
-}
-
-function toReceiptStatus(value: unknown): ReceiptStatus {
-  if (typeof value !== 'string') return 'awaiting';
-  const normalized = value.trim().toUpperCase();
-  if (
-    normalized === 'SORTED' ||
-    normalized === 'TRIADO' ||
-    normalized === 'COMPLETED'
-  ) {
-    return 'sorted';
-  }
-  return 'awaiting';
-}
-
-async function getJson(token: string, path: string): Promise<unknown> {
+async function request(
+  token: string,
+  path: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+  body?: unknown
+) {
   if (!API_URL) {
     throw new CollectorApiError('API não configurada (NEXT_PUBLIC_API_URL).');
   }
@@ -314,10 +69,13 @@ async function getJson(token: string, path: string): Promise<unknown> {
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
+      method,
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token}`,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
+      body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch {
@@ -327,294 +85,187 @@ async function getJson(token: string, path: string): Promise<unknown> {
   }
 
   if (!response.ok) {
+    const payload: unknown =
+      response.status === 400 ? await response.json().catch(() => null) : null;
+    const apiMessage =
+      isRecord(payload) && isString(payload.message) ? payload.message : null;
     throw new CollectorApiError(
-      MESSAGES[response.status] ??
-        'Não foi possível carregar os dados do coletor. Tente novamente.',
+      apiMessage ??
+        MESSAGES[response.status] ??
+        'Não foi possível concluir. Tente novamente.',
       response.status
     );
   }
 
-  return response.json().catch(() => null);
+  return response;
 }
 
-export async function getCollectorMe(token: string): Promise<User> {
-  const body = await getJson(token, '/auth/me');
-  const user = toUser(body);
-
-  if (!user) {
-    throw new CollectorApiError('Resposta inesperada ao carregar o perfil.');
+function toHour(value: unknown): CollectorHour | null {
+  if (
+    !isRecord(value) ||
+    !isString(value.id) ||
+    !isString(value.weekday) ||
+    !(value.weekday in WEEKDAYS) ||
+    !isString(value.openTime) ||
+    !isString(value.closeTime) ||
+    value.isActive === false
+  ) {
+    return null;
   }
 
-  return user;
+  return {
+    id: value.id,
+    weekday: value.weekday as CollectionPointWeekday,
+    openTime: value.openTime,
+    closeTime: value.closeTime,
+  };
 }
 
-export async function getMyCollectionPoints(
+function toCategory(
+  value: unknown,
+  label: (code: string) => string
+): CollectorCategory | null {
+  if (
+    !isRecord(value) ||
+    !isString(value.categoryId) ||
+    !isString(value.name) ||
+    (value.approvalStatus !== 'PENDING' && value.approvalStatus !== 'APPROVED')
+  ) {
+    return null;
+  }
+
+  return {
+    categoryId: value.categoryId,
+    code: value.name,
+    label: label(value.name),
+    approvalStatus: value.approvalStatus,
+    isAccepting: value.isAccepting !== false,
+  };
+}
+
+function toCooperative(value: unknown): CollectorPoint['cooperative'] {
+  if (
+    !isRecord(value) ||
+    !isString(value.cooperativeName) ||
+    !isString(value.cnpj)
+  ) {
+    return null;
+  }
+
+  return {
+    name: value.cooperativeName,
+    cnpj: value.cnpj,
+    neighborhood: isString(value.neighborhood) ? value.neighborhood : '',
+    postalCode: isString(value.postalCode) ? value.postalCode : '',
+  };
+}
+
+function toPoint(
+  value: unknown,
+  label: (code: string) => string
+): CollectorPoint | null {
+  if (
+    !isRecord(value) ||
+    !isString(value.id) ||
+    !isString(value.name) ||
+    !isString(value.status) ||
+    !(value.status in STATUSES) ||
+    !Array.isArray(value.hours) ||
+    !Array.isArray(value.categoryApprovals)
+  ) {
+    return null;
+  }
+
+  const hours = value.hours.flatMap((item) => {
+    const hour = toHour(item);
+    return hour ? [hour] : [];
+  });
+
+  return {
+    id: value.id,
+    name: value.name,
+    address: isString(value.address) ? value.address : '',
+    city: isString(value.city) ? value.city : '',
+    status: STATUSES[value.status],
+    hours,
+    schedule: hours.map((hour) => ({
+      weekdays: [WEEKDAYS[hour.weekday]],
+      opens: hour.openTime,
+      closes: hour.closeTime,
+    })),
+    categories: value.categoryApprovals.flatMap((item) => {
+      const category = toCategory(item, label);
+      return category ? [category] : [];
+    }),
+    isOutdated: value.isOutdated === true,
+    hoursConfirmedAt: isString(value.hoursConfirmedAt)
+      ? value.hoursConfirmedAt
+      : null,
+    cooperative: toCooperative(value.cooperative),
+  };
+}
+
+export async function getCollectorPoints(
   token: string
 ): Promise<CollectorPoint[]> {
-  const body = await getJson(token, '/collection-points/mine');
-  const list = extractPointsArray(body);
+  const [response, options] = await Promise.all([
+    request(token, '/collection-points/mine'),
+    listWasteCategories().catch(() => []),
+  ]);
+  const body: unknown = await response.json().catch(() => null);
 
-  if (!list) {
-    throw new CollectorApiError('Resposta inesperada ao carregar os pontos.');
+  if (!Array.isArray(body)) {
+    throw new CollectorApiError('Resposta inesperada do servidor.');
   }
 
-  return list.flatMap((item) => {
-    const point = toCollectorPoint(item);
+  const label = categoryLabels(options);
+  return body.flatMap((item) => {
+    const point = toPoint(item, label);
     return point ? [point] : [];
   });
 }
 
-export async function getCollectorOverview(
-  token: string
-): Promise<CollectorOverviewData> {
-  const [user, points] = await Promise.all([
-    getCollectorMe(token),
-    getMyCollectionPoints(token),
-  ]);
-
-  return { user, points };
-}
-
-export function formatCollectorShortName(name: string): string {
-  const normalized = name.trim().replace(/^Cooperativa\s+/i, 'Coop. ');
-  if (normalized.length <= 28) return normalized;
-  return `${normalized.slice(0, 25).trimEnd()}...`;
-}
-
-export function formatMaterialLabel(material: string): string {
-  const key = material.trim().toLowerCase();
-  return MATERIAL_LABELS[key] ?? material;
-}
-
-export function toCollectorReceipts(value: unknown): CollectorReceipt[] {
-  const list = Array.isArray(value)
-    ? value
-    : isRecord(value) && Array.isArray(value.receipts)
-      ? value.receipts
-      : isRecord(value) && Array.isArray(value.items)
-        ? value.items
-        : [];
-
-  return list
-    .map((item, index): CollectorReceipt | null => {
-      if (!isRecord(item)) return null;
-
-      const id =
-        typeof item.id === 'string' || typeof item.id === 'number'
-          ? String(item.id)
-          : `receipt-${index}`;
-
-      const rawTime =
-        typeof item.time === 'string'
-          ? item.time
-          : typeof item.createdAt === 'string'
-            ? new Date(item.createdAt).toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            : '--:--';
-
-      const donor =
-        pickValidText(
-          typeof item.donor === 'string' ? item.donor : null,
-          isRecord(item.donor) && typeof item.donor.name === 'string'
-            ? item.donor.name
-            : null
-        ) ?? 'Doador não identificado';
-
-      const donorType =
-        pickValidText(
-          typeof item.donorType === 'string' ? item.donorType : null,
-          isRecord(item.donor) && typeof item.donor.type === 'string'
-            ? item.donor.type
-            : null
-        ) ?? 'Cidadão';
-
-      const description =
-        pickValidText(
-          typeof item.description === 'string' ? item.description : null,
-          typeof item.material === 'string' ? item.material : null,
-          typeof item.notes === 'string' ? item.notes : null
-        ) ?? 'Recebimento registrado';
-
-      const weightKg =
-        toFiniteNumber(item.weightKg ?? item.weight ?? item.kg ?? 0) ?? 0;
-
-      return {
-        id,
-        pointId: typeof item.pointId === 'string' ? item.pointId : undefined,
-        time: rawTime,
-        donor,
-        donorType,
-        description,
-        weightKg,
-        status: toReceiptStatus(item.status),
-      };
-    })
-    .filter((entry): entry is CollectorReceipt => entry !== null);
-}
-
-export type CreateCollectorPointPayload = {
-  name: string;
-  address: string;
-  neighborhood: string;
-  city: string;
-  cep: string;
-  materials: string[];
-  schedule?: OpeningHours[];
-  collectorName?: string | null;
-  cnpj?: string | null;
-  unit?: string | null;
-};
-
-export async function createCollectorPoint(
+export async function saveWeeklyHours(
   token: string,
-  payload: CreateCollectorPointPayload
-): Promise<CollectorPoint> {
-  if (!API_URL) {
-    throw new CollectorApiError('API não configurada (NEXT_PUBLIC_API_URL).');
-  }
+  point: CollectorPoint,
+  next: WeeklyHour[]
+): Promise<void> {
+  const byDay = new Map(next.map((hour) => [hour.weekday, hour]));
+  const kept = new Set<CollectionPointWeekday>();
 
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}/collection-points`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      cache: 'no-store',
-    });
-  } catch {
-    throw new CollectorApiError(
-      'Não foi possível conectar ao servidor. Tente novamente.'
-    );
-  }
+  for (const hour of point.hours) {
+    const wanted = byDay.get(hour.weekday);
 
-  const body: unknown = await response.json().catch(() => null);
+    if (!wanted || kept.has(hour.weekday)) {
+      await request(
+        token,
+        `/operating-hours/${encodeURIComponent(hour.id)}`,
+        'DELETE'
+      );
+      continue;
+    }
 
-  if (!response.ok) {
-    const message =
-      isRecord(body) && typeof body.message === 'string'
-        ? body.message
-        : (MESSAGES[response.status] ??
-          'Não foi possível criar o ponto de coleta.');
-
-    throw new CollectorApiError(message, response.status);
-  }
-
-  const candidate =
-    isRecord(body) && isRecord(body.point)
-      ? body.point
-      : isRecord(body) && isRecord(body.data)
-        ? body.data
-        : body;
-
-  const point = toCollectorPoint(candidate);
-  if (!point) {
-    throw new CollectorApiError(
-      'Resposta inesperada ao criar o ponto de coleta.'
-    );
-  }
-
-  return point;
-}
-
-const WEEKDAY_TO_NAME: Record<Weekday, string> = {
-  0: 'SUNDAY',
-  1: 'MONDAY',
-  2: 'TUESDAY',
-  3: 'WEDNESDAY',
-  4: 'THURSDAY',
-  5: 'FRIDAY',
-  6: 'SATURDAY',
-};
-
-function toBackendHoursPayload(schedule: OpeningHours[]) {
-  const entries: Array<{
-    weekday: string;
-    openTime: string;
-    closeTime: string;
-    isActive: boolean;
-  }> = [];
-
-  for (const block of schedule) {
-    for (const day of block.weekdays) {
-      const weekdayName = WEEKDAY_TO_NAME[day];
-      if (!weekdayName) continue;
-      entries.push({
-        weekday: weekdayName,
-        openTime: block.opens,
-        closeTime: block.closes,
-        isActive: true,
-      });
+    kept.add(hour.weekday);
+    if (
+      wanted.openTime !== hour.openTime ||
+      wanted.closeTime !== hour.closeTime
+    ) {
+      await request(
+        token,
+        `/operating-hours/${encodeURIComponent(hour.id)}`,
+        'PUT',
+        { openTime: wanted.openTime, closeTime: wanted.closeTime }
+      );
     }
   }
 
-  return entries;
-}
-
-export async function updateCollectorPointSchedule(
-  token: string,
-  pointId: string,
-  schedule: OpeningHours[]
-): Promise<CollectorPoint> {
-  if (!API_URL) {
-    throw new CollectorApiError('API não configurada (NEXT_PUBLIC_API_URL).');
-  }
-
-  let response: Response;
-  try {
-    response = await fetch(
-      `${API_URL}/collection-points/${encodeURIComponent(pointId)}`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          hours: toBackendHoursPayload(schedule),
-        }),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-        cache: 'no-store',
-      }
-    );
-  } catch {
-    throw new CollectorApiError(
-      'Não foi possível conectar ao servidor. Tente novamente.'
+  for (const hour of next) {
+    if (kept.has(hour.weekday)) continue;
+    await request(
+      token,
+      `/collection-points/${encodeURIComponent(point.id)}/operating-hours`,
+      'POST',
+      hour
     );
   }
-
-  const body: unknown = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      isRecord(body) && typeof body.message === 'string'
-        ? body.message
-        : (MESSAGES[response.status] ??
-          'Não foi possível salvar os horários de operação.');
-
-    throw new CollectorApiError(message, response.status);
-  }
-
-  const candidate =
-    isRecord(body) && isRecord(body.point)
-      ? body.point
-      : isRecord(body) && isRecord(body.data)
-        ? body.data
-        : body;
-
-  const point = toCollectorPoint(candidate);
-  if (!point) {
-    throw new CollectorApiError(
-      'Resposta inesperada ao atualizar os horários.'
-    );
-  }
-
-  return point;
 }

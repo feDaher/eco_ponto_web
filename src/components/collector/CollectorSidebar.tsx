@@ -5,27 +5,21 @@ import { usePathname } from 'next/navigation';
 import {
   Boxes,
   ClipboardPlus,
-  Clock,
+  Cog,
   History,
   LayoutDashboard,
-  MapPin,
   type LucideIcon,
 } from 'lucide-react';
-
+import { useAuth } from '@/context/AuthContext';
 import { COLLECTOR_SECTIONS, ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
+import { useCollector } from './collectorContext';
 
 type SidebarItem = {
   label: string;
   href: string;
   page: string;
   icon: LucideIcon;
-};
-
-type CollectorSidebarProps = {
-  shortName: string;
-  cnpj?: string | null;
-  subtitle?: string | null;
 };
 
 function section(id: string) {
@@ -52,31 +46,24 @@ const sidebarItems: SidebarItem[] = [
     icon: History,
   },
   {
-    label: 'Meu ponto de coleta',
-    href: section(COLLECTOR_SECTIONS.point),
-    page: '',
-    icon: MapPin,
-  },
-  {
-    label: 'Horários de funcionamento',
-    href: section(COLLECTOR_SECTIONS.hours),
-    page: '',
-    icon: Clock,
-  },
-  {
     label: 'Materiais e capacidade',
     href: ROUTES.collectorMaterials,
     page: ROUTES.collectorMaterials,
     icon: Boxes,
   },
+  {
+    label: 'Configurações',
+    href: ROUTES.collectorSettings,
+    page: ROUTES.collectorSettings,
+    icon: Cog,
+  },
 ];
 
-export function CollectorSidebar({
-  shortName,
-  cnpj,
-  subtitle,
-}: CollectorSidebarProps) {
+export function CollectorSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const { selectedPoint } = useCollector();
+  const cooperative = selectedPoint?.cooperative;
 
   return (
     <aside className="lg:sticky lg:top-24 lg:w-64 lg:shrink-0 lg:self-start">
@@ -84,11 +71,13 @@ export function CollectorSidebar({
         <p className="text-[10px] font-bold tracking-wider text-brand-muted uppercase">
           Parceiro coletor
         </p>
-        <p className="mt-1 text-sm font-semibold text-slate-800">{shortName}</p>
-        {cnpj ? (
-          <p className="text-xs text-slate-500">CNPJ: {cnpj}</p>
+        <p className="mt-1 truncate text-sm font-semibold text-slate-800">
+          {cooperative?.name ?? user?.name}
+        </p>
+        {cooperative ? (
+          <p className="text-xs text-slate-500">CNPJ: {cooperative.cnpj}</p>
         ) : (
-          subtitle && <p className="text-xs text-slate-500">{subtitle}</p>
+          user?.city && <p className="text-xs text-slate-500">{user.city}</p>
         )}
       </div>
 

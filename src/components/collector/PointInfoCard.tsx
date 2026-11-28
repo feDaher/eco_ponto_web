@@ -1,32 +1,38 @@
+'use client';
+
 import Link from 'next/link';
 import { Building2, MapPin, PlusCircle } from 'lucide-react';
 import { SectionCard } from '@/components/point/SectionCard';
+import { buttonVariants } from '@/components/ui/Button';
 import { COLLECTOR_SECTIONS, ROUTES } from '@/lib/routes';
 import type { PointStatus } from '@/types/api';
-import type { CollectorPoint } from '@/types/collector';
-
-type PointInfoCardProps = {
-  point: CollectorPoint | null;
-  registerHref?: string;
-};
+import { useCollector } from './collectorContext';
 
 const STATUS_EYEBROW: Record<PointStatus, string> = {
   approved: 'Homologado',
   pending: 'Em análise',
-  rejected: 'Rejeitado',
-  removed: 'Removido',
+  rejected: 'Reprovado',
+  removed: 'Inativo',
 };
 
-export function PointInfoCard({
-  point,
-  registerHref = ROUTES.account,
-}: PointInfoCardProps) {
+export function PointInfoCard() {
+  const { loading, selectedPoint: point } = useCollector();
+
+  if (loading) {
+    return (
+      <div
+        aria-hidden="true"
+        className="h-40 animate-pulse rounded-2xl bg-slate-200/70"
+      />
+    );
+  }
+
   if (!point) {
     return (
       <SectionCard
         id={COLLECTOR_SECTIONS.point}
         title="Dados do ponto"
-        eyebrow="Sem Cadastro"
+        eyebrow="Sem cadastro"
         icon={Building2}
       >
         <div className="space-y-3 rounded-xl border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-600">
@@ -38,20 +44,23 @@ export function PointInfoCard({
             horários e receber materiais.
           </p>
           <Link
-            href={registerHref}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-dark"
+            href={ROUTES.collectorSettings}
+            className={buttonVariants({ size: 'sm' })}
           >
-            <PlusCircle aria-hidden="true" className="size-3.5" />
+            <PlusCircle aria-hidden="true" />
             Cadastrar ponto de coleta
           </Link>
         </div>
       </SectionCard>
     );
   }
+
   const cityLine = [
-    point.neighborhood,
+    point.cooperative?.neighborhood,
     point.city,
-    point.cep ? `CEP ${point.cep}` : null,
+    point.cooperative?.postalCode
+      ? `CEP ${point.cooperative.postalCode}`
+      : null,
   ]
     .filter(Boolean)
     .join(' • ');
@@ -75,7 +84,13 @@ export function PointInfoCard({
         </address>
       </div>
       <p className="mt-3 text-xs text-slate-500">
-        Alterações de endereço exigem aprovação prévia da moderação municipal.
+        Alterações de endereço exigem aprovação prévia da moderação municipal.{' '}
+        <Link
+          href={ROUTES.collectorSettings}
+          className="font-semibold text-brand hover:underline"
+        >
+          Editar dados do ponto
+        </Link>
       </p>
     </SectionCard>
   );

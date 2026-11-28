@@ -19,6 +19,7 @@ export const ROUTES = {
   adminReports: '/admin/reports',
   collector: '/collector',
   collectorMaterials: '/collector/materials',
+  collectorSettings: '/collector/settings',
   point: (slug: string) => `/points/${slug}`,
 } as const;
 

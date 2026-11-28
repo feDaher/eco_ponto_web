@@ -1,53 +1,30 @@
 'use client';
 
-import { useMemo, useState, type SubmitEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { Check, ClipboardPlus } from 'lucide-react';
 import { useCollector } from '@/components/collector/collectorContext';
 import { SectionCard } from '@/components/point/SectionCard';
 import { FIELD_CLASS, LABEL_CLASS } from '@/components/point/fieldStyles';
 import { Button } from '@/components/ui/Button';
+import { receiptDestinations } from '@/data/mockCollector';
 import { COLLECTOR_SECTIONS } from '@/lib/routes';
-import { formatMaterialLabel } from '@/services/collector';
-
-type ReceiptDestinationOption = {
-  id: string;
-  label: string;
-  description: string;
-};
-
-const RECEIPT_DESTINATIONS: ReceiptDestinationOption[] = [
-  {
-    id: 'triagem',
-    label: 'Triagem interna',
-    description: 'Separar e pesar por subcategoria antes do envio.',
-  },
-  {
-    id: 'destinador',
-    label: 'Destinador parceiro',
-    description: 'Encaminhar direto para recicladora ou cooperativa.',
-  },
-];
 
 const OPTION_CLASS =
   'flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 bg-card p-3 text-sm text-slate-700 transition-colors hover:border-brand-medium has-checked:border-brand has-checked:bg-brand-light has-focus-visible:ring-2 has-focus-visible:ring-brand';
 
 export function ReceiptForm() {
-  const { selectedPoint, displayName, unitLabel } = useCollector();
+  const { selectedPoint } = useCollector();
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const categories = useMemo(() => {
-    const rawMaterials = selectedPoint?.materials ?? [];
-    return rawMaterials.map((code, index) => {
-      const label = formatMaterialLabel(code);
-      return {
-        id: `${code}-${index}`,
-        value: code,
-        label,
-      };
-    });
-  }, [selectedPoint?.materials]);
+  const categories = (selectedPoint?.categories ?? [])
+    .filter((category) => category.approvalStatus === 'APPROVED')
+    .map((category) => ({
+      id: category.categoryId,
+      value: category.code,
+      label: category.label,
+    }));
 
-  const terminalLabel = selectedPoint?.name || unitLabel || displayName;
+  const terminalLabel = selectedPoint?.name;
   const hasCategories = categories.length > 0;
 
   function submitReceipt(event: SubmitEvent<HTMLFormElement>) {
@@ -145,7 +122,7 @@ export function ReceiptForm() {
             Destinação inicial
           </legend>
           <div className="grid gap-2 sm:grid-cols-2">
-            {RECEIPT_DESTINATIONS.map((destination, index) => (
+            {receiptDestinations.map((destination, index) => (
               <label key={destination.id} className={OPTION_CLASS}>
                 <input
                   type="radio"
@@ -174,14 +151,15 @@ export function ReceiptForm() {
           </Button>
           <p className="text-xs text-slate-500">
             {selectedPoint
-              ? `Ponto ativo: ${terminalLabel}.`
-              : 'Vincule um ponto de coleta para registrar entradas.'}
+              ? 'Demonstração: o recebimento não será salvo.'
+              : 'Cadastre um ponto de coleta para registrar entradas.'}
           </p>
         </div>
 
         {isSubmitted && (
           <p role="status" className="text-sm font-medium text-brand">
-            Entrada validada para {terminalLabel}.
+            Entrada conferida para {terminalLabel}. Demonstração: nada foi
+            salvo.
           </p>
         )}
       </form>
