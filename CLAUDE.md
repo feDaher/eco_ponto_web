@@ -145,6 +145,8 @@ Detalhes:
 ## Painel do coletor (`/collector`)
 
 - `/collector`: painel com recebimento, histórico/MTRs, ponto, horários e categorias (âncoras em `COLLECTOR_SECTIONS`).
+- `app/collector/layout.tsx`: `RequireRole` + `CollectorProvider` (`collectorContext.tsx`) + `CollectorShell` (sidebar e alerta de erro). O contexto carrega `GET /collection-points/mine` (`src/services/collector.ts`, nomes das categorias pelo `label` de `/waste-categories`), guarda o ponto selecionado e recarrega a cada troca de página. Cada página desenha o próprio `CollectorHeader` (que tem o `h1`); `/collector/settings` usa o próprio `h1`.
+- Cartões ligados à API: cabeçalho, status no mapa, aviso de análise (ponto `PENDING` ou categorias pendentes), dados do ponto e horários. O `OpeningHoursEditor` liga/desliga dias e salva pelas rotas de horário (`POST /collection-points/:id/operating-hours`, `PUT`/`DELETE /operating-hours/:id`), sem mexer no resto do ponto. Totais em kg, capacidade e recebimentos seguem no mock (`mockCollector.ts`).
 - `PointCategories` usa a **API**: `GET /collection-points/mine` (`categoryApprovals` com `approvalStatus`/`isAccepting`), `PUT /collection-points/:id/categories` (as adicionadas ficam `PENDING`; desmarcar remove na hora; o ponto precisa manter uma aprovada, senão 422) e o histórico de decisões. Nomes vêm do `label` de `GET /waste-categories`. Coletor com vários pontos escolhe num `select`.
 - `/collector/materials` (WEB-18): capacidade por material, alerta de lotação (≥ 85%), pausar recepção e alterar o limite (validado: inteiro e não menor que o estoque). Mock em `src/data/mockCollector.ts`, porque a API não tem rota de capacidade.
 - `CollectorSidebar` usa `usePathname()` para marcar a página ativa.

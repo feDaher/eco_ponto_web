@@ -10,9 +10,10 @@ import {
   LayoutDashboard,
   type LucideIcon,
 } from 'lucide-react';
-import { collectorProfile } from '@/data/mockCollector';
+import { useAuth } from '@/context/AuthContext';
 import { COLLECTOR_SECTIONS, ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
+import { useCollector } from './collectorContext';
 
 type SidebarItem = {
   label: string;
@@ -58,28 +59,27 @@ const sidebarItems: SidebarItem[] = [
   },
 ];
 
-export function CollectorSidebar({
-  showProfile = true,
-}: {
-  showProfile?: boolean;
-}) {
+export function CollectorSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const { selectedPoint } = useCollector();
+  const cooperative = selectedPoint?.cooperative;
 
   return (
     <aside className="lg:sticky lg:top-24 lg:w-64 lg:shrink-0 lg:self-start">
-      {showProfile && (
-        <div className="hidden rounded-2xl border border-slate-200/70 bg-surface-alt p-4 lg:block">
-          <p className="text-[10px] font-bold tracking-wider text-brand-muted uppercase">
-            Parceiro coletor
-          </p>
-          <p className="mt-1 text-sm font-semibold text-slate-800">
-            {collectorProfile.shortName}
-          </p>
-          <p className="text-xs text-slate-500">
-            CNPJ: {collectorProfile.cnpj}
-          </p>
-        </div>
-      )}
+      <div className="hidden rounded-2xl border border-slate-200/70 bg-surface-alt p-4 lg:block">
+        <p className="text-[10px] font-bold tracking-wider text-brand-muted uppercase">
+          Parceiro coletor
+        </p>
+        <p className="mt-1 truncate text-sm font-semibold text-slate-800">
+          {cooperative?.name ?? user?.name}
+        </p>
+        {cooperative ? (
+          <p className="text-xs text-slate-500">CNPJ: {cooperative.cnpj}</p>
+        ) : (
+          user?.city && <p className="text-xs text-slate-500">{user.city}</p>
+        )}
+      </div>
 
       <nav aria-label="Painel do coletor" className="lg:mt-4">
         <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0">

@@ -1,8 +1,24 @@
+'use client';
+
 import { FileClock, Info } from 'lucide-react';
-import { pendingRequest } from '@/data/mockCollector';
+import { useCollector } from './collectorContext';
 
 export function PendingRequestNotice() {
-  const { protocol, title, category, detail } = pendingRequest;
+  const { selectedPoint: point } = useCollector();
+  if (!point) return null;
+
+  const isPointPending = point.status === 'pending';
+  const pendingLabels = point.categories
+    .filter((category) => category.approvalStatus === 'PENDING')
+    .map((category) => category.label);
+
+  if (!isPointPending && pendingLabels.length === 0) return null;
+
+  const categories = new Intl.ListFormat('pt-BR', {
+    style: 'long',
+    type: 'conjunction',
+  }).format(pendingLabels);
+  const plural = pendingLabels.length > 1;
 
   return (
     <section
@@ -19,18 +35,32 @@ export function PendingRequestNotice() {
             id="pending-request-heading"
             className="text-base font-bold text-slate-800"
           >
-            {title}
+            {isPointPending
+              ? 'Cadastro do ponto em análise'
+              : 'Alterações em análise'}
           </h2>
           <span className="rounded bg-card/70 px-2 py-0.5 text-[11px] font-semibold text-brand">
-            Em análise pelo fiscal ({protocol})
+            Em análise pela moderação
           </span>
         </div>
+
         <p>
-          Sua solicitação de inclusão da categoria <strong>{category}</strong> e{' '}
-          {detail} foi enviada e está pendente de aprovação pela moderação
-          municipal. Durante a avaliação, os dados públicos cadastrados
-          permanecem ativos no mapa de coleta.
+          {isPointPending ? (
+            <>
+              O cadastro do ponto <strong>{point.name}</strong> está aguardando
+              a aprovação da moderação municipal. Assim que for homologado, ele
+              aparece no mapa público.
+            </>
+          ) : (
+            <>
+              {plural ? 'As categorias' : 'A categoria'}{' '}
+              <strong>{categories}</strong> {plural ? 'aguardam' : 'aguarda'} a
+              aprovação da moderação municipal. Enquanto isso, os dados públicos
+              já aprovados continuam ativos no mapa.
+            </>
+          )}
         </p>
+
         <p className="flex items-start gap-1.5 text-xs text-slate-500">
           <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
           <span>
