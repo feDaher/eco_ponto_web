@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { MapPin, MessageSquareQuote } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, MapPin, MessageSquareQuote } from 'lucide-react';
 import { averageRating, formatDate, pluralize } from '@/lib/points';
 import { listPointReviews } from '@/services/reviews';
 import type { Review } from '@/types/api';
@@ -11,47 +11,40 @@ import { StarRating } from './StarRating';
 
 type PointReviewsProps = {
   pointId: string;
-  reviews: Review[];
   pointName: string;
+  initialReviews: Review[];
+  initialError: string | null;
+  live: boolean;
 };
 
 export function PointReviews({
   pointId,
-  reviews: initialReviews,
   pointName,
+  initialReviews,
+  initialError,
+  live,
 }: PointReviewsProps) {
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
-
-  const syncReviews = useCallback(async () => {
-    const freshReviews = await listPointReviews(pointId);
-    setReviews(freshReviews);
-  }, [pointId]);
-
-  useEffect(() => {
-    let active = true;
-
-    listPointReviews(pointId).then((freshReviews) => {
-      if (active) setReviews(freshReviews);
-    });
-
-    function handleFocus() {
-      void syncReviews();
-    }
-
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      active = false;
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [pointId, syncReviews]);
+  const [reviews, setReviews] = useState(initialReviews);
+  const [error, setError] = useState(initialError);
 
   const average = averageRating(reviews);
   const averageLabel = average.toFixed(1).replace('.', ',');
   const countLabel = pluralize(reviews.length, 'avaliação', 'avaliações');
 
-  function handleAddReview(newReview: Review) {
-    setReviews((prev) => [newReview, ...prev]);
-    void syncReviews();
+  async function handlePublished(review: Review) {
+    setReviews((current) => [
+      review,
+      ...current.filter((item) => item.id !== review.id),
+    ]);
+
+    try {
+      setReviews(await listPointReviews(pointId));
+      setError(null);
+    } catch {
+      setError(
+        'A avaliação foi salva, mas não foi possível atualizar a lista.'
+      );
+    }
   }
 
   return (
@@ -77,6 +70,16 @@ export function PointReviews({
         )
       }
     >
+      {error && (
+        <p
+          role="alert"
+          className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+        >
+          <AlertCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          {error}
+        </p>
+      )}
+
       {reviews.length > 0 ? (
         <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {reviews.map((review) => (
@@ -128,21 +131,24 @@ export function PointReviews({
           ))}
         </ul>
       ) : (
-        <div className="rounded-2xl bg-surface-alt p-5 text-center">
-          <MessageSquareQuote
-            aria-hidden="true"
-            className="mx-auto size-6 text-slate-400"
-          />
-          <p className="mt-2 text-sm text-slate-500">
-            Este ponto ainda não recebeu avaliações.
-          </p>
-        </div>
+        !error && (
+          <div className="rounded-2xl bg-surface-alt p-5 text-center">
+            <MessageSquareQuote
+              aria-hidden="true"
+              className="mx-auto size-6 text-slate-400"
+            />
+            <p className="mt-2 text-sm text-slate-500">
+              Este ponto ainda não recebeu avaliações.
+            </p>
+          </div>
+        )
       )}
 
       <ReviewForm
         pointId={pointId}
         pointName={pointName}
-        onAddReview={handleAddReview}
+        live={live}
+        onPublished={handlePublished}
       />
     </SectionCard>
   );

@@ -21,8 +21,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeRedirect(searchParams.get('next'));
+  const embedded = onSuccess !== undefined;
   const passwordChanged =
-    searchParams.get('reason') === PASSWORD_CHANGED_REASON;
+    !embedded && searchParams.get('reason') === PASSWORD_CHANGED_REASON;
   const {
     register,
     handleSubmit,
@@ -65,12 +66,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <div className="mx-auto w-full max-w-sm">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-        Bem-vindo de volta
-      </h1>
-      <p className="mt-1.5 text-sm text-slate-500">
-        Insira seus dados para acessar seu painel.
-      </p>
+      {!embedded && (
+        <>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            Bem-vindo de volta
+          </h1>
+          <p className="mt-1.5 text-sm text-slate-500">
+            Insira seus dados para acessar seu painel.
+          </p>
+        </>
+      )}
 
       {passwordChanged && (
         <p
@@ -114,7 +119,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           {isSubmitting && (
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />
           )}
-          {isSubmitting ? 'Entrando...' : 'Entrar no painel'}
+          {isSubmitting
+            ? 'Entrando...'
+            : embedded
+              ? 'Entrar'
+              : 'Entrar no painel'}
         </button>
       </form>
 

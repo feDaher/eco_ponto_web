@@ -1,127 +1,171 @@
 'use client';
 
 import { useState, type SubmitEvent } from 'react';
-import { Loader2, MessageSquareText, PenLine, Star } from 'lucide-react';
+import {
+  Info,
+  Loader2,
+  LogIn,
+  MessageSquareText,
+  PenLine,
+  Star,
+} from 'lucide-react';
+import { LoginForm } from '@/components/auth/LoginForm';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
+import { firstName } from '@/lib/account';
 import { cn } from '@/lib/utils';
-import { ReviewApiError, createPointReview } from '@/services/reviews';
+import {
+  REVIEW_COMMENT_MAX,
+  ReviewApiError,
+  publishPointReview,
+} from '@/services/reviews';
 import type { Review } from '@/types/api';
 import { FIELD_CLASS, LABEL_CLASS } from './fieldStyles';
-import { LoginModalReviews } from './LoginModalReviews';
 
 const STARS: Review['rating'][] = [1, 2, 3, 4, 5];
+
+const WRAPPER_CLASS = 'mt-6 border-t border-slate-100 pt-5';
 
 type ReviewFormProps = {
   pointId: string;
   pointName: string;
-  onAddReview: (review: Review) => void;
+  live: boolean;
+  onPublished: (review: Review) => Promise<void>;
 };
 
 export function ReviewForm({
   pointId,
   pointName,
-  onAddReview,
+  live,
+  onPublished,
 }: ReviewFormProps) {
   const { status, user, token, logout } = useAuth();
 
-  if (status === 'loading') {
-    return null;
-  }
+  if (status === 'loading') return null;
 
-  if (status === 'authenticated' && user && token && user.role === 'CITIZEN') {
+  if (!live) {
     return (
-      <CitizenReviewForm
-        key={user.id}
-        token={token}
-        firstName={user.name.split(' ')[0]}
-        pointId={pointId}
-        pointName={pointName}
-        onAddReview={onAddReview}
-        onUnauthorized={logout}
-      />
+      <Note>
+        Este ponto ainda é de demonstração. As avaliações serão liberadas quando
+        ele for cadastrado na plataforma.
+      </Note>
     );
   }
 
-  if (status === 'authenticated') {
-    return null;
+  if (!user || !token) return <GuestPrompt />;
+
+  if (user.role !== 'CITIZEN') {
+    return <Note>Só cidadãos podem avaliar pontos de coleta.</Note>;
   }
 
-  return <GuestReviewPrompt />;
+  return (
+    <CitizenForm
+      key={user.id}
+      token={token}
+      name={firstName(user.nickname || user.name)}
+      pointId={pointId}
+      pointName={pointName}
+      onPublished={onPublished}
+      onUnauthorized={logout}
+    />
+  );
 }
 
-function GuestReviewPrompt() {
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+function Note({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      className={cn(
+        WRAPPER_CLASS,
+        'flex items-start gap-2 text-sm text-slate-500'
+      )}
+    >
+      <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function GuestPrompt() {
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="mt-6 border-t border-slate-100 pt-5">
-      <Button type="button" size="lg" onClick={() => setIsLoginModalOpen(true)}>
-        Cadastre-se como usuário para comentar
+    <div className={WRAPPER_CLASS}>
+      <Button type="button" size="lg" onClick={() => setOpen(true)}>
+        <LogIn aria-hidden="true" />
+        Entrar para avaliar
       </Button>
+      <p className="mt-2 text-xs text-slate-500">
+        Só cidadãos cadastrados podem avaliar os pontos de coleta.
+      </p>
 
-      <LoginModalReviews
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
+      {open && (
+        <Modal
+          title="Entre para avaliar"
+          subtitle="Use sua conta de cidadão do EcoPonto."
+          icon={LogIn}
+          onClose={() => setOpen(false)}
+        >
+          <LoginForm onSuccess={() => setOpen(false)} />
+        </Modal>
+      )}
     </div>
   );
 }
 
-type CitizenReviewFormProps = {
+type CitizenFormProps = {
   token: string;
-  firstName: string;
+  name: string;
   pointId: string;
   pointName: string;
-  onAddReview: (review: Review) => void;
+  onPublished: (review: Review) => Promise<void>;
   onUnauthorized: () => void;
 };
 
-function CitizenReviewForm({
+function CitizenForm({
   token,
-  firstName,
+  name,
   pointId,
   pointName,
-  onAddReview,
+  onPublished,
   onUnauthorized,
-}: CitizenReviewFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
+}: CitizenFormProps) {
+  const [open, setOpen] = useState(false);
   const [rating, setRating] = useState<Review['rating']>(5);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  async function submitReview(event: SubmitEvent<HTMLFormElement>) {
+  async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const formData = new FormData(form);
-    const comment = String(formData.get('comentario') ?? '').trim();
-
-    if (comment.length > 0 && comment.length < 5) {
-      setErrorMessage(
-        'Se escrever um comentário, use pelo menos 5 caracteres.'
-      );
-      return;
-    }
+    const comment = String(new FormData(form).get('comentario') ?? '');
 
     setSubmitting(true);
-    setErrorMessage(null);
+    setError(null);
 
     try {
-      const created = await createPointReview(token, pointId, {
+      const { review, created } = await publishPointReview(token, pointId, {
         rating,
         comment,
       });
-      onAddReview(created);
       form.reset();
       setRating(5);
-      setIsOpen(false);
-    } catch (error) {
-      if (error instanceof ReviewApiError && error.status === 401) {
+      setOpen(false);
+      setNotice(
+        created
+          ? 'Avaliação enviada. Obrigado por contribuir!'
+          : 'Você já tinha avaliado este ponto, então sua avaliação foi atualizada.'
+      );
+      await onPublished(review);
+    } catch (cause) {
+      if (cause instanceof ReviewApiError && cause.status === 401) {
         onUnauthorized();
         return;
       }
-      setErrorMessage(
-        error instanceof ReviewApiError
-          ? error.message
+      setError(
+        cause instanceof ReviewApiError
+          ? cause.message
           : 'Não foi possível enviar sua avaliação. Tente novamente.'
       );
     } finally {
@@ -130,34 +174,42 @@ function CitizenReviewForm({
   }
 
   return (
-    <div className="mt-6 border-t border-slate-100 pt-5">
+    <div className={WRAPPER_CLASS}>
       <Button
         type="button"
         size="lg"
-        variant={isOpen ? 'outline' : 'default'}
+        variant={open ? 'outline' : 'default'}
         onClick={() => {
-          setIsOpen((open) => !open);
-          setErrorMessage(null);
+          setOpen((value) => !value);
+          setError(null);
+          setNotice(null);
         }}
-        aria-expanded={isOpen}
+        aria-expanded={open}
         aria-controls="review-form"
       >
         <PenLine aria-hidden="true" />
-        {isOpen ? 'Fechar avaliação' : 'Avaliar este ponto'}
+        {open ? 'Fechar avaliação' : 'Avaliar este ponto'}
       </Button>
 
-      {isOpen && (
+      {notice && (
+        <p role="status" className="mt-3 text-sm font-medium text-brand">
+          {notice}
+        </p>
+      )}
+
+      {open && (
         <form
           id="review-form"
-          onSubmit={(e) => void submitReview(e)}
+          onSubmit={(event) => void submit(event)}
           className="mt-5 grid gap-4 rounded-2xl bg-surface-alt p-4 sm:p-5"
         >
           <div>
             <h3 className="font-semibold text-slate-900">
-              Conte sua experiência, {firstName}
+              Conte sua experiência, {name}
             </h3>
             <p className="mt-1 text-sm text-slate-600">
-              Sua avaliação nos ajuda a melhorar o {pointName}.
+              Sua avaliação ajuda outras pessoas a conhecer o {pointName}. Se
+              você já avaliou, a nova avaliação substitui a anterior.
             </p>
           </div>
 
@@ -169,7 +221,7 @@ function CitizenReviewForm({
               {STARS.map((star) => (
                 <label
                   key={star}
-                  className="cursor-pointer rounded-lg p-1 text-amber-500 transition-colors hover:bg-amber-100 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-amber-700"
+                  className="cursor-pointer rounded-lg p-1 text-amber-500 transition-colors hover:bg-amber-100 has-focus-visible:outline-2 has-focus-visible:outline-amber-700 dark:hover:bg-amber-950/40"
                 >
                   <input
                     type="radio"
@@ -198,25 +250,34 @@ function CitizenReviewForm({
             Comentário (opcional)
             <textarea
               name="comentario"
-              maxLength={80}
+              maxLength={REVIEW_COMMENT_MAX}
               rows={4}
               disabled={submitting}
               placeholder="Conte como foi sua experiência neste ponto..."
               className={cn(FIELD_CLASS, 'resize-y')}
             />
+            <span className="text-xs font-normal text-slate-500">
+              Até {REVIEW_COMMENT_MAX} caracteres. Seu primeiro nome aparece
+              junto da avaliação.
+            </span>
           </label>
 
-          {errorMessage && (
+          {error && (
             <p
               role="alert"
               className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300"
             >
-              {errorMessage}
+              {error}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" size="lg" disabled={submitting}>
+          <div>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={submitting}
+              aria-busy={submitting}
+            >
               {submitting ? (
                 <Loader2 aria-hidden="true" className="animate-spin" />
               ) : (

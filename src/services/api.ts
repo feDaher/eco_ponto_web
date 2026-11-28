@@ -1,6 +1,5 @@
 import { mockPointDetails } from '@/data/mockPointDetails';
 import { mockPoints } from '@/data/mockPoints';
-
 import { isInBounds } from '@/lib/geo';
 import { daysSince, isOutdated } from '@/lib/points';
 import type {
@@ -47,11 +46,7 @@ export async function getPointBySlug(
 
   if (!point || !details) return null;
 
-  return {
-    ...point,
-    ...details,
-    reviews: [],
-  };
+  return { ...point, ...details };
 }
 
 export async function getOutdatedPoints(
